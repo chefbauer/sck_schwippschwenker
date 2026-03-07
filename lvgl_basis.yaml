@@ -64,38 +64,70 @@ lvgl:
                   text_color: 0x003366  # Dunkelblau
                   text_align: CENTER
               
-              # Farbtest-Quadrate: Rot, Grün, Blau je 200x200
+              # 3D-Behälter mit Wasserstand
               - obj:
-                  id: sq_red
-                  width: 200
-                  height: 200
+                  id: container_tank
+                  width: 260
+                  height: 380
                   align: CENTER
-                  x: -220
-                  y: 50
-                  bg_color: 0xFF0000
-                  bg_opa: COVER
+                  y: 0
+                  bg_opa: TRANSP
                   border_width: 0
-              - obj:
-                  id: sq_green
-                  width: 200
-                  height: 200
-                  align: CENTER
-                  x: 0
-                  y: 50
-                  bg_color: 0x00FF00
-                  bg_opa: COVER
-                  border_width: 0
-              - obj:
-                  id: sq_blue
-                  width: 200
-                  height: 200
-                  align: CENTER
-                  x: 220
-                  y: 50
-                  bg_color: 0x0000FF
-                  bg_opa: COVER
-                  border_width: 0
-              
+                  widgets:
+                    # Zylinderkörper (Mantel)
+                    - obj:
+                        id: cyl_body
+                        width: 200
+                        height: 280
+                        align: TOP_MID
+                        y: 25
+                        bg_color: 0x607080
+                        border_width: 3
+                        border_color: 0x2A3A4A
+                        radius: 0
+                    # Boden-Ellipse (3D-Effekt)
+                    - obj:
+                        id: cyl_bottom
+                        width: 200
+                        height: 50
+                        align: TOP_MID
+                        y: 280
+                        radius: 25
+                        bg_color: 0x405060
+                        border_width: 3
+                        border_color: 0x2A3A4A
+                    # Wasser-Körper (blau)
+                    - obj:
+                        id: water_body
+                        width: 184
+                        height: 216
+                        align: TOP_MID
+                        y: 89
+                        bg_color: 0x3A8FC0
+                        border_width: 0
+                        radius: 0
+                    # Wasser-Oberfläche (helle Ellipse)
+                    - obj:
+                        id: water_surface
+                        width: 184
+                        height: 38
+                        align: TOP_MID
+                        y: 70
+                        radius: 19
+                        bg_color: 0x6BB8E0
+                        border_width: 0
+                    # Oberer Rand / Öffnung
+                    - obj:
+                        id: cyl_rim
+                        width: 200
+                        height: 50
+                        align: TOP_MID
+                        y: 0
+                        radius: 25
+                        bg_color: 0x8090A0
+                        border_width: 3
+                        border_color: 0x2A3A4A
+
               # Navigation Button zu Einstellungen
               - button:
                   id: btn_to_settings
@@ -182,6 +214,44 @@ lvgl:
                                     - light.control:
                                         id: light_screen_background
                                         brightness: !lambda "return x / 100.0;"
+
+                        # Farbtest-Quadrate (150 x 150)
+                        - obj:
+                            id: row_farben
+                            width: 960
+                            height: 170
+                            align: TOP_MID
+                            y: 110
+                            bg_opa: TRANSP
+                            border_width: 0
+                            widgets:
+                              - obj:
+                                  id: sq_red
+                                  width: 150
+                                  height: 150
+                                  align: CENTER
+                                  x: -180
+                                  bg_color: 0xFF0000
+                                  bg_opa: COVER
+                                  border_width: 0
+                              - obj:
+                                  id: sq_green
+                                  width: 150
+                                  height: 150
+                                  align: CENTER
+                                  x: 0
+                                  bg_color: 0x00FF00
+                                  bg_opa: COVER
+                                  border_width: 0
+                              - obj:
+                                  id: sq_blue
+                                  width: 150
+                                  height: 150
+                                  align: CENTER
+                                  x: 180
+                                  bg_color: 0x0000FF
+                                  bg_opa: COVER
+                                  border_width: 0
 
                     # Tab 2: System
                     - name: "System"
