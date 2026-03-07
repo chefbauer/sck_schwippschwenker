@@ -1,78 +1,155 @@
 # Display Drehwurm - Pflichtenheft
 
 ## Projekt Übersicht
-ESPHome LVGL Display-Konfiguration für einen "Supercooler Drehwurm Kühler"
 
-Datei lvgl_basis.yaml wird in esphome mit Packages: importiert.
-Daher nur folgendes generieren:
-- lvgl:
-- fonts:
-- grafiken.
+ESPHome LVGL Display-Konfiguration für einen "Supercooler Drehwurm Kühler".
 
-Nicht generieren:
-- sonstigen esphome code
+`lvgl_basis.yaml` wird in ESPHome via `packages:` importiert.  
+**Nur generieren:** `font:`, `globals:`, `interval:`, `lvgl:`  
+**Nicht generieren:** sonstiger ESPHome-Code (sensors, lights, etc.)
 
-## Hardware Spezifikation
-- **Display Auflösung**: 1024x600 Pixel
-- **Display Typ**: LVGL-kompatibles TFT Display
-- **Plattform**: ESPHome mit LVGL Integration
+---
 
+## Hardware
 
-## UI Design Anforderungen
+| Parameter | Wert |
+|---|---|
+| Plattform | ESP32-P4 |
+| PSRAM | 32 MB |
+| Display | 1024 × 600 px |
+| LVGL Version | 8.x (kein LVGL 9!) |
 
-### Page 1: Start/Hauptseite
-- **Layout**: Vertikales Layout
-- **Titel**: "Supercooler Drehwurm Kühler"
-  - Position: Oben mittig
-  - Schriftgröße: 60
-  - Ausrichtung: Zentriert
-- **Farbtest-Quadrate** (200×200 px, nebeneinander zentriert):
-  - Rot `#FF0000`
-  - Grün `#00FF00`
-  - Blau `#0000FF`
+---
 
-### Page 2: Einstellungen
-- **Layout**: Vertikales Layout
-- **Titel**: "Einstellungen"
-  - Position: Oben mittig
-  - Schriftgröße: 60
-  - Ausrichtung: Zentriert
-- **TabView** mit 3 Tabs (oben), Schriftgröße 30, Hintergrund hellgrau (#E0E0E0):
-  - **Tab "Bildschirm"**:
-    - Zeile: Label "Helligkeit" (linksbündig) + Slider (rechtsseitig, 0-100, Standard 80)
-    - Weitere Einstellungen folgen
-  - **Tab "System"**: Platzhalter
-  - **Tab "Kühler"**: Platzhalter
-- **Zurück-Button**: unten links, dunkelgrau (#444444), Text "Zurück" → navigiert zu Hauptseite
+## Fonts
 
-## Technische Implementierung
+| ID | Datei | Größe | Verwendung |
+|---|---|---|---|
+| `font_title` | Roboto 700 (gfonts) | 60 | Seitentitel |
+| `font_normal` | Roboto 400 (gfonts) | 28 | Labels, Slot-Text |
+| `font_tab` | Roboto 400 (gfonts) | 30 | Tab-Beschriftungen |
+| `font_icons` | Font Awesome Solid 6.5.0 (CDN) | 40 | Play/Pause-Icons (U+F04B, U+F04C) |
 
-### Fonts
-- **Hauptschrift für Titel**: Größe 60 (Roboto Bold oder Montserrat Bold)
-- **Standard Text**: Größe 24-32
-- **Small Text**: Größe 16-20
+Icon-Bytes in Lambdas: Play = `\xef\x81\x8b`, Pause = `\xef\x81\x8c`
 
-### Farbschema
-- **Hintergrund**: Weiß/Grau für Bereiche
-- **Primärfarbe**: dunkelblau
-- **Text**: Schwarz 
+---
 
-### LVGL Komponenten
-- Pages (Screens)
-- Labels für Text
-- Buttons für Navigation
-- Container für Layout-Strukturierung
-- Sensoren-Integration via Lambda-Funktionen
+## Globale Variablen
 
-## Workflow
-1. `display.md` definiert das UI-Design
-2. GitHub Copilot generiert `lvgl_basis.yaml` basierend auf der Spezifikation
-3. Keine manuelle Code-Anpassung erforderlich
-4. Änderungen nur in `display.md` vornehmen
+Für 6 Timer-Slots (Index 0–5):
+
+| ID | Typ | Bedeutung |
+|---|---|---|
+| `slot_start_ms` | `std::array<uint32_t, 6>` | millis() beim letzten Start |
+| `slot_elapsed_ms` | `std::array<uint32_t, 6>` | akkumulierte Zeit in ms |
+| `slot_status` | `std::array<int, 6>` | 0=gestoppt, 1=läuft, 2=pausiert |
+
+**Interval:** 500 ms → aktualisiert alle 6 Timer-Labels wenn Status = 1.
+
+---
+
+## Page 1: Hauptseite (`page_main`)
+
+### Titel
+- Text: "Supercooler Drehwurm Kühler"
+- Font: `font_title`, Farbe: `#003366`, oben mittig, y=20
+
+### Tank-Widget (Platzhalter)
+- **TODO: durch echtes PNG-Bild ersetzen**
+- Position: zentriert, y=20, 360×360 px
+- Aufbau aus LVGL `obj`-Widgets (Zylinder-Illusion):
+  - `cyl_rim`: oben, grau, oval (Öffnung)
+  - `cyl_body`: Mantelrechteck, grau
+  - `water_surface`: hellblaue Ellipse (Wasseroberfläche)
+  - `water_body`: blaues Rechteck (Wasserkörper)
+  - `cyl_bottom`: dunkelgraue Ellipse (Boden)
+
+### 6 Farbslots (Timer-Buttons)
+
+Anordnung im Uhrzeigersinn nach Farbrad:
+
+| Slot | Farbe | Seite | y-Position | Index |
+|---|---|---|---|---|
+| 1 | Rot `#FF0000` | links | 110 | 0 |
+| 2 | Gelb `#FFFF00` | links | 250 | 1 |
+| 3 | Grün `#00FF00` | links | 390 | 2 |
+| 4 | Cyan `#00FFFF` | rechts | 110 | 3 |
+| 5 | Blau `#0000FF` | rechts | 250 | 4 |
+| 6 | Magenta `#FF00FF` | rechts | 390 | 5 |
+
+**Jeder Slot ist ein `button`** (290×120 px, radius=16, clip_corner=true, bg_opa=TRANSP):
+
+- **Linker Tab** (50×100%, `clickable: false`): volle Slot-Farbe, Slot-Nummer zentriert
+- **Rechter Bereich** (240×100%, `clickable: false`): 50% Opacity, enthält:
+  - Label "Timer:" oben links
+  - Zeitanzeige `MM:SS` darunter
+  - Play/Pause-Icon rechtsbündig (x=-17)
+
+**Touch-Verhalten:**
+- `on_short_click`: Start (Status 0→1) / Pause (Status 1→2) Toggle
+- `on_long_press`: Reset — nur wenn Status=2 (pausiert) → Status=0, Anzeige=00:00
+
+> `on_short_click` feuert bei Long Press **nicht** → kein Extra-Flag nötig
+
+**Textfarben** (auf 50%-Hintergrund):
+| Slot | Textfarbe |
+|---|---|
+| 1 R | `#880000` |
+| 2 Y | `#666600` |
+| 3 G | `#004400` |
+| 4 C | `#004444` |
+| 5 B | `#FFFFFF` |
+| 6 M | `#880044` |
+
+### Navigation
+- Button "Einstellungen" unten rechts → `lvgl.page.show: page_settings`
+
+---
+
+## Page 2: Einstellungen (`page_settings`)
+
+### Titel
+- Text: "Einstellungen", Font: `font_title`, Farbe: `#003366`, oben mittig
+
+### TabView (3 Tabs, `font_tab`, Hintergrund `#E0E0E0`)
+
+**Tab "Bildschirm":**
+- Zeile: Label "Helligkeit" + Slider (`slider_helligkeit`, 0–100, Standard 80)
+  - `on_value` → `light.control` auf `light_screen_background` mit `brightness: x/100.0`
+- Farbtest-Quadrate (150×150 px): Rot / Grün / Blau nebeneinander zentriert
+
+**Tab "System":** Platzhalter
+
+**Tab "Kühler":** Platzhalter
+
+### Navigation
+- Button "Zurück" unten links, `#444444` → `lvgl.page.show: page_main`
+
+---
+
+## Bekannte LVGL-8-Einschränkungen
+
+| Problem | Lösung |
+|---|---|
+| `transform_scale_y` nicht verfügbar (LVGL9) | nicht verwenden |
+| `bg_opa` nur `%`-Suffix oder Keywords | `50%`, `COVER`, `TRANSP` |
+| ESPHome setzt `LV_OBJ_FLAG_CLICKABLE` auf alle `obj` | `clickable: false` direkt im YAML setzen |
+| `obj` empfängt keinen `on_click` zuverlässig | Widget-Typ `button` verwenden |
+
+---
 
 ## Status
-- [x] Basis-Struktur definiert
-- [x] Page-Layout spezifiziert
-- [ ] Sensoren hinzufügen
-- [ ] Interaktive Elemente implementieren
-- [ ] Animations-Effekte definieren
+
+- [x] Font-Definitionen
+- [x] Timer-Globals (6 Slots)
+- [x] Interval 500ms (alle 6 Slots)
+- [x] Hauptseite Titel
+- [x] Tank-Widget (Platzhalter)
+- [x] 6 Farbslots im Farbrad-Layout
+- [x] Split-Design: voller Farbtab + 50%-Timer-Bereich
+- [x] Touch: `on_short_click` / `on_long_press`
+- [x] Helligkeit-Slider → `light_screen_background`
+- [x] Farbtest-Quadrate in Einstellungen
+- [ ] Tank-Platzhalter durch echtes PNG ersetzen
+- [ ] Einstellungen Tab "System" füllen
+- [ ] Einstellungen Tab "Kühler" füllen
