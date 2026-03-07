@@ -26,10 +26,10 @@ Nicht generieren:
   - Position: Oben mittig
   - Schriftgröße: 60
   - Ausrichtung: Zentriert
-- **Sensordaten-Bereiche** (werden später ergänzt):
-  - Temperaturanzeigen
-  - Status-Indikatoren
-  - Grafische Widgets
+- **Farbtest-Quadrate** (200×200 px, nebeneinander zentriert):
+  - Rot `#FF0000`
+  - Grün `#00FF00`
+  - Blau `#0000FF`
 
 ### Page 2: Einstellungen
 - **Layout**: Vertikales Layout

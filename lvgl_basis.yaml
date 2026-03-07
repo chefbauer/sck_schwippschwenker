@@ -64,26 +64,37 @@ lvgl:
                   text_color: 0x003366  # Dunkelblau
                   text_align: CENTER
               
-              # Status Container (Platzhalter für Sensoren)
+              # Farbtest-Quadrate: Rot, Grün, Blau je 200x200
               - obj:
-                  id: status_container
-                  width: 900
-                  height: 400
+                  id: sq_red
+                  width: 200
+                  height: 200
                   align: CENTER
+                  x: -220
                   y: 50
-                  bg_color: 0xF0F0F0
+                  bg_color: 0xFF0000
                   bg_opa: COVER
-                  border_color: 0x003366
-                  border_width: 2
-                  radius: 10
-                  pad_all: 15
-                  widgets:
-                    - label:
-                        id: status_label
-                        text: "System bereit"
-                        align: CENTER
-                        text_font: font_normal
-                        text_color: 0x000000  # Schwarz
+                  border_width: 0
+              - obj:
+                  id: sq_green
+                  width: 200
+                  height: 200
+                  align: CENTER
+                  x: 0
+                  y: 50
+                  bg_color: 0x00FF00
+                  bg_opa: COVER
+                  border_width: 0
+              - obj:
+                  id: sq_blue
+                  width: 200
+                  height: 200
+                  align: CENTER
+                  x: 220
+                  y: 50
+                  bg_color: 0x0000FF
+                  bg_opa: COVER
+                  border_width: 0
               
               # Navigation Button zu Einstellungen
               - button:

@@ -63,20 +63,17 @@
             font-weight: 700;
             padding: 18px 10px 10px;
         }
-        #pageMain .status-box {
+        #pageMain .squares {
             position: absolute;
-            top: 110px; left: 62px;
-            width: 900px; height: 400px;
-            background: #F0F0F0;
-            border: 2px solid #003366;
-            border-radius: 10px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, calc(-50% + 50px));
             display: flex;
-            align-items: center;
-            justify-content: center;
+            gap: 20px;
         }
-        #pageMain .status-box span {
-            font-size: 28px;
-            color: #000;
+        #pageMain .sq {
+            width: 200px;
+            height: 200px;
         }
         #pageMain .btn-settings {
             position: absolute;
@@ -120,8 +117,12 @@
             border-right: 1px solid #bbb;
             font-size: 30px;
             font-family: 'Roboto', Arial, sans-serif;
+            font-weight: 400;
             color: #000;
             cursor: pointer;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            letter-spacing: 0.01em;
         }
         .tab-bar button:last-child { border-right: none; }
         .tab-bar button.active {
@@ -209,7 +210,11 @@
     <!-- PAGE 1: Hauptseite -->
     <div class="page active" id="pageMain">
         <div class="p-title">Supercooler Drehwurm Kühler</div>
-        <div class="status-box"><span>System bereit</span></div>
+        <div class="squares">
+                <div class="sq" style="background:#FF0000"></div>
+                <div class="sq" style="background:#00FF00"></div>
+                <div class="sq" style="background:#0000FF"></div>
+            </div>
         <button class="btn-settings" onclick="showPage('settings')">Einstellungen</button>
     </div>
 
