@@ -178,6 +178,10 @@ lvgl:
                                   min_value: 0
                                   max_value: 100
                                   value: 80
+                                  on_value:
+                                    - light.control:
+                                        id: light_screen_background
+                                        brightness: !lambda "return x / 100.0;"
 
                     # Tab 2: System
                     - name: "System"
