@@ -5,6 +5,11 @@
 # Alle Sensoren teilen sich den gemeinsamen I²C-Bus
 # der Hauptkonfiguration (main_config): "i2c_bus"
 # ================================
+external_components:
+  #- source: github://mrtoy-me/esphome-vl53l1x
+  - source: github://chefbauer/esphome_vl53l4cd@vl53l1x
+    components: [vl53l1x]
+    refresh: 1s     #1d  # Optional: Täglich auf Updates prüfen
 
 i2c_device:
   - id: i2c_mlx90632
