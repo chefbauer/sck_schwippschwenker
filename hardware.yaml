@@ -7,7 +7,7 @@ output:
     mcp4728_id: dac_output
     channel: A
     vref: vdd
-    power_down: gnd_1k    # normal # default
+    power_down: normal
     min_power: 0.3
     max_power: 1.0
 
