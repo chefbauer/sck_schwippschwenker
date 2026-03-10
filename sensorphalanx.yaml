@@ -29,7 +29,8 @@ sensor:
     address: 0x29
     update_interval: 500ms
     distance_mode: short
-    measurement_timing_budget: 400ms
+    timeout: 50ms
+    measurement_timing_budget: 300ms
     unit_of_measurement: "mm"
     accuracy_decimals: 0
     filters:
