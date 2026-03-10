@@ -40,7 +40,7 @@ globals:
   - id: amg_pixel_temps
     type: std::array<float, 64>
     restore_value: false
-    initial_value: '{}'
+    initial_value: '{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}'
 
 sensor:
   # Temperatursensor Becken (Platzhalter, wird später ersetzt)
