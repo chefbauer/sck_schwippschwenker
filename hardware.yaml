@@ -1,0 +1,12 @@
+mcp4728:
+  - id: dac_output
+
+output:
+  - platform: mcp4728
+    id: output_pumpe_dacA
+    mcp4728_id: dac_output
+    channel: A
+    vref: vdd
+    power_down: gnd_1k    # normal # default
+    min_power: 0.3
+    max_power: 1.0

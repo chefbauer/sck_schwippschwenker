@@ -965,6 +965,41 @@ lvgl:
                             text_font: font_normal
                             text_color: 0x000000
 
+                    # Tab 4: Test
+                    - name: "Test"
+                      id: tab_test
+                      widgets:
+                        # Zeile: Turmpumpe Label + Slider
+                        - obj:
+                            id: row_turmpumpe
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 20
+                            bg_opa: TRANSP
+                            border_width: 0
+                            widgets:
+                              - label:
+                                  id: lbl_turmpumpe
+                                  text: "Turmpumpe"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - slider:
+                                  id: slider_turmpumpe
+                                  width: 650
+                                  height: 20
+                                  align: RIGHT_MID
+                                  x: -10
+                                  min_value: 0
+                                  max_value: 100
+                                  value: 0
+                                  on_value:
+                                    - output.set_level:
+                                        id: output_pumpe_dacA
+                                        level: !lambda "return x / 100.0;"
+
               # Zurück Button
               - button:
                   id: btn_back
