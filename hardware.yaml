@@ -10,3 +10,68 @@ output:
     power_down: gnd_1k    # normal # default
     min_power: 0.3
     max_power: 1.0
+
+  # PWM Lüftersteuerung (Kompressor-Lüfter)
+  - platform: ledc
+    id: output_luefter_kompressor_pwm
+    pin: ${pin_pwm3}
+    frequency: 25000 Hz
+    min_power: 0.03
+
+  # Kompressor-Relais Ein/Aus
+  - platform: gpio
+    id: output_kompressor_relais
+    pin: ${pin_pwm4}
+
+climate:
+  - platform: thermostat
+    name: thermostat
+    id: climate_thermostat
+    sensor: sensor_temp_becken # kommt noch
+    min_cooling_off_time: 120s
+    min_cooling_run_time: 90s
+    min_idle_time: 30s
+    startup_delay: true
+    cool_deadband: 1.5 °C
+    cool_overrun: 0.0 °C
+    cool_action:
+      - switch.turn_on: output_kompressor_relais
+      - output.set_level:
+          id: output_luefter_kompressor_pwm
+          level: !lambda "return ${fan_kompressor_max_perc} / 100.0;"
+    idle_action:
+      - switch.turn_off: output_kompressor_relais
+      - output.set_level:
+          id: output_luefter_kompressor_pwm
+          level: !lambda "return ${fan_kompressor_min_perc} / 100.0;"
+    default_preset: Eco
+    preset:
+      - name: Eco
+        default_target_temperature_high: 5 °C
+      - name: Normal
+        default_target_temperature_high: 1.5 °C
+    visual:
+      min_temperature: 0
+      max_temperature: 5
+      temperature_step: 0.1
+    on_control:
+      - lambda: |-
+          if (x.get_mode() == CLIMATE_MODE_OFF)
+          {
+            auto call = id(pumpe_steuerung).turn_off();
+            call.perform();
+          }
+          else
+          {
+            auto call = id(pumpe_steuerung).turn_on();
+            call.set_brightness(${c_pumpe_standby_perc} / 100.0);
+            call.perform();
+          }
+    on_state:
+      - lvgl.label.update:
+          id: lbl_kompressor_icon
+          text_color: !lambda |-
+            if (id(climate_thermostat).action == CLIMATE_ACTION_COOLING) {
+              return lv_color_hex(0x0055FF); // Blau
+            }
+            return lv_color_hex(0xCCCCCC); // Grau

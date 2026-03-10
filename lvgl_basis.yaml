@@ -42,6 +42,7 @@ font:
     glyphs:
       - "\uF04B"
       - "\uF04C"
+      - "\uF2DC"  # Schneeflocke
 
   # Dot-Matrix Font für Timer-Anzeige
   - file: "fonts/5x7-dot-matrix.ttf"
@@ -130,7 +131,7 @@ lvgl:
               # Titel oben mittig
               - label:
                   id: main_title
-                  text: "Supercooler Drehwurm Kühler"
+                  text: "SC Drehwurm Kühler"
                   align: TOP_MID
                   y: 20
                   text_font: font_title
@@ -818,6 +819,26 @@ lvgl:
                               x: -17
                               text_color: 0x880044
 
+              # Statusleiste unten mittig
+              - obj:
+                  id: status_bar
+                  width: 1024
+                  height: 80
+                  align: BOTTOM_MID
+                  y: 0
+                  bg_color: 0xF0F0F0
+                  bg_opa: COVER
+                  border_width: 0
+                  radius: 0
+                  scrollable: false
+                  widgets:
+                    - label:
+                        id: lbl_kompressor_icon
+                        text: "\uF2DC"
+                        text_font: font_icons
+                        align: CENTER
+                        text_color: 0xCCCCCC  # Grau = Kompressor aus
+
               # Navigation Button zu Einstellungen
               - button:
                   id: btn_to_settings
@@ -958,12 +979,141 @@ lvgl:
                     - name: "Kühler"
                       id: tab_kuehler
                       widgets:
-                        - label:
-                            id: lbl_kuehler_placeholder
-                            text: "Kuehler-Einstellungen folgen..."
-                            align: CENTER
-                            text_font: font_normal
-                            text_color: 0x000000
+                        # Zeile: Kühlung Ein/Aus
+                        - obj:
+                            id: row_kuehlung
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 20
+                            bg_opa: TRANSP
+                            border_width: 0
+                            widgets:
+                              - label:
+                                  id: lbl_kuehlung
+                                  text: "Kühlung"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - switch:
+                                  id: sw_kuehlung
+                                  align: RIGHT_MID
+                                  x: -10
+                                  on_value:
+                                    - lambda: |-
+                                        auto call = id(climate_thermostat).make_call();
+                                        if (x) {
+                                          call.set_mode(CLIMATE_MODE_COOL);
+                                        } else {
+                                          call.set_mode(CLIMATE_MODE_OFF);
+                                        }
+                                        call.perform();
+                        # Zeile: Temperatur Slider
+                        - obj:
+                            id: row_temp_slider
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 110
+                            bg_opa: TRANSP
+                            border_width: 0
+                            widgets:
+                              - label:
+                                  id: lbl_temp_soll
+                                  text: "Temperatur"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - slider:
+                                  id: slider_temp
+                                  width: 600
+                                  height: 20
+                                  align: RIGHT_MID
+                                  x: -70
+                                  min_value: 0
+                                  max_value: 100
+                                  value: 15
+                                  on_value:
+                                    - lambda: |-
+                                        auto call = id(climate_thermostat).make_call();
+                                        call.set_target_temperature_high(x / 10.0f);
+                                        call.perform();
+                              - label:
+                                  id: lbl_temp_wert
+                                  text: "1.5°"
+                                  align: RIGHT_MID
+                                  x: -10
+                                  text_font: font_normal
+                                  text_color: 0x003366
+                        # Preset-Tasten
+                        - obj:
+                            id: row_presets
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 200
+                            bg_opa: TRANSP
+                            border_width: 0
+                            widgets:
+                              - button:
+                                  id: btn_preset_1
+                                  width: 120
+                                  height: 50
+                                  align: LEFT_MID
+                                  x: 10
+                                  widgets:
+                                    - label:
+                                        text: "1°C"
+                                        align: CENTER
+                                        text_font: font_normal
+                                        text_color: 0xFFFFFF
+                                  on_click:
+                                    - lambda: |-
+                                        auto call = id(climate_thermostat).make_call();
+                                        call.set_target_temperature_high(1.0f);
+                                        call.perform();
+                                        lv_slider_set_value(id(slider_temp), 10, LV_ANIM_OFF);
+                                        lv_label_set_text(id(lbl_temp_wert), "1.0°");
+                              - button:
+                                  id: btn_preset_15
+                                  width: 120
+                                  height: 50
+                                  align: LEFT_MID
+                                  x: 150
+                                  widgets:
+                                    - label:
+                                        text: "1.5°C"
+                                        align: CENTER
+                                        text_font: font_normal
+                                        text_color: 0xFFFFFF
+                                  on_click:
+                                    - lambda: |-
+                                        auto call = id(climate_thermostat).make_call();
+                                        call.set_target_temperature_high(1.5f);
+                                        call.perform();
+                                        lv_slider_set_value(id(slider_temp), 15, LV_ANIM_OFF);
+                                        lv_label_set_text(id(lbl_temp_wert), "1.5°");
+                              - button:
+                                  id: btn_preset_5
+                                  width: 120
+                                  height: 50
+                                  align: LEFT_MID
+                                  x: 290
+                                  widgets:
+                                    - label:
+                                        text: "5°C"
+                                        align: CENTER
+                                        text_font: font_normal
+                                        text_color: 0xFFFFFF
+                                  on_click:
+                                    - lambda: |-
+                                        auto call = id(climate_thermostat).make_call();
+                                        call.set_target_temperature_high(5.0f);
+                                        call.perform();
+                                        lv_slider_set_value(id(slider_temp), 50, LV_ANIM_OFF);
+                                        lv_label_set_text(id(lbl_temp_wert), "5.0°");
 
                     # Tab 4: Test
                     - name: "Test"
