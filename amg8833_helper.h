@@ -5,11 +5,12 @@
 
 // AMG8833 Zell-Objekte (8x8 Grid, lazy-created beim ersten Overlay-Aufruf)
 static lv_obj_t* amg_cells[64] = {};
+static bool      amg_cold_mode  = false;
+static float     amg_last_temps[64] = {};
 
-// Thermisches Farbspektrum (Iron/Rainbow): 0°C = schwarz-blau, 30°C = weiß
-// Palette: schwarz → blau → cyan → grün → gelb → orange → rot → weiß
-inline lv_color_t amg_temp_color(float temp) {
-    float t = temp / 30.0f;
+// ── Palette "Normal" (Iron/Rainbow): 15°C = schwarz, 40°C = weiß ────────────
+inline lv_color_t amg_temp_color_normal(float temp) {
+    float t = (temp - 15.0f) / 25.0f;
     if (t < 0.0f) t = 0.0f;
     if (t > 1.0f) t = 1.0f;
 
@@ -24,7 +25,6 @@ inline lv_color_t amg_temp_color(float temp) {
         {0.857f, 255,   0,   0},  // rot
         {1.000f, 255, 255, 255},  // weiß
     };
-
     for (int i = 0; i < 7; i++) {
         if (t <= palette[i + 1].pos) {
             float seg = (t - palette[i].pos) / (palette[i + 1].pos - palette[i].pos);
@@ -35,6 +35,38 @@ inline lv_color_t amg_temp_color(float temp) {
         }
     }
     return lv_color_make(255, 255, 255);
+}
+
+// ── Palette "Kalt": 0°C = dunkelblau, 5°C = cyan, 20°C = rot ────────────────
+// Optimiert für Eiswasser-Erkennung — 0° und 5° sind deutlich unterscheidbar
+inline lv_color_t amg_temp_color_kalt(float temp) {
+    float t = temp / 20.0f;
+    if (t < 0.0f) t = 0.0f;
+    if (t > 1.0f) t = 1.0f;
+
+    struct Stop { float pos; uint8_t r, g, b; };
+    static const Stop palette[6] = {
+        {0.000f,   0,   0, 180},  // dunkelblau  (0°C  – Eis)
+        {0.100f,   0,  80, 255},  // blau        (2°C)
+        {0.250f,   0, 230, 230},  // cyan        (5°C  – klar unterscheidbar)
+        {0.500f,   0, 200,   0},  // grün        (10°C)
+        {0.750f, 255, 220,   0},  // gelb        (15°C)
+        {1.000f, 255,  40,   0},  // rot         (20°C)
+    };
+    for (int i = 0; i < 5; i++) {
+        if (t <= palette[i + 1].pos) {
+            float seg = (t - palette[i].pos) / (palette[i + 1].pos - palette[i].pos);
+            uint8_t r = (uint8_t)(palette[i].r + seg * (palette[i + 1].r - palette[i].r));
+            uint8_t g = (uint8_t)(palette[i].g + seg * (palette[i + 1].g - palette[i].g));
+            uint8_t b = (uint8_t)(palette[i].b + seg * (palette[i + 1].b - palette[i].b));
+            return lv_color_make(r, g, b);
+        }
+    }
+    return lv_color_make(255, 40, 0);
+}
+
+inline lv_color_t amg_temp_color(float temp) {
+    return amg_cold_mode ? amg_temp_color_kalt(temp) : amg_temp_color_normal(temp);
 }
 
 // Grid-Zellen programmatisch erstellen (einmalig beim ersten Aufruf)
@@ -62,12 +94,12 @@ inline void amg_create_grid(lv_obj_t* parent, int cell_size) {
     }
 }
 
-// Zellen mit neuen Temperaturwerten aktualisieren
-inline void amg_update_cells(const float* temps) {
+// Zellen neu zeichnen – wird auch nach Moduswechsel aufgerufen
+inline void amg_refresh_cells() {
     char buf[8];
     for (int i = 0; i < 64; i++) {
         if (amg_cells[i] == nullptr) continue;
-        float t = (std::isnan(temps[i])) ? 0.0f : temps[i];
+        float t = amg_last_temps[i];
         lv_obj_set_style_bg_color(amg_cells[i], amg_temp_color(t), 0);
         lv_obj_t* lbl = lv_obj_get_child(amg_cells[i], 0);
         if (lbl) {
@@ -75,4 +107,11 @@ inline void amg_update_cells(const float* temps) {
             lv_label_set_text(lbl, buf);
         }
     }
+}
+
+// Zellen mit neuen Temperaturwerten aktualisieren
+inline void amg_update_cells(const float* temps) {
+    for (int i = 0; i < 64; i++)
+        amg_last_temps[i] = (std::isnan(temps[i])) ? 0.0f : temps[i];
+    amg_refresh_cells();
 }
