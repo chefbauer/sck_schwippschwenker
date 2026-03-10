@@ -5,6 +5,10 @@
 # Alle Sensoren teilen sich den gemeinsamen I²C-Bus
 # der Hauptkonfiguration (main_config): "i2c_bus"
 # ================================
+esphome:
+  includes: 
+      - includes/mlx_functions.h
+
 external_components:
   #- source: github://mrtoy-me/esphome-vl53l1x
   - source: github://chefbauer/esphome_vl53l4cd@vl53l1x
