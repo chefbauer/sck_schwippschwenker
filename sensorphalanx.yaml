@@ -35,6 +35,9 @@ sensor:
     inter_measurement_ms: 0    # optional, Standard: 0 (Continuous-Mode)
     timeout_ms: 500            # optional, Standard: 500 ms
     update_interval: 500ms     # optional, Standard: 60s
+    filters:
+      - lambda: |-
+          return x * 1000 - 17;     // - 26;             // Offset -26mm, Meter -> Millimeter
     on_value:
       then:
         - lvgl.label.update:
