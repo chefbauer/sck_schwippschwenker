@@ -115,7 +115,7 @@ lvgl:
             # ── Zeile 1: VL53L1X Distanz ──────────────────────────
             - obj:
                 id: row_sp_tof
-                width: 860
+                width: 990
                 height: 65
                 align: TOP_LEFT
                 x: 15
@@ -137,9 +137,9 @@ lvgl:
                       scrollable: false
                       widgets:
                         - label:
-                            text: "ToF"
+                            text: "\uF545"
                             align: CENTER
-                            text_font: font_small
+                            text_font: font_icons
                             text_color: 0xFFFFFF
                   - label:
                       text: "Distanz"
@@ -150,7 +150,7 @@ lvgl:
                   - label:
                       text: "Time-of-Flight · VL53L1X · 50–4000 mm"
                       align: LEFT_MID
-                      x: 265
+                      x: 380
                       text_font: font_small
                       text_color: 0x555555
                   - label:
@@ -168,7 +168,7 @@ lvgl:
             # ── Zeile 2: SHT4x Temperatur ─────────────────────────
             - obj:
                 id: row_sp_temp
-                width: 860
+                width: 990
                 height: 65
                 align: TOP_LEFT
                 x: 15
@@ -190,9 +190,9 @@ lvgl:
                       scrollable: false
                       widgets:
                         - label:
-                            text: "T°"
+                            text: "\uF2C9"
                             align: CENTER
-                            text_font: font_small
+                            text_font: font_icons
                             text_color: 0xFFFFFF
                   - label:
                       text: "Temperatur"
@@ -203,7 +203,7 @@ lvgl:
                   - label:
                       text: "Umgebungstemperatur · SHT4x"
                       align: LEFT_MID
-                      x: 265
+                      x: 380
                       text_font: font_small
                       text_color: 0x555555
                   - label:
@@ -221,7 +221,7 @@ lvgl:
             # ── Zeile 3: SHT4x Luftfeuchtigkeit ───────────────────
             - obj:
                 id: row_sp_humi
-                width: 860
+                width: 990
                 height: 65
                 align: TOP_LEFT
                 x: 15
@@ -243,9 +243,9 @@ lvgl:
                       scrollable: false
                       widgets:
                         - label:
-                            text: "RH"
+                            text: "\uF043"
                             align: CENTER
-                            text_font: font_small
+                            text_font: font_icons
                             text_color: 0xFFFFFF
                   - label:
                       text: "Luftfeuchtigkeit"
@@ -256,7 +256,7 @@ lvgl:
                   - label:
                       text: "Relative Luftfeuchte · SHT4x"
                       align: LEFT_MID
-                      x: 265
+                      x: 380
                       text_font: font_small
                       text_color: 0x555555
                   - label:
@@ -274,7 +274,7 @@ lvgl:
             # ── Zeile 4: BMP581 Luftdruck ──────────────────────────
             - obj:
                 id: row_sp_pressure
-                width: 860
+                width: 990
                 height: 65
                 align: TOP_LEFT
                 x: 15
@@ -296,9 +296,9 @@ lvgl:
                       scrollable: false
                       widgets:
                         - label:
-                            text: "hPa"
+                            text: "\uF72E"
                             align: CENTER
-                            text_font: font_small
+                            text_font: font_icons
                             text_color: 0xFFFFFF
                   - label:
                       text: "Luftdruck"
@@ -309,7 +309,7 @@ lvgl:
                   - label:
                       text: "Barometrischer Druck · BMP581"
                       align: LEFT_MID
-                      x: 265
+                      x: 380
                       text_font: font_small
                       text_color: 0x555555
                   - label:
@@ -327,7 +327,7 @@ lvgl:
             # ── Zeile 5: Höhe aus BMP581 ───────────────────────────
             - obj:
                 id: row_sp_altitude
-                width: 860
+                width: 990
                 height: 65
                 align: TOP_LEFT
                 x: 15
@@ -349,9 +349,9 @@ lvgl:
                       scrollable: false
                       widgets:
                         - label:
-                            text: "ALT"
+                            text: "\uF6FC"
                             align: CENTER
-                            text_font: font_small
+                            text_font: font_icons
                             text_color: 0xFFFFFF
                   - label:
                       text: "Höhe"
@@ -362,7 +362,7 @@ lvgl:
                   - label:
                       text: "Berechnet aus Luftdruck · hypsometrisch"
                       align: LEFT_MID
-                      x: 265
+                      x: 380
                       text_font: font_small
                       text_color: 0x555555
                   - label:
@@ -380,7 +380,7 @@ lvgl:
             # ── Zeile 6: VEML7700 Licht ────────────────────────────
             - obj:
                 id: row_sp_light
-                width: 860
+                width: 990
                 height: 65
                 align: TOP_LEFT
                 x: 15
@@ -402,9 +402,9 @@ lvgl:
                       scrollable: false
                       widgets:
                         - label:
-                            text: "LUX"
+                            text: "\uF185"
                             align: CENTER
-                            text_font: font_small
+                            text_font: font_icons
                             text_color: 0xFFFFFF
                   - label:
                       text: "Helligkeit"
@@ -415,7 +415,7 @@ lvgl:
                   - label:
                       text: "Umgebungslicht · VEML7700"
                       align: LEFT_MID
-                      x: 265
+                      x: 380
                       text_font: font_small
                       text_color: 0x555555
                   - label:
@@ -433,7 +433,7 @@ lvgl:
             # ── Zeile 7: MLX90632 IR-Temperatur ───────────────────
             - obj:
                 id: row_sp_mlx
-                width: 860
+                width: 990
                 height: 65
                 align: TOP_LEFT
                 x: 15
@@ -455,9 +455,9 @@ lvgl:
                       scrollable: false
                       widgets:
                         - label:
-                            text: "IR°"
+                            text: "\uF05B"
                             align: CENTER
-                            text_font: font_small
+                            text_font: font_icons
                             text_color: 0xFFFFFF
                   - label:
                       text: "IR Temperatur"
@@ -468,7 +468,7 @@ lvgl:
                   - label:
                       text: "Objekt berührungslos · MLX90632"
                       align: LEFT_MID
-                      x: 265
+                      x: 380
                       text_font: font_small
                       text_color: 0x555555
                   - label:

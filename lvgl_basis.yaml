@@ -54,10 +54,17 @@ font:
     size: 40
     bpp: 4
     glyphs:
-      - "\uF04B"
-      - "\uF04C"
+      - "\uF04B"  # Play
+      - "\uF04C"  # Pause
       - "\uF2DC"  # Schneeflocke
       - "\uF013"  # Zahnrad (Einstellungen)
+      - "\uF545"  # Ruler (ToF Distanz)
+      - "\uF2C9"  # Thermometer-half (Temperatur)
+      - "\uF043"  # Droplet (Luftfeuchtigkeit)
+      - "\uF72E"  # Wind (Luftdruck)
+      - "\uF6FC"  # Mountain (Höhe)
+      - "\uF185"  # Sun (Licht)
+      - "\uF05B"  # Crosshairs / Laser (IR)
 
   # Dot-Matrix Font für Timer-Anzeige
   - file: "fonts/5x7-dot-matrix.ttf"
