@@ -924,6 +924,8 @@ lvgl:
                             y: 20
                             bg_opa: TRANSP
                             border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
                             widgets:
                               - label:
                                   id: lbl_overlays
@@ -979,6 +981,8 @@ lvgl:
                             y: 20
                             bg_opa: TRANSP
                             border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
                             widgets:
                               - label:
                                   id: lbl_helligkeit
@@ -1078,7 +1082,7 @@ lvgl:
                       id: tab_kuehler
                       scrollable: false
                       widgets:
-                        # Zeile: Kühlung Ein/Aus
+                        # Zeile: Kühlung Ein/Aus  (25% / 75%)
                         - obj:
                             id: row_kuehlung
                             width: 960
@@ -1087,6 +1091,8 @@ lvgl:
                             y: 20
                             bg_opa: TRANSP
                             border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
                             widgets:
                               - label:
                                   id: lbl_kuehlung
@@ -1098,7 +1104,7 @@ lvgl:
                               - switch:
                                   id: sw_kuehlung
                                   align: LEFT_MID
-                                  x: 200
+                                  x: 240
                                   on_value:
                                     - lambda: |-
                                         auto call = id(climate_thermostat).make_call();
@@ -1158,6 +1164,8 @@ lvgl:
                             y: 200
                             bg_opa: TRANSP
                             border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
                             widgets:
                               - button:
                                   id: btn_preset_1
