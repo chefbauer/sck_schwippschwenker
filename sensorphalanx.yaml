@@ -9,11 +9,15 @@ esphome:
   includes: 
       - includes/mlx_functions.h
 
+#external_components:
+#  #- source: github://mrtoy-me/esphome-vl53l1x
+#  - source: github://chefbauer/esphome_vl53l4cd@vl53l1x
+#    components: [vl53l1x]
+#    refresh: 1s     #1d  # Optional: Täglich auf Updates prüfen
+
 external_components:
-  #- source: github://mrtoy-me/esphome-vl53l1x
-  - source: github://chefbauer/esphome_vl53l4cd@vl53l1x
-    components: [vl53l1x]
-    refresh: 1s     #1d  # Optional: Täglich auf Updates prüfen
+  - source: github://chefbauer/esphome_vlx53l4cd
+    components: [vl53l4cd]
 
 i2c_device:
   - id: i2c_mlx90632
@@ -21,21 +25,15 @@ i2c_device:
     i2c_id: i2c_bus
 
 sensor:
-  # ── VL53L1X – Time-of-Flight Distanzsensor ────────────────
-  - platform: vl53l1x
+  - platform: vl53l4cd
     id: distance_sensor
     name: vlx53l4cd Distanz
     i2c_id: i2c_bus
-    address: 0x29
-    update_interval: 500ms
-    distance_mode: short
-    timeout: 50ms
-    measurement_timing_budget: 300ms
-    unit_of_measurement: "mm"
-    accuracy_decimals: 0
-    filters:
-      - lambda: |-
-          return x * 1000 - 26;             // Offset -26mm, Meter -> Millimeter
+    address: 0x29              # optional, Standard: 0x29
+    timing_budget_ms: 200       # optional, Standard: 50 (10–200 ms)
+    inter_measurement_ms: 0    # optional, Standard: 0 (Continuous-Mode)
+    timeout_ms: 500            # optional, Standard: 500 ms
+    update_interval: 500ms     # optional, Standard: 60s
     on_value:
       then:
         - lvgl.label.update:
@@ -43,6 +41,22 @@ sensor:
             text:
               format: "%.0fmm"
               args: ['x']
+
+  # ── VL53L1X – Time-of-Flight Distanzsensor ────────────────
+#  - platform: vl53l1x
+#    id: distance_sensor
+#    name: vlx53l4cd Distanz
+#    i2c_id: i2c_bus
+#    address: 0x29
+#    update_interval: 500ms
+#    distance_mode: short
+#    timeout: 50ms
+#    measurement_timing_budget: 300ms
+#    unit_of_measurement: "mm"
+#    accuracy_decimals: 0
+#    filters:
+#      - lambda: |-
+#          return x * 1000 - 26;             // Offset -26mm, Meter -> Millimeter
 
   # ── SHT4x – Temperatur und Luftfeuchtigkeit ───────────────
   - platform: sht4x
