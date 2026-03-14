@@ -136,8 +136,8 @@ interval:
           if (!lv_obj_has_flag(id(overlay_amg8833), LV_OBJ_FLAG_HIDDEN)) {
             amg_update_cells(id(amg_pixel_temps).data());
           }
-          // Uhrzeit in Statusleiste aktualisieren
-          auto t = id(rtc_ds3231).now();
+          // Uhrzeit in Statusleiste aktualisieren (SNTP)
+          auto t = id(sntp_time).now();
           if (t.is_valid()) {
             char tbuf[9];
             snprintf(tbuf, sizeof(tbuf), "%02d:%02d:%02d", t.hour, t.minute, t.second);
