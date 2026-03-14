@@ -61,8 +61,8 @@ one_wire:
   - platform: ds2484
     id: one_wire_bus
     i2c_id: i2c_bus
-    active_pullup: true
-    strong_pullup: true
+    active_pullup: false
+    #strong_pullup: true
 
 i2c_device:
   - id: i2c_amg8833
