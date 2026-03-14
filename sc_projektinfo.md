@@ -27,6 +27,9 @@ Ausgelegt für **Dosen und Flaschen** — durch das Drehen wird die Kühlleistun
 **Nur in lvgl_basis/overlay generieren:** `font:`, `globals:`, `interval:`, `lvgl:`  
 **Nicht generieren:** sonstiger ESPHome-Code (sensors, lights, etc.)
 
+**Extern definiert (nicht in diesen Dateien generieren):**  
+`esphome:` Grundkonfiguration, `display:`, `i2c:` Bus
+
 ---
 
 ## Hardware
