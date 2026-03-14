@@ -41,7 +41,6 @@ output:
   # ESP32 (3.3V) reicht nicht direkt → Open-Drain + 10kΩ Pull-Up an 5V nötig.
   - platform: ledc
     id: output_luefter_kompressor_pwm
-    name: output_luefter_kompressor_pwm
     pin:
       number: ${pin_pwm4}
       mode:
