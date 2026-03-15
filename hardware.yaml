@@ -22,6 +22,7 @@ time:
 
 mcp4728:
   - id: dac_output
+    i2c_id: i2c_bus
 
 output:
   - platform: mcp4728
