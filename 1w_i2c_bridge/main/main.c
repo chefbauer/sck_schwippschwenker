@@ -103,7 +103,7 @@ static void i2c_tx_fill(void)
         (uint8_t)((raw >> 8) & 0xFF),   // MSB
         (uint8_t)( raw       & 0xFF),   // LSB
     };
-    i2c_slave_write_ram(s_slave, buf, sizeof(buf));  // non-blocking, IDF 5.5 API
+    i2c_slave_write_ram(s_slave, 0, buf, sizeof(buf));  // non-blocking, IDF 5.5 API
 }
 
 static void led_blink(int n)
@@ -136,8 +136,9 @@ static void temp_task(void *arg)
     ESP_ERROR_CHECK(onewire_new_device_iter(bus, &it));
 
     onewire_device_t dev;
+    const ds18b20_config_t ds_cfg = {};
     while (onewire_device_iter_get_next(it, &dev) == ESP_OK) {
-        if (ds18b20_new_device(&dev, &ds) == ESP_OK) {
+        if (ds18b20_new_device_from_enumeration(&dev, &ds_cfg, &ds) == ESP_OK) {
             ESP_LOGI(TAG, "DS18B20  ROM: %016llX", dev.address);
             break;
         }
@@ -212,6 +213,7 @@ void app_main(void)
         .send_buf_depth = TX_BUF_DEPTH,
         .slave_addr     = I2C_SLAVE_ADDR,
         .addr_bit_len   = I2C_ADDR_BIT_LEN_7,
+        .flags.access_ram_en = 1,   // RAM-Modus für i2c_slave_write_ram
     };
     ESP_ERROR_CHECK(i2c_new_slave_device(&slv_cfg, &s_slave));
     ESP_LOGI(TAG, "I²C-Slave 0x%02X aktiv", I2C_SLAVE_ADDR);
