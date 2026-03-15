@@ -11,7 +11,7 @@
 
 esp32_ble_tracker:
   scan_parameters:
-    passive: true          # kein Active Scan → spart Strom, reicht für BTHome
+    active: false          # kein Active Scan → spart Strom, reicht für BTHome
     interval: 320ms        # Scan-Fenster-Intervall
     window: 30ms           # aktives Lauschen pro Intervall
     continuous: true       # dauerhaft scannen
