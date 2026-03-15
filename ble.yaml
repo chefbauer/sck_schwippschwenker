@@ -1,12 +1,9 @@
 # ================================
-# BLE – Scanner für BTHome v2
+# BLE – BTHome v2 Empfang via bthome_receiver
 #
 # esp32_hosted (ESP32-C6 via SDIO) ist extern definiert.
-# Hier nur BLE-Scanner und Sensoren.
-#
-# BLE-Empfangsseite:
-#   - BTHome v2 Advertisements von DS18B20-BLE-Bridge (ESP32-C3)
-#   - Externe Komponente: github://dz0ny/esphome-bthome (bthome_receiver)
+# Externe Komponente: github://dz0ny/esphome-bthome
+# Benötigt esp32_ble_tracker (bluedroid-Modus, default).
 # ================================
 
 external_components:
@@ -18,17 +15,18 @@ external_components:
 
 esp32_ble_tracker:
   scan_parameters:
-    active: false          # kein Active Scan → spart Strom, reicht für BTHome
+    active: false
     interval: 320ms
     window: 30ms
     continuous: true
 
 bthome_receiver:
+  ble_stack: bluedroid
   devices:
     - mac_address: "dc:da:0c:a1:89:8e"
       name: "DS18B20 BLE-Bridge"
 
-# ── Temperatursensor (BTHome v2) ─────────────────────────────────────────────
+# ── Temperatursensor ──────────────────────────────────────────────────────────
 
 sensor:
   - platform: bthome_receiver
