@@ -3,8 +3,7 @@
 #
 # esp32_hosted (ESP32-C6 via SDIO) ist extern definiert.
 # Externe Komponente: github://dz0ny/esphome-bthome
-# ble_stack: nimble → kein esp32_ble_tracker nötig,
-# kein nativer BT-Stack auf P4 erforderlich.
+# ble_stack: bluedroid (Standard) – passend für P4+C6.
 # ================================
 
 external_components:
@@ -14,8 +13,17 @@ external_components:
       ref: main
     components: [bthome_receiver]
 
+esp32_ble:
+
+esp32_ble_tracker:
+  scan_parameters:
+    active: false
+
 bthome_receiver:
-  ble_stack: nimble
+  ble_stack: bluedroid
+  devices:
+    - mac_address: "dc:da:0c:a1:89:8e"
+      name: "DS18B20 BLE-Bridge"
 
 # ── Temperatursensor ──────────────────────────────────────────────────────────
 
