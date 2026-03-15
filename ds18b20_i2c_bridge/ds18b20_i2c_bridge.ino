@@ -25,7 +25,7 @@
  *
  *   esp32_ble_tracker:
  *     scan_parameters:
- *       passive: true
+ *       active: false
  *
  *   sensor:
  *     - platform: bthome
@@ -60,9 +60,6 @@
 
 OneWire           oneWire(ONE_WIRE_PIN);
 DallasTemperature ds18b20(&oneWire);
-
-int16_t      g_temp_raw = 0;     // Temperatur × 16  →  0.0625 °C / LSB
-bool         g_valid    = false;
 
 NimBLEAdvertising* pAdv = nullptr;
 
@@ -110,7 +107,7 @@ void setup() {
   // BLE Advertising (BTHome v2, Non-Connectable)
   NimBLEDevice::init("temp_bridge");
   pAdv = NimBLEDevice::getAdvertising();
-  pAdv->setAdvertisementType(BLE_HCI_ADV_TYPE_ADV_NONCONN_IND);
+  pAdv->setConnectableMode(0);         // 0 = BLE_GAP_CONN_MODE_NON (Non-Connectable)
   pAdv->setMinInterval(800);   // 500 ms × 1/0.625 = 800 Einheiten
   pAdv->setMaxInterval(800);
   pAdv->start();
@@ -162,13 +159,9 @@ void loop() {
 
   // 85.0 °C = Power-On-Reset-Wert → als Fehler behandeln
   if (t == DEVICE_DISCONNECTED_C || t == 85.0f) {
-    g_valid = false;
     Serial.println("  [ERR] Sensor nicht erreichbar oder Power-on-Default");
     return;
   }
-
-  g_temp_raw = (int16_t)roundf(t * 16.0f);
-  g_valid    = true;
 
   // BTHome v2 Advertisement aktualisieren
   int16_t ble_raw = (int16_t)roundf(t * 100.0f);  // 0.01 °C Auflösung
@@ -180,6 +173,7 @@ void loop() {
   };
   NimBLEAdvertisementData advData;
   advData.setFlags(0x06);
+  advData.setName("temp_bridge");
   advData.setServiceData(NimBLEUUID((uint16_t)0xFCD2),
                          std::string((char*)svcData, sizeof(svcData)));
   pAdv->setAdvertisementData(advData);

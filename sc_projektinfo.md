@@ -63,12 +63,9 @@ Ausgelegt für **Dosen und Flaschen** — durch das Drehen wird die Kühlleistun
 
 **Sensor:** DS18B20 via BLE-Bridge (ESP32-C3, BTHome v2)
 
-**Status:** BLE-Scanner aktiv (`ble.yaml`). Temperatursensor wird nach MAC-Ermittlung in `ble.yaml` aktiviert.
-
-> **TODO:** MAC-Adresse aus Serial-Monitor der BLE-Bridge ablesen und in `ble.yaml` eintragen,
-> dann den `bthome`-Block auskommentieren. Danach I²C-Bridge-Einträge aus `hardware.yaml` entfernen.
-
-**Früher:** DS18B20 via I²C-Bridge (ESP32-C3 Slave, Adresse `0x48`) — abgelöst durch BLE.
+**MAC:** `dc:da:0c:a1:89:8e`  
+**Sensor-ID:** `sensor_temp_becken` in `ble.yaml`  
+**ROM-Code:** `28:B2:FE:B9:0F:00:00:2E`
 
 **Multiplexer:** TCA9548A (`0x70`) – alle sensorphalanx-Sensoren auf Kanal 0 (`i2c_mux_ch0`):
 - MLX90632 (`i2c_device`, `0x3A`)
@@ -556,3 +553,5 @@ Anordnung im Uhrzeigersinn nach Farbrad:
 | 2026-03-15 | `on_control`: `c_pumpe_standby_perc` → `c_pumpe_umwaelzung_ein_perc`; `on_state`: `slider_umwaelzpumpe` synchronisiert Thermostat-Modus | `hardware.yaml` |
 | 2026-03-15 | DS18B20-Bridge: I²C-Slave entfernt → BLE BTHome v2 Advertising (NimBLE, ESP32-C3 v3.x) | `ds18b20_i2c_bridge.ino` |
 | 2026-03-15 | `ble.yaml` neu: `esp32_ble_tracker` (passiv); `esp32_hosted` extern, nicht in dieser Datei | `ble.yaml` |
+| 2026-03-15 | BLE MAC ermittelt (`dc:da:0c:a1:89:8e`); `sensor_temp_becken` via BTHome v2 aktiviert | `ble.yaml` |
+| 2026-03-15 | I²C-Bridge `temp_bridge` (0x48) + Template-Sensor aus `hardware.yaml` entfernt | `hardware.yaml` |

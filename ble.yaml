@@ -17,16 +17,15 @@ esp32_ble_tracker:
     continuous: true       # dauerhaft scannen
 
 # ── Temperatursensor (BTHome v2) ─────────────────────────────────────────────
-# TODO: MAC-Adresse aus Serial-Monitor der BLE-Bridge eintragen, dann aktivieren:
-#
-# sensor:
-#   - platform: bthome
-#     mac_address: "XX:XX:XX:XX:XX:XX"   # ← MAC aus Serial-Monitor eintragen
-#     temperature:
-#       id: sensor_temp_becken
-#       name: "Temperatur Becken"
-#       accuracy_decimals: 1
-#       filters:
-#         - throttle: 3s
-#       on_value:
-#         - lvgl.widget.refresh: lbl_temp_becken
+
+sensor:
+  - platform: bthome
+    mac_address: "dc:da:0c:a1:89:8e"
+    temperature:
+      id: sensor_temp_becken
+      name: "Temperatur Becken"
+      accuracy_decimals: 1
+      filters:
+        - throttle: 3s
+      on_value:
+        - lvgl.widget.refresh: lbl_temp_becken
