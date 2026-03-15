@@ -1,0 +1,32 @@
+# ================================
+# BLE – Scanner für BTHome v2
+#
+# esp32_hosted (ESP32-C6 via SDIO) ist extern definiert.
+# Hier nur BLE-Scanner und Sensoren.
+#
+# BLE-Empfangsseite:
+#   - BTHome v2 Advertisements von DS18B20-BLE-Bridge (ESP32-C3)
+#   - Temperatursensor wird nach MAC-Ermittlung aktiviert
+# ================================
+
+esp32_ble_tracker:
+  scan_parameters:
+    passive: true          # kein Active Scan → spart Strom, reicht für BTHome
+    interval: 320ms        # Scan-Fenster-Intervall
+    window: 30ms           # aktives Lauschen pro Intervall
+    continuous: true       # dauerhaft scannen
+
+# ── Temperatursensor (BTHome v2) ─────────────────────────────────────────────
+# TODO: MAC-Adresse aus Serial-Monitor der BLE-Bridge eintragen, dann aktivieren:
+#
+# sensor:
+#   - platform: bthome
+#     mac_address: "XX:XX:XX:XX:XX:XX"   # ← MAC aus Serial-Monitor eintragen
+#     temperature:
+#       id: sensor_temp_becken
+#       name: "Temperatur Becken"
+#       accuracy_decimals: 1
+#       filters:
+#         - throttle: 3s
+#       on_value:
+#         - lvgl.widget.refresh: lbl_temp_becken

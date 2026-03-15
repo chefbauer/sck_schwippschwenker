@@ -53,13 +53,22 @@ Ausgelegt für **Dosen und Flaschen** — durch das Drehen wird die Kühlleistun
 | LVGL Version | 8.x (kein LVGL 9!) |
 | Betrieb | Standalone (kein Home Assistant nötig) |
 | Zeit-Quelle | SNTP (NTP) — RTC wird später hinzugefügt |
-| 1-Wire Bus | DS18B20 an ESP32-S3 Bridge → I²C `0x48` |
+| Radio-Koprocessor | ESP32-C6 via `esp32_hosted` (SDIO 4-bit, extern definiert) |
+| BLE | ESP32-C6 stellt BLE bereit; Scanner in `ble.yaml` |
+| 1-Wire Bus | DS18B20 an ESP32-C3 BLE-Bridge → BTHome v2 |
 
 ---
 
 ## Becken-Temperatursensor
 
-**Sensor:** DS18B20 via I²C-Bridge (ESP32-C3 Slave, Adresse `0x48`)
+**Sensor:** DS18B20 via BLE-Bridge (ESP32-C3, BTHome v2)
+
+**Status:** BLE-Scanner aktiv (`ble.yaml`). Temperatursensor wird nach MAC-Ermittlung in `ble.yaml` aktiviert.
+
+> **TODO:** MAC-Adresse aus Serial-Monitor der BLE-Bridge ablesen und in `ble.yaml` eintragen,
+> dann den `bthome`-Block auskommentieren. Danach I²C-Bridge-Einträge aus `hardware.yaml` entfernen.
+
+**Früher:** DS18B20 via I²C-Bridge (ESP32-C3 Slave, Adresse `0x48`) — abgelöst durch BLE.
 
 **Multiplexer:** TCA9548A (`0x70`) – alle sensorphalanx-Sensoren auf Kanal 0 (`i2c_mux_ch0`):
 - MLX90632 (`i2c_device`, `0x3A`)
@@ -545,3 +554,5 @@ Anordnung im Uhrzeigersinn nach Farbrad:
 | 2026-03-15 | `c_pumpe_standby_perc` → `c_pumpe_umwaelzung_ein_perc: 30` in Substitutions | `display.yaml` |
 | 2026-03-15 | Pump-Slider (`row_turmpumpe`, `row_umwaelzpumpe`) von Tab "Test" → Tab "System" (y:110/200, nach row_overlays) | `lvgl_basis.yaml` |
 | 2026-03-15 | `on_control`: `c_pumpe_standby_perc` → `c_pumpe_umwaelzung_ein_perc`; `on_state`: `slider_umwaelzpumpe` synchronisiert Thermostat-Modus | `hardware.yaml` |
+| 2026-03-15 | DS18B20-Bridge: I²C-Slave entfernt → BLE BTHome v2 Advertising (NimBLE, ESP32-C3 v3.x) | `ds18b20_i2c_bridge.ino` |
+| 2026-03-15 | `ble.yaml` neu: `esp32_ble_tracker` (passiv); `esp32_hosted` extern, nicht in dieser Datei | `ble.yaml` |

@@ -1,115 +1,70 @@
 /**
- * DS18B20 → I²C-Bridge
- * ====================
+ * DS18B20 → BLE-Bridge
+ * =====================
  * Plattform : ESP32-C3
  * 1-Wire    : GPIO1  (DS18B20 Data, 4.7 kΩ Pull-Up nach 3.3 V)
- * Sensor-VCC : GPIO0  (OUTPUT HIGH → 3.3 V) — Strapping-Pin, muss HIGH bleiben!
- * Sensor-GND : GPIO2  (OUTPUT LOW  → GND)
+ * Sensor-VCC: GPIO0  (OUTPUT HIGH → 3.3 V) — Strapping-Pin, muss HIGH bleiben!
+ * Sensor-GND: GPIO2  (OUTPUT LOW  → GND)
  * Direktanschluss DS18B20: Pin0=3V3, Pin1=Data, Pin2=GND
- * I²C Slave : SDA = GPIO4, SCL = GPIO3
  * Onboard-LED: GPIO8 (blau) — 2× kurz blinken bei gültiger Messung
  *
- * Register-Layout (2 Byte, MSB first, LM75-kompatibel):
- *   Wert = int16_raw / 16.0  →  Auflösung 0.0625 °C
- *   z. B. 25.0 °C → raw = 400 = 0x0190, gesendet: 0x01 0x90
- *   Bei ungültigem Sensor → 0x8000 als Error-Marker
+ * BLE Advertising: BTHome v2, Service UUID 0xFCD2, Non-Connectable
+ * Service-Data-Format:
+ *   Byte 0 : 0x40  (BTHome v2, kein Encryption)
+ *   Byte 1 : 0x02  (Object-ID: Temperature)
+ *   Byte 2-3: int16 LE × 0.01 °C  →  25.0 °C = 0xC4 0x09
  *
- * Board-Manager : esp32 by Espressif  2.0.17  (IDF 4.x – I2C-Slave stabil!)
- * Board         : "ESP32C3 Dev Module"  (NICHT v3.x – I2C-Slave dort kaputt)
- * Libraries     : OneWire, DallasTemperature
+ * Board-Manager : esp32 by Espressif  3.x.x  (IDF 5.x)
+ * Board         : "ESP32C3 Dev Module"
+ * Libraries     : OneWire, DallasTemperature, NimBLE-Arduino, WiFi, ArduinoOTA
  *
- * ── ESPHome Gegenseite ────────────────────────────────────────────────────────
+ * OTA-Flash     : Arduino IDE → Werkzeuge → Port → "temp_bridge (ESP32-C3)" (Netzwerk)
+ *                 Passwort: siehe OTA_PASSWORD unten
  *
- *   i2c_device:
- *     - id: temp_bridge
- *       address: 0x48
- *       i2c_id: i2c_bus
+ * ── ESPHome Gegenseite (BTHome v2) ───────────────────────────────────────────
+ *
+ *   esp32_ble_tracker:
+ *     scan_parameters:
+ *       passive: true
  *
  *   sensor:
- *     - platform: template
- *       id: sensor_temp_becken
- *       name: "Temperatur Becken"
- *       unit_of_measurement: "°C"
- *       accuracy_decimals: 1
- *       device_class: temperature
- *       state_class: measurement
- *       update_interval: 1s
- *       lambda: |-
- *         // ESP32-C3 IDF 4.x Bug: Repeated-START (write-then-read) wird nicht ACKt.
- *         // Workaround: reiner Raw-Read ohne Register-Write davor.
- *         uint8_t buf[2];
- *         auto err = id(i2c_bus)->read(0x48, buf, 2);
- *         if (err != i2c::ERROR_OK) return {};
- *         int16_t raw = (int16_t)((buf[0] << 8) | buf[1]);
- *         if (raw == (int16_t)0x8000) return {};   // Error-Marker
- *         return raw / 16.0f;
- *       on_value:
- *         - lvgl.widget.refresh: lbl_temp_becken
+ *     - platform: bthome
+ *       mac_address: "XX:XX:XX:XX:XX:XX"   # ← MAC aus Serial-Monitor eintragen
+ *       temperature:
+ *         id: sensor_temp_becken
+ *         name: "Temperatur Becken"
+ *         on_value:
+ *           - lvgl.widget.refresh: lbl_temp_becken
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
 #include <Arduino.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#include <Wire.h>
+#include <NimBLEDevice.h>
+#include <WiFi.h>
+#include <ArduinoOTA.h>
 
 // ── Konfiguration ─────────────────────────────────────────────────────────────
+#define WIFI_SSID       "DEIN_WLAN_NAME"   // ← anpassen
+#define WIFI_PASSWORD   "DEIN_WLAN_PASSWORT" // ← anpassen
+#define OTA_HOSTNAME    "temp_bridge"
+#define OTA_PASSWORD    "ota1234"           // ← anpassen
+
 #define ONE_WIRE_PIN    1        // DS18B20 Datenleitung
 #define PIN_SENSOR_VCC  0        // OUTPUT HIGH → 3.3 V für Sensor (Strapping-Pin: MUSS HIGH bleiben!)
 #define PIN_SENSOR_GND  2        // OUTPUT LOW  → GND für Sensor
-#define I2C_SDA         4        // I²C Slave SDA
-#define I2C_SCL         3        // I²C Slave SCL
-#define I2C_ADDR        0x48     // Slave-Adresse (0x48–0x4F, Jumper-frei wählbar)
-#define UPDATE_MS        750     // Messintervall [ms] – DS18B20 12-bit Wandlung ~750 ms
+#define UPDATE_MS       3000     // Mess- + BLE-Update-Intervall [ms]
 #define PIN_LED           8      // Onboard-LED (blau, active LOW)
 // ─────────────────────────────────────────────────────────────────────────────
 
 OneWire           oneWire(ONE_WIRE_PIN);
 DallasTemperature ds18b20(&oneWire);
 
-// Mutex für thread-sicheren Zugriff (Wire-CB läuft ggf. auf anderem Core)
-portMUX_TYPE tempMux = portMUX_INITIALIZER_UNLOCKED;
 int16_t      g_temp_raw = 0;     // Temperatur × 16  →  0.0625 °C / LSB
 bool         g_valid    = false;
 
-// Für Logging aus loop() statt aus dem Wire-Callback
-volatile bool    g_req_fired = false;
-volatile int16_t g_req_sent  = 0;
-volatile bool    g_req_valid = false;
-
-// ── I²C-Callbacks ─────────────────────────────────────────────────────────────
-
-// Master schreibt ein Register-Byte vor dem Lesen – wir ignorieren es,
-// da wir nur ein einziges Register haben.
-void onReceive(int /*len*/) {
-  while (Wire.available()) Wire.read();
-}
-
-// Master fordert Daten an → 2 Bytes senden (MSB first)
-// ACHTUNG: Callback so kurz wie möglich halten – kein Serial, kein LED, kein delay!
-// Serial.printf(%.4f) würde mehrere ms blockieren und den I²C-Timeout des Masters auslösen.
-void onRequest() {
-  int16_t snap;
-  bool    valid;
-
-  portENTER_CRITICAL_ISR(&tempMux);
-    snap  = g_temp_raw;
-    valid = g_valid;
-  portEXIT_CRITICAL_ISR(&tempMux);
-
-  if (!valid) {
-    Wire.write((uint8_t)0x80);
-    Wire.write((uint8_t)0x00);
-    g_req_sent  = (int16_t)0x8000;
-    g_req_valid = false;
-  } else {
-    Wire.write((uint8_t)((snap >> 8) & 0xFF));  // MSB
-    Wire.write((uint8_t)( snap       & 0xFF));  // LSB
-    g_req_sent  = snap;
-    g_req_valid = true;
-  }
-  g_req_fired = true;  // loop() übernimmt Logging + LED
-}
+NimBLEAdvertising* pAdv = nullptr;
 
 // ── Setup ──────────────────────────────────────────────────────────────────────
 void setup() {
@@ -117,14 +72,11 @@ void setup() {
   delay(300);
 
   Serial.println("\n╔══════════════════════════════════════╗");
-  Serial.println("║   DS18B20 → I²C-Bridge  (ESP32-C3)  ║");
+  Serial.println("║  DS18B20 → BLE-Bridge   (ESP32-C3)  ║");
   Serial.println("╚══════════════════════════════════════╝");
   Serial.printf("  1-Wire  : GPIO%d\n",       ONE_WIRE_PIN);
   Serial.printf("  Sens-VCC: GPIO%d (HIGH)\n", PIN_SENSOR_VCC);
   Serial.printf("  Sens-GND: GPIO%d (LOW)\n",  PIN_SENSOR_GND);
-  Serial.printf("  I²C SDA : GPIO%d\n",       I2C_SDA);
-  Serial.printf("  I²C SCL : GPIO%d\n",       I2C_SCL);
-  Serial.printf("  Adresse : 0x%02X\n",       I2C_ADDR);
   Serial.printf("  Intervall: %d ms\n\n",     UPDATE_MS);
 
   // Sensor-Versorgung per GPIO
@@ -155,23 +107,53 @@ void setup() {
     }
   }
 
-  // I²C Slave starten
-  // Hinweis: Wire.begin(addr, sda, scl) ist auf ESP32-C3 / Arduino v3.x unzuverlässig.
-  // Korrekte Reihenfolge: setPins → onReceive/onRequest → begin(addr)
-  Wire.setPins(I2C_SDA, I2C_SCL);
-  Wire.onReceive(onReceive);
-  Wire.onRequest(onRequest);
-  bool ok = Wire.begin((uint8_t)I2C_ADDR);
-  Serial.printf("  Wire.begin(0x%02X) -> %s\n", I2C_ADDR, ok ? "OK" : "FEHLER!");
-  Serial.flush();
+  // BLE Advertising (BTHome v2, Non-Connectable)
+  NimBLEDevice::init("temp_bridge");
+  pAdv = NimBLEDevice::getAdvertising();
+  pAdv->setAdvertisementType(BLE_HCI_ADV_TYPE_ADV_NONCONN_IND);
+  pAdv->setMinInterval(800);   // 500 ms × 1/0.625 = 800 Einheiten
+  pAdv->setMaxInterval(800);
+  pAdv->start();
+  Serial.printf("  BLE MAC : %s\n", NimBLEDevice::getAddress().toString().c_str());
+  Serial.println("  BLE     : BTHome v2 aktiv (UUID 0xFCD2)\n");
 
-  Serial.println("\n  I²C-Slave aktiv – warte auf Anfragen …\n");
+  // WiFi + OTA
+  Serial.printf("  WiFi: verbinde mit '%s' …", WIFI_SSID);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  uint8_t wifiTries = 0;
+  while (WiFi.status() != WL_CONNECTED && wifiTries < 30) {
+    delay(500);
+    Serial.print(".");
+    wifiTries++;
+  }
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.printf(" OK  IP: %s\n", WiFi.localIP().toString().c_str());
+  } else {
+    Serial.println(" FEHLER (kein OTA verfügbar, Slave läuft trotzdem)");
+  }
+
+  ArduinoOTA.setHostname(OTA_HOSTNAME);
+  ArduinoOTA.setPassword(OTA_PASSWORD);
+  ArduinoOTA.onStart([]() {
+    Serial.println("  [OTA] Start – bitte warten …");
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("  [OTA] Fertig – Reboot.");
+  });
+  ArduinoOTA.onError([](ota_error_t e) {
+    Serial.printf("  [OTA] Fehler [%u]\n", e);
+  });
+  ArduinoOTA.begin();
+  Serial.printf("  OTA  : aktiv als '%s'\n\n", OTA_HOSTNAME);
 }
 
 // ── Loop ───────────────────────────────────────────────────────────────────────
 static uint32_t lastMs = 0;
 
 void loop() {
+  ArduinoOTA.handle();
+
   if (millis() - lastMs < UPDATE_MS) return;
   lastMs = millis();
 
@@ -180,19 +162,29 @@ void loop() {
 
   // 85.0 °C = Power-On-Reset-Wert → als Fehler behandeln
   if (t == DEVICE_DISCONNECTED_C || t == 85.0f) {
-    portENTER_CRITICAL(&tempMux);
-      g_valid = false;
-    portEXIT_CRITICAL(&tempMux);
+    g_valid = false;
     Serial.println("  [ERR] Sensor nicht erreichbar oder Power-on-Default");
     return;
   }
 
-  int16_t raw = (int16_t)roundf(t * 16.0f);
+  g_temp_raw = (int16_t)roundf(t * 16.0f);
+  g_valid    = true;
 
-  portENTER_CRITICAL(&tempMux);
-    g_temp_raw = raw;
-    g_valid    = true;
-  portEXIT_CRITICAL(&tempMux);
+  // BTHome v2 Advertisement aktualisieren
+  int16_t ble_raw = (int16_t)roundf(t * 100.0f);  // 0.01 °C Auflösung
+  uint8_t svcData[4] = {
+    0x40,                              // BTHome v2, kein Encryption
+    0x02,                              // Object-ID: Temperature
+    (uint8_t)(ble_raw & 0xFF),         // LSB
+    (uint8_t)((ble_raw >> 8) & 0xFF),  // MSB
+  };
+  NimBLEAdvertisementData advData;
+  advData.setFlags(0x06);
+  advData.setServiceData(NimBLEUUID((uint16_t)0xFCD2),
+                         std::string((char*)svcData, sizeof(svcData)));
+  pAdv->setAdvertisementData(advData);
+  pAdv->stop();
+  pAdv->start();
 
   // 2× kurz blinken (active LOW)
   for (int i = 0; i < 2; i++) {
@@ -200,21 +192,8 @@ void loop() {
     digitalWrite(PIN_LED, HIGH); delay(80);
   }
 
-  Serial.printf("  Temp: %+7.4f °C   raw=0x%04X (%d)\n",
-                t, (uint16_t)raw, raw);
-
-  // I²C-Request-Logging (verzögert aus Callback heraus – kein Float im ISR-Kontext)
-  if (g_req_fired) {
-    g_req_fired = false;
-    if (!g_req_valid) {
-      Serial.println("  [I2C] onRequest -> ERROR-Marker gesendet (kein gueltiger Wert)");
-    } else {
-      int16_t sent = g_req_sent;
-      Serial.printf("  [I2C] onRequest -> gesendet: 0x%02X 0x%02X  (%.4f degC)\n",
-                    (sent >> 8) & 0xFF, sent & 0xFF, sent / 16.0f);
-      // 1× kurz blinken als I²C-Bestätigung
-      digitalWrite(PIN_LED, LOW);  delay(20);
-      digitalWrite(PIN_LED, HIGH);
-    }
-  }
+  Serial.printf("  Temp: %+7.4f °C   BLE raw=%d (BTHome 0x%02X 0x%02X)\n",
+                t, ble_raw,
+                (uint8_t)(ble_raw & 0xFF),
+                (uint8_t)((ble_raw >> 8) & 0xFF));
 }
