@@ -124,6 +124,7 @@ script:
           ESP_LOGI("schwenker", "START  halbperiode=%u ms  max=%d RPM",
                    id(sw_halbperiode_ms), id(sw_max_speed_rpm));
           lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x229933), 0);
+          lv_obj_set_style_bg_color(id(btn_schwenker_overlay_toggle), lv_color_hex(0x229933), 0);
 
   # ── Stoppen ───────────────────────────────────────────────
   - id: script_schwenker_stop
@@ -132,6 +133,7 @@ script:
       - lambda: |-
           id(sw_aktiv) = false;
           lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x666666), 0);
+          lv_obj_set_style_bg_color(id(btn_schwenker_overlay_toggle), lv_color_hex(0x666666), 0);
           ESP_LOGI("schwenker", "STOP");
           // Mode 5 = FOC → kein Haltestrom im Stillstand
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x82, 0x05 }));

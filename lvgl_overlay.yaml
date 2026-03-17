@@ -79,8 +79,8 @@ lvgl:
           id: overlay_schwenker_settings
           width: 100%
           height: 100%
-          bg_color: 0x111122
-          bg_opa: 96%
+          bg_color: 0xFFFFFF
+          bg_opa: 97%
           hidden: true
           clickable: true
           pad_all: 0
@@ -92,7 +92,7 @@ lvgl:
                 align: TOP_MID
                 y: 18
                 text_font: font_title
-                text_color: 0x99CCFF
+                text_color: 0x003366
                 text_align: CENTER
 
             # Exit-Button
@@ -124,6 +124,7 @@ lvgl:
                 bg_opa: TRANSP
                 border_width: 0
                 scrollable: false
+                clickable: false
                 pad_all: 0
                 widgets:
                   - label:
@@ -131,7 +132,7 @@ lvgl:
                       align: TOP_MID
                       y: 0
                       text_font: font_normal
-                      text_color: 0xAABBCC
+                      text_color: 0x334455
                   - arc:
                       id: arc_schwenkzeit
                       width: 280
@@ -163,7 +164,7 @@ lvgl:
                       align: TOP_MID
                       y: 148
                       text_font: font_temp
-                      text_color: 0x55EEFF
+                      text_color: 0x0077CC
                       text_align: CENTER
 
             # ── Arc 2: Max RPM ─────────────────────────────────────
@@ -177,6 +178,7 @@ lvgl:
                 bg_opa: TRANSP
                 border_width: 0
                 scrollable: false
+                clickable: false
                 pad_all: 0
                 widgets:
                   - label:
@@ -184,7 +186,7 @@ lvgl:
                       align: TOP_MID
                       y: 0
                       text_font: font_normal
-                      text_color: 0xAABBCC
+                      text_color: 0x334455
                   - arc:
                       id: arc_rpm
                       width: 280
@@ -216,15 +218,42 @@ lvgl:
                       align: TOP_MID
                       y: 148
                       text_font: font_temp
-                      text_color: 0x44FF88
+                      text_color: 0x226644
                       text_align: CENTER
                   - label:
                       text: "Upm"
                       align: TOP_MID
                       y: 198
                       text_font: font_small
-                      text_color: 0x778899
-
+                      text_color: 0x556677
+            # ── Start/Stop Button (mittig zwischen den Arcs) ─────────────
+            - button:
+                id: btn_schwenker_overlay_toggle
+                width: 150
+                height: 150
+                align: CENTER
+                y: -20
+                radius: 75
+                bg_color: 0x666666
+                bg_opa: COVER
+                border_width: 0
+                shadow_width: 0
+                outline_width: 0
+                pad_all: 0
+                on_press:
+                  - lambda: |-
+                      if (id(sw_aktiv)) {
+                        id(script_schwenker_stop).execute();
+                      } else {
+                        id(script_schwenker_start).execute();
+                      }
+                widgets:
+                  - label:
+                      id: lbl_overlay_schwenker_icon
+                      align: CENTER
+                      text: "\uF021"
+                      text_font: font_icon_xl
+                      text_color: 0xFFFFFF
             # ── Preset-Buttons ──────────────────────────────────────
             # Short Click: Preset laden  |  Long Click: aktuellen Wert speichern
             - obj:

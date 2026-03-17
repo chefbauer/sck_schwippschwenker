@@ -250,6 +250,8 @@ lvgl:
                   border_color: 0x4455AA
                   clickable: false
                   pad_all: 0
+                  scrollable: false
+                  scrollbar_mode: "off"
                   widgets:
                     - button:
                         id: btn_schwenker_main
@@ -289,17 +291,17 @@ lvgl:
                     # ── Slot-Marker: Kreise mit Slot-Farben, rotieren mit Motor-Winkel ──
                     - obj:
                         id: ring_slot1_marker
-                        width: 75
-                        height: 75
-                        radius: 37
+                        width: 70
+                        height: 70
+                        radius: 35
                         bg_color: 0x882222
                         bg_opa: COVER
                         border_width: 6
                         border_color: 0xFF0000
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 143
-                        y: 283
+                        x: 145
+                        y: 285
                         widgets:
                           - label:
                               text: "1"
@@ -308,17 +310,17 @@ lvgl:
                               text_color: 0xFFFFFF
                     - obj:
                         id: ring_slot2_marker
-                        width: 75
-                        height: 75
-                        radius: 37
+                        width: 70
+                        height: 70
+                        radius: 35
                         bg_color: 0x887700
                         bg_opa: COVER
                         border_width: 6
                         border_color: 0xFFFF00
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 21
-                        y: 213
+                        x: 24
+                        y: 215
                         widgets:
                           - label:
                               text: "2"
@@ -327,17 +329,17 @@ lvgl:
                               text_color: 0x000000
                     - obj:
                         id: ring_slot3_marker
-                        width: 75
-                        height: 75
-                        radius: 37
+                        width: 70
+                        height: 70
+                        radius: 35
                         bg_color: 0x228822
                         bg_opa: COVER
                         border_width: 6
                         border_color: 0x00FF00
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 21
-                        y: 73
+                        x: 24
+                        y: 75
                         widgets:
                           - label:
                               text: "3"
@@ -346,17 +348,17 @@ lvgl:
                               text_color: 0x000000
                     - obj:
                         id: ring_slot4_marker
-                        width: 75
-                        height: 75
-                        radius: 37
+                        width: 70
+                        height: 70
+                        radius: 35
                         bg_color: 0x228888
                         bg_opa: COVER
                         border_width: 6
                         border_color: 0x00FFFF
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 143
-                        y: 3
+                        x: 145
+                        y: 5
                         widgets:
                           - label:
                               text: "4"
@@ -365,17 +367,17 @@ lvgl:
                               text_color: 0x000000
                     - obj:
                         id: ring_slot5_marker
-                        width: 75
-                        height: 75
-                        radius: 37
+                        width: 70
+                        height: 70
+                        radius: 35
                         bg_color: 0x222288
                         bg_opa: COVER
                         border_width: 6
                         border_color: 0x0000FF
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 264
-                        y: 73
+                        x: 266
+                        y: 75
                         widgets:
                           - label:
                               text: "5"
@@ -384,17 +386,17 @@ lvgl:
                               text_color: 0xFFFFFF
                     - obj:
                         id: ring_slot6_marker
-                        width: 75
-                        height: 75
-                        radius: 37
+                        width: 70
+                        height: 70
+                        radius: 35
                         bg_color: 0x882288
                         bg_opa: COVER
                         border_width: 6
                         border_color: 0xFF00FF
                         pad_all: 0
                         align: TOP_LEFT
-                        x: 264
-                        y: 213
+                        x: 266
+                        y: 215
                         widgets:
                           - label:
                               text: "6"

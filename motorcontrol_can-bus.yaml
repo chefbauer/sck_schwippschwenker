@@ -793,7 +793,7 @@ sensor:
             const float R  = 140.0f;   // Radius der Marker-Mittelpunkte im Ring (px)
             const float CX = 180.0f;   // Ringmitte X
             const float CY = 180.0f;   // Ringmitte Y
-            const float HS = 37.0f;    // halbe Widget-Breite (75px / 2 = 37.5 → 37)
+            const float HS = 35.0f;    // halbe Widget-Breite (70px / 2 = 35)
             lv_obj_t* markers[6] = {
               id(ring_slot1_marker), id(ring_slot2_marker), id(ring_slot3_marker),
               id(ring_slot4_marker), id(ring_slot5_marker), id(ring_slot6_marker)
