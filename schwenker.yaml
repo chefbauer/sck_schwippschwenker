@@ -119,7 +119,7 @@ script:
       - delay: 300ms
       - script.execute:
           id: script_motor_set_work_current_mA
-          current_mA: 500   // nach Stopp: geringer Haltestrom → Motor drehbar, aber nicht frei
+          current_mA: 500   # nach Stopp: geringer Haltestrom → Motor drehbar, aber nicht frei
       - script.execute:
           id: script_motor_set_idle_current_perc
           current_perc: 10
