@@ -1710,7 +1710,7 @@ lvgl:
                                   text_color: 0x003366
                         # Preset-Tasten
                         - obj:
-                            id: row_presets
+                            id: row_temp_presets
                             width: 960
                             height: 70
                             align: TOP_MID
