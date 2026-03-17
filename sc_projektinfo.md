@@ -153,7 +153,14 @@ Aktualisiert auch das AMG8833-Overlay wenn es sichtbar ist.
 - Text: "SC Schwippschwenker"
 - Font: `font_title`, Farbe: `#003366`, oben mittig, y=20
 
-### Tank-Widget (Platzhalter)
+### System-Notschalter (`btn_system_power`)
+- 80×80 px, rund (radius=40), oben rechts (x=-10, y=10)
+- Rot = System AUS, Grün = System EIN
+- Icon: U+F011 (Power, `font_icons`, weiß)
+- **Dient gleichzeitig als Notschalter!**
+  - **AUS: sofort bei einfachem Druck** (`on_press`) — stoppt Schwenker, Thermostat, Pumpen sofort
+  - **EIN: nur per Long Press** (`on_long_press`) — verhindert versehentliches Einschalten
+- AUS löst `script_system_aus` aus: Schwenker stopp + Thermostat OFF + DAC-Pumpen aus
 - **TODO: durch echtes PNG-Bild ersetzen**
 - Position: zentriert, y=20, 360×360 px
 - Aufbau aus LVGL `obj`-Widgets (Zylinder-Illusion):
@@ -394,7 +401,16 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 
 ### Prinzip: F5 + "Fernes Ziel" + Sinus-Hüllkurve
 
-**Methode:** `F5` (Abs. Positionsmodus, Echtzeit-Updates laut Doku) mit "nie erreichbarem Ziel"
+> **⚠️ Wasserwiderstand / Strombegrenzung**
+> Der Motor dreht im **gefüllten Wasserbecken** — das Wasser erzeugt erheblichen mechanischen Widerstand.
+> - Der Motor kämpft bei jedem Richtungswechsel gegen Traegheitsmasse + Strömungswiderstand an.
+> - Die **Arbeitsstromgrenze von 2000 mA** (0x83, 0x07, 0xD0) ist eine bewusste Schutzgrenze:
+>   höhere Ströme würden den Motor überlasten und bei Blockade wäre ein Motorschaden möglich.
+> - Geschwindigkeit und Beschleunigung müssen **wasserangepasst** klein bleiben:
+>   - **Schwenken:** `sw_max_speed_rpm = 15`, `sw_acc = 200` (Sinus glättet Richtungswechsel)
+>   - **Positionsfahrt:** `speed = 5 RPM`, `acc = 50` (langsam und weich im Wasser)
+> - Eine Blockierung durch übermäßige Last → Motor bleibt stehen, 2 A Limit verhindert Schlimmeres.
+>   Die Motortemperatur und das Verhalten im Wasser müssen bei der Inbetriebnahme beobachtet werden.
 
 | Global-ID | Typ | Default | Bedeutung |
 |---|---|---|---|
@@ -425,8 +441,9 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 - Parameter: `slot` (int, 1–6)
 - Zielwinkel: `(slot - 1) × 60°` → Slot 1=0°, Slot 2=60°, …, Slot 6=300°
 - Liest `sensor_motor_position` (14-bit, 0–16383 = 0–360°), berechnet kürzesten Relativweg (±180°)
-- Ruft `script_motor_goto_relative_degree(60 RPM, 150 acc, rel_deg)` auf
-- Bricht bei NaN-Sensor-Wert ab (ESP_LOGW)
+- Ruft `script_motor_goto_relative_degree(5 RPM, 50 acc, rel_deg)` auf (wasserwiderstandsangepasst)
+- Motor-Init vor Fahrt: Mode 4, 64 Steps, 2000 mA, idle min (wie Schwenken)
+- Nach Fahrt: 7 s Wartezeit, dann Mode 5 (FOC) → kein Haltestrom
 
 **Button:** `btn_schwenker_toggle` (Start/Stop Toggle)
 
