@@ -1464,7 +1464,7 @@ lvgl:
                             width: 960
                             height: 80
                             align: TOP_MID
-                            y: 110
+                            y: 175
                             bg_opa: TRANSP
                             border_width: 0
                             scrollable: false
