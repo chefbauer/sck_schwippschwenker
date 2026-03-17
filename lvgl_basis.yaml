@@ -1171,6 +1171,16 @@ lvgl:
                                         id: output_pumpe_dacB
                                         level: !lambda "return x / 100.0;"
 
+                        # Build-Nummer (zum Verifizieren ob neue Firmware aktiv ist)
+                        - label:
+                            id: lbl_build_number
+                            text: "Build: 20260317-002"
+                            align: BOTTOM_RIGHT
+                            x: -20
+                            y: -15
+                            text_font: font_small
+                            text_color: 0xAAAAAA
+
                     # Tab 2: Schwenker
                     - name: "Schwenker"
                       id: tab_schwenker
