@@ -388,12 +388,14 @@ script:
                     add_crc(${motor_can_id}, { 0xF4, sh, sl, ah, hh, hm, hl }));
                 ESP_LOGI("sw_test", "F4  dir=%+d  %.1f deg  %d RPM  acc=%d",
                          id(sw_test_richtung), id(sw_test_winkel), spd, acc);
-            # Alle 100 ms F1 abfragen bis Motor stoppt (status==1) oder F4-Completion (status==2)
+            # Alle 100 ms F1 abfragen bis Motor stoppt (F1 liefert status==1)
+            # WICHTIG: status==2 bedeutet "Motor läuft" (F1-Antwort) UND "F4 completed" (on_frame)
+            # → niemals auf status==2 als Abbruchbedingung verlassen, nur auf status==1 warten.
             - while:
                 condition:
                   lambda: |-
                     float s = id(sensor_motor_status).state;
-                    return s != 1.0f && s != 2.0f && id(sw_test_aktiv);
+                    return s != 1.0f && id(sw_test_aktiv);
                 then:
                   - delay: 100ms
                   - lambda: |-
