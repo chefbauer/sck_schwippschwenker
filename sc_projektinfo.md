@@ -649,3 +649,12 @@ Anordnung im Uhrzeigersinn nach Farbrad:
 | 2026-03-15 | I²C-Bridge `temp_bridge` (0x48) + Template-Sensor aus `hardware.yaml` entfernt | `hardware.yaml` |
 | 2026-03-17 | TCA9548A-Mux entfernt; alle sensorphalanx-Sensoren direkt auf `i2c_bus` umgestellt | `sensorphalanx.yaml` |
 | 2026-03-17 | I²C-Bridge (`1w_i2c_bridge`, ESP-IDF 5.x) wieder aktiv; `sensor_temp_becken` liest `temp_bridge` (0x48, 3s); `ble.yaml`-BLE-Sensor abgelöst | `hardware.yaml` |
+| 2026-03-18 | Timer-Kontrast: Alle 6 Slot-Timer-Bereiche: `font_small` → Roboto@700 (fett), `font_timer` 35→38px, `bg_opa` 50%→40%; Textfarben Slots 1–4 → schwarz, Slot 6 → weiß | `lvgl_basis.yaml` |
+| 2026-03-18 | `btn_beckenfuellung`: Runder Button 80×80px, Position tangential 45° rechts unten am Ring (`align: CENTER, x:156, y:176`); Icon `\uF773` (fa-water) zu `font_icons`-Glyph-Liste ergänzt | `lvgl_basis.yaml` |
+| 2026-03-18 | `script_pumpe_a_kurz/lang`: Slider `slider_turmpumpe` wird am Ende auf 15 gesetzt | `schwenker.yaml` |
+| 2026-03-18 | Umwälzpumpe: `on_state`-Slider-Reset entfernt; Slider-Sync nur noch bei `cool_action` (→30%) und `idle_action`/`on_control` (→0%); manuelle Slider-Änderung bleibt erhalten | `hardware.yaml` |
+| 2026-03-18 | `script_pumpe_a_lang`: 100%-Spülphase 7s → 9s | `schwenker.yaml` |
+| 2026-03-18 | `script_schwenker_goto_slot`: Motor-Modus fix auf Closed Loop (`0x04`), unabhängig von `sw_motor_mode` | `schwenker.yaml` |
+| 2026-03-18 | `script_schwenker_goto_slot`: acc 20→10; acc=0/255-Guard (sofortiger Ruck) in `script_motor_goto_relative_degree`; sanfter Stop via F5 speed=0 acc=10 + 500ms Delay vor FOC | `schwenker.yaml`, `motorcontrol_can-bus.yaml` |
+| 2026-03-18 | Compile-Fehler behoben: Kommentar-Text `(25% → 15% …)` befand sich außerhalb Lambda-Kommentar in `script_pumpe_a_kurz` | `schwenker.yaml` |
+| 2026-03-18 | App-Titel umbenannt auf "SCK Schwippschwenker"; `font_title`-Glyphs um `K` ergänzt | `lvgl_basis.yaml` |
