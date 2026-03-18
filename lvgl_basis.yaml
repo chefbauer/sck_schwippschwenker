@@ -1233,7 +1233,7 @@ lvgl:
                     # Tab 1: System
                     - name: "System"
                       id: tab_system
-                      scrollable: false
+                      scrollable: true
                       widgets:
                         # Overlays
                         - obj:
@@ -1400,7 +1400,7 @@ lvgl:
                     # Tab 2: Schwenker
                     - name: "Schwenker"
                       id: tab_schwenker
-                      scrollable: false
+                      scrollable: true
                       widgets:
                         # Einstellungen öffnen
                         - button:
@@ -1561,10 +1561,64 @@ lvgl:
                                         id: slider_trim_motor
                                         value: 0
 
+                        # Zeile: Motor Strom 500–2000 mA (einmalig senden)
+                        - obj:
+                            id: row_motor_strom
+                            width: 960
+                            height: 80
+                            align: TOP_MID
+                            y: 270
+                            bg_opa: TRANSP
+                            border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
+                            widgets:
+                              - label:
+                                  text: "Motor Strom:"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - label:
+                                  text: "500mA"
+                                  align: LEFT_MID
+                                  x: 190
+                                  text_font: font_small
+                                  text_color: 0x888888
+                              - label:
+                                  text: "2000mA"
+                                  align: RIGHT_MID
+                                  x: -10
+                                  text_font: font_small
+                                  text_color: 0x888888
+                              - slider:
+                                  id: slider_motor_strom
+                                  width: 580
+                                  height: 30
+                                  align: LEFT_MID
+                                  x: 240
+                                  min_value: 500
+                                  max_value: 2000
+                                  value: 1000
+                                  on_release:
+                                    - lambda: |-
+                                        id(script_motor_set_work_current_mA).execute(x);
+                                        char buf[12];
+                                        snprintf(buf, sizeof(buf), "%d mA", (int)x);
+                                        lv_label_set_text(id(lbl_motor_strom_wert), buf);
+                                        ESP_LOGI("settings", "Motor Strom gesetzt: %d mA", (int)x);
+                              - label:
+                                  id: lbl_motor_strom_wert
+                                  text: "1000 mA"
+                                  align: RIGHT_MID
+                                  x: -75
+                                  text_font: font_normal
+                                  text_color: 0x003366
+
                     # Tab 3: Bildschirm
                     - name: "Bildschirm"
                       id: tab_bildschirm
-                      scrollable: false
+                      scrollable: true
                       widgets:
                         # Zeile: Helligkeit Label + Slider  (25% / 75%)
                         - obj:
@@ -1674,7 +1728,7 @@ lvgl:
                     # Tab 3: Kuehler
                     - name: "Kühler"
                       id: tab_kuehler
-                      scrollable: false
+                      scrollable: true
                       widgets:
                         # Zeile: Kühlung Ein/Aus  (25% / 75%)
                         - obj:
@@ -1848,7 +1902,7 @@ lvgl:
                     # Tab 4: Test
                     - name: "Test"
                       id: tab_test
-                      scrollable: false
+                      scrollable: true
                       widgets:
                         - label:
                             text: "(leer)"
