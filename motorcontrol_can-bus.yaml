@@ -430,7 +430,14 @@ script:
       - lambda: |-
           unsigned char speed_h = speed_rpm / 256;
           unsigned char speed_l = speed_rpm % 256;
-          unsigned char accel_l = accel;
+          // WICHTIG: acc=0 und acc=255 bedeuten "kein Ramping" → sofortiger Ruck!
+          // Gültige Werte: 1–254 (Motor interpoliert Start und Stop intern)
+          int accel_safe = accel;
+          if (accel_safe <= 0 || accel_safe >= 255) {
+            accel_safe = 10;
+            ESP_LOGW("motor_goto", "accel=%d ungültig (0/255=kein Ramping) → auf 10 korrigiert", accel);
+          }
+          unsigned char accel_l = (unsigned char)accel_safe;
           // unsigned char npr_hh = 0;
           // unsigned char npr_h = 0;
           // unsigned char npr_l = 0;
