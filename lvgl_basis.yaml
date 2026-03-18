@@ -28,7 +28,7 @@ font:
     bpp: 4
     glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~°"
 
-  - file: "gfonts://Roboto@400"
+  - file: "gfonts://Roboto@700"
     id: font_small
     size: 18
     bpp: 4
@@ -71,7 +71,7 @@ font:
   # Dot-Matrix Font für Timer-Anzeige
   - file: "fonts/5x7-dot-matrix.ttf"
     id: font_timer
-    size: 35
+    size: 38
     bpp: 1
     glyphs: "0123456789:"
 
@@ -242,14 +242,14 @@ lvgl:
                         text_font: font_icons
                         text_color: 0xFFFFFF
               
-              # Beckenfüllungs-Button (rund, rechts unten neben Ring)
+              # Beckenfüllungs-Button (rund, tangential 45° rechts unten am Ring)
               - button:
                   id: btn_beckenfuellung
                   width: 80
                   height: 80
-                  align: BOTTOM_RIGHT
-                  x: -15
-                  y: -15
+                  align: CENTER
+                  x: 156
+                  y: 176
                   radius: 40
                   bg_color: 0x555555
                   bg_opa: COVER
@@ -508,7 +508,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0xFF0000
-                        bg_opa: 50%
+                        bg_opa: 40%
                         border_width: 0
                         shadow_width: 0
                         outline_width: 0
@@ -550,7 +550,7 @@ lvgl:
                               x: 0
                               y: 10
                               text_font: font_small
-                              text_color: 0x880000
+                              text_color: 0x000000
                           - label:
                               id: lbl_slot1_time
                               text: "00:00"
@@ -558,14 +558,14 @@ lvgl:
                               x: 0
                               y: 38
                               text_font: font_timer
-                              text_color: 0x880000
+                              text_color: 0x000000
                           - label:
                               id: lbl_slot1_symbol
                               text: "\uF04B"
                               text_font: font_icons
                               align: RIGHT_MID
                               x: -17
-                              text_color: 0x880000
+                              text_color: 0x000000
               - obj:
                   id: slot2_yellow
                   width: 290
@@ -613,7 +613,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0xFFFF00
-                        bg_opa: 50%
+                        bg_opa: 40%
                         border_width: 0
                         shadow_width: 0
                         outline_width: 0
@@ -655,7 +655,7 @@ lvgl:
                               x: 0
                               y: 10
                               text_font: font_small
-                              text_color: 0x666600
+                              text_color: 0x000000
                           - label:
                               id: lbl_slot2_time
                               text: "00:00"
@@ -663,14 +663,14 @@ lvgl:
                               x: 0
                               y: 38
                               text_font: font_timer
-                              text_color: 0x666600
+                              text_color: 0x000000
                           - label:
                               id: lbl_slot2_symbol
                               text: "\uF04B"
                               text_font: font_icons
                               align: RIGHT_MID
                               x: -17
-                              text_color: 0x666600
+                              text_color: 0x000000
               - obj:
                   id: slot3_green
                   width: 290
@@ -718,7 +718,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0x00FF00
-                        bg_opa: 50%
+                        bg_opa: 40%
                         border_width: 0
                         shadow_width: 0
                         outline_width: 0
@@ -760,7 +760,7 @@ lvgl:
                               x: 0
                               y: 10
                               text_font: font_small
-                              text_color: 0x004400
+                              text_color: 0x000000
                           - label:
                               id: lbl_slot3_time
                               text: "00:00"
@@ -768,14 +768,14 @@ lvgl:
                               x: 0
                               y: 38
                               text_font: font_timer
-                              text_color: 0x004400
+                              text_color: 0x000000
                           - label:
                               id: lbl_slot3_symbol
                               text: "\uF04B"
                               text_font: font_icons
                               align: RIGHT_MID
                               x: -17
-                              text_color: 0x004400
+                              text_color: 0x000000
 
               # ---- Slot-Container rechts: Slot 4 (C), 5 (B), 6 (M) ----
               - obj:
@@ -825,7 +825,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0x00FFFF
-                        bg_opa: 50%
+                        bg_opa: 40%
                         border_width: 0
                         shadow_width: 0
                         outline_width: 0
@@ -867,7 +867,7 @@ lvgl:
                               x: 0
                               y: 10
                               text_font: font_small
-                              text_color: 0x004444
+                              text_color: 0x000000
                           - label:
                               id: lbl_slot4_time
                               text: "00:00"
@@ -875,14 +875,14 @@ lvgl:
                               x: 0
                               y: 38
                               text_font: font_timer
-                              text_color: 0x004444
+                              text_color: 0x000000
                           - label:
                               id: lbl_slot4_symbol
                               text: "\uF04B"
                               text_font: font_icons
                               align: RIGHT_MID
                               x: -17
-                              text_color: 0x004444
+                              text_color: 0x000000
               - obj:
                   id: slot5_blue
                   width: 290
@@ -930,7 +930,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0x0000FF
-                        bg_opa: 50%
+                        bg_opa: 40%
                         border_width: 0
                         shadow_width: 0
                         outline_width: 0
@@ -1035,7 +1035,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0xFF00FF
-                        bg_opa: 50%
+                        bg_opa: 40%
                         border_width: 0
                         shadow_width: 0
                         outline_width: 0
@@ -1077,7 +1077,7 @@ lvgl:
                               x: 0
                               y: 10
                               text_font: font_small
-                              text_color: 0x880044
+                              text_color: 0xFFFFFF
                           - label:
                               id: lbl_slot6_time
                               text: "00:00"
@@ -1085,14 +1085,14 @@ lvgl:
                               x: 0
                               y: 38
                               text_font: font_timer
-                              text_color: 0x880044
+                              text_color: 0xFFFFFF
                           - label:
                               id: lbl_slot6_symbol
                               text: "\uF04B"
                               text_font: font_icons
                               align: RIGHT_MID
                               x: -17
-                              text_color: 0x880044
+                              text_color: 0xFFFFFF
 
               # Statusleiste unten
               - obj:
