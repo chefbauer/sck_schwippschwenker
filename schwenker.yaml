@@ -357,6 +357,10 @@ script:
           // Closed Loop für präzise Winkelfahrten
           id(can_bus)->send_data(${motor_can_id}, false,
               add_crc(${motor_can_id}, { 0x82, 0x04 }));
+          // 8C 01 00: respond=ON, active=OFF → Motor pusht KEINE automatischen Status-Updates mehr
+          // Verhindert, dass stale F1-Status den Sentinel überschreibt
+          id(can_bus)->send_data(${motor_can_id}, false,
+              add_crc(${motor_can_id}, { 0x8C, 0x01, 0x00 }));
           id(sw_test_aktiv)    = true;
           id(sw_test_richtung) = 1;
           lv_obj_set_style_bg_color(id(btn_sw_test_toggle), lv_color_hex(0x22AA55), 0);
@@ -371,15 +375,12 @@ script:
           then:
             # F4-Protokoll: { 0xF4, spd_H, spd_L, acc, relAxis_HH, relAxis_H, relAxis_L }
             # relAxis = int24_t signed: positiv = CW, negativ = CCW (Two's Complement)
-            # Richtung über Vorzeichen: sw_test_richtung × winkel → signed steps → maskieren
             - lambda: |-
-                id(sensor_motor_status).publish_state(99);  // sentinel: Fahrt läuft
                 int   spd   = id(sw_test_speed);
                 int   acc   = id(sw_test_acc);
                 if (acc <= 0 || acc >= 255) acc = 50;
                 double deg  = (double)id(sw_test_richtung) * (double)id(sw_test_winkel);
                 int32_t steps = (int32_t)lround((16384.0 / 360.0) * deg);
-                // int24_t two's complement: negative Werte werden durch Maskierung korrekt
                 uint32_t val = static_cast<uint32_t>(steps) & 0xFFFFFF;
                 uint8_t sh = (uint8_t)(spd >> 8);
                 uint8_t sl = (uint8_t)(spd & 0xFF);
@@ -391,9 +392,13 @@ script:
                     add_crc(${motor_can_id}, { 0xF4, sh, sl, ah, hh, hm, hl }));
                 ESP_LOGI("sw_test", "F4  %.1f deg  steps=0x%06X  %d RPM  acc=%d",
                          deg, (unsigned)val, spd, acc);
-            # Alle 100 ms F1 abfragen bis Motor stoppt (F1 liefert status==1)
-            # WICHTIG: status==2 bedeutet "Motor läuft" (F1-Antwort) UND "F4 completed" (on_frame)
-            # → niemals auf status==2 als Abbruchbedingung verlassen, nur auf status==1 warten.
+            # 250ms Anlauf-Delay: Motor startet, alle alten CAN-Responses sind abgearbeitet.
+            # Erst DANACH Sentinel setzen – so kann kein stale F1 den Sentinel überschreiben.
+            - delay: 250ms
+            - lambda: |-
+                if (id(sw_test_aktiv))
+                  id(sensor_motor_status).publish_state(99);  // sentinel: Fahrt läuft
+            # Alle 100 ms F1 abfragen bis Motor stoppt (status==1)
             - while:
                 condition:
                   lambda: |-
@@ -425,6 +430,9 @@ script:
           uint8_t acc = (uint8_t)std::max(1, std::min(254, id(sw_test_acc)));
           id(can_bus)->send_data(${motor_can_id}, false,
               add_crc(${motor_can_id}, { 0xF5, 0x00, 0x00, acc, 0x7F, 0xFF, 0xFF }));
+          // 8C 01 01: respond=ON, active=ON → Motor-Active wieder einschalten (default)
+          id(can_bus)->send_data(${motor_can_id}, false,
+              add_crc(${motor_can_id}, { 0x8C, 0x01, 0x01 }));
           ESP_LOGI("sw_test", "Testmodus gestoppt");
 
 # ============================================================
