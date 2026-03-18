@@ -232,12 +232,16 @@ climate:
       - output.set_level:
           id: output_pumpe_dacB
           level: "${c_pumpe_umwaelzung_ein_perc}%"
+      - lambda: |-
+          lv_slider_set_value(id(slider_umwaelzpumpe), ${c_pumpe_umwaelzung_ein_perc}, LV_ANIM_OFF);
     idle_action:
       - output.turn_off: output_kompressor_relais
       - output.set_level:
           id: output_luefter_kompressor_pwm
           level: "${fan_kompressor_min_perc}%"
       - output.turn_off: output_pumpe_dacB
+      - lambda: |-
+          lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
     default_preset: Eco
     preset:
       - name: Eco
@@ -253,10 +257,12 @@ climate:
           if (x.get_mode() == CLIMATE_MODE_OFF)
           {
             id(output_pumpe_dacB).turn_off();
+            lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
           }
           else
           {
             id(output_pumpe_dacB).set_level(${c_pumpe_umwaelzung_ein_perc} / 100.0);
+            lv_slider_set_value(id(slider_umwaelzpumpe), ${c_pumpe_umwaelzung_ein_perc}, LV_ANIM_OFF);
           }
     on_state:
       - lvgl.label.update:
@@ -281,8 +287,5 @@ climate:
           snprintf(buf, sizeof(buf), "%.0f %%", perc);
           lv_label_set_text(id(lbl_luefter_wert), buf);
       - lambda: |-
-          // Umwälzpumpe-Slider mit Thermostat-Modus synchronisieren
-          int pump_val = (id(climate_thermostat).mode == CLIMATE_MODE_COOL)
-            ? ${c_pumpe_umwaelzung_ein_perc}
-            : 0;
-          lv_slider_set_value(id(slider_umwaelzpumpe), pump_val, LV_ANIM_OFF);
+          // Umwälzpumpe-Slider: kein automatischer Reset – Slider bleibt manuell verstellbar
+          // Sync erfolgt nur bei Kompressor-Start (cool_action) und -Stop (idle_action)
