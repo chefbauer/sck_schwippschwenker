@@ -296,10 +296,10 @@ script:
       - delay: 300ms
       - lambda: |-
           id(output_pumpe_dacA).set_level(0.02f);  // 15% Zwischenphase
-      - delay: 3000ms
+      - delay: 2000ms
       - lambda: |-
           id(output_pumpe_dacA).set_level(1.0f);   // 100% Spülen
-      - delay: 6000ms
+      - delay: 8000ms
       - lambda: |-
           id(output_pumpe_dacA).set_level(0.05f);  // 5% Dauer
           lv_slider_set_value(id(slider_turmpumpe), 5, LV_ANIM_OFF);
