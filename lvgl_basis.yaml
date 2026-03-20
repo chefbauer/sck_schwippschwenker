@@ -1449,14 +1449,19 @@ lvgl:
                                   // Arcs auf aktuelle Werte setzen beim Öffnen
                                   lv_arc_set_value(id(arc_schwenkzeit), (int)(id(sw_halbperiode_ms) / 100));
                                   lv_arc_set_value(id(arc_rpm), id(sw_max_speed_rpm));
+                                  lv_arc_set_value(id(arc_acc), id(sw_acc));
                                   int z = lv_arc_get_value(id(arc_schwenkzeit));
                                   int r = lv_arc_get_value(id(arc_rpm));
+                                  int a = lv_arc_get_value(id(arc_acc));
                                   id(sw_halbperiode_ms) = (uint32_t)(z * 100);
                                   id(sw_max_speed_rpm)  = r;
+                                  id(sw_acc)            = a;
                                   char b1[8]; snprintf(b1,sizeof(b1),"%.1fs", z / 10.0f);
                                   lv_label_set_text(id(lbl_arc_zeit_val), b1);
                                   char b2[6]; snprintf(b2,sizeof(b2),"%d", r);
                                   lv_label_set_text(id(lbl_arc_rpm_val), b2);
+                                  char b3[6]; snprintf(b3,sizeof(b3),"%d%%", a);
+                                  lv_label_set_text(id(lbl_arc_acc_val), b3);
                                   // Motor-Modus-Button synchronisieren
                                   lv_obj_set_style_bg_color(id(btn_sw_motor_mode_toggle),
                                     id(sw_motor_mode)==1 ? lv_color_hex(0x885522) : lv_color_hex(0x226644), 0);
@@ -1645,7 +1650,58 @@ lvgl:
                                   text_font: font_normal
                                   text_color: 0x003366
 
-                    # Tab 3: Bildschirm
+                        # Zeile: Motor-Ramp (internes acc-Byte für 50ms-Stufenglättung)
+                        - obj:
+                            id: row_motor_ramp
+                            width: 960
+                            height: 80
+                            align: TOP_MID
+                            y: 360
+                            bg_opa: TRANSP
+                            border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
+                            widgets:
+                              - label:
+                                  text: "Motor Ramp:"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - label:
+                                  text: "weich"
+                                  align: LEFT_MID
+                                  x: 190
+                                  text_font: font_small
+                                  text_color: 0x888888
+                              - label:
+                                  text: "hart"
+                                  align: RIGHT_MID
+                                  x: -10
+                                  text_font: font_small
+                                  text_color: 0x888888
+                              - slider:
+                                  id: slider_motor_ramp
+                                  width: 580
+                                  height: 30
+                                  align: LEFT_MID
+                                  x: 240
+                                  min_value: 1
+                                  max_value: 254
+                                  value: 200
+                                  on_release:
+                                    - lambda: |-
+                                        id(sw_motor_ramp) = (int)x;
+                                        char buf[8];
+                                        snprintf(buf, sizeof(buf), "%d", (int)x);
+                                        lv_label_set_text(id(lbl_motor_ramp_wert), buf);
+                              - label:
+                                  id: lbl_motor_ramp_wert
+                                  text: "200"
+                                  align: RIGHT_MID
+                                  x: -75
+                                  text_font: font_normal
+                                  text_color: 0x664400
                     - name: "Bildschirm"
                       id: tab_bildschirm
                       scrollable: true

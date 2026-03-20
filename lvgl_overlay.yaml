@@ -192,15 +192,15 @@ lvgl:
                       value: 32          # = 3.2 s (default)
                       adjustable: true
                       arc_color: 0x2299FF
-                      arc_width: 18
+                      arc_width: 15
                       indicator:
                         arc_color: 0x55EEFF
-                        arc_width: 18
+                        arc_width: 15
                       knob:
                         bg_color: 0x55EEFF
-                        width: 26
-                        height: 26
-                        radius: 13
+                        width: 22
+                        height: 22
+                        radius: 11
                       on_value:
                         - lambda: |-
                             id(sw_halbperiode_ms) = (uint32_t)(x * 100);
@@ -216,13 +216,74 @@ lvgl:
                       text_color: 0x0077CC
                       text_align: CENTER
 
-            # ── Arc 2: Max RPM ─────────────────────────────────────
+            # ── Arc 2: Beschleunigung (Trapez-Rampe %) ────────────
+            - obj:
+                id: arc_area_acc
+                width: 320
+                height: 340
+                align: TOP_MID
+                x: 0
+                y: 100
+                bg_opa: TRANSP
+                border_width: 0
+                scrollable: false
+                clickable: false
+                pad_all: 0
+                widgets:
+                  - label:
+                      text: "Beschleunigung"
+                      align: TOP_MID
+                      y: 0
+                      text_font: font_normal
+                      text_color: 0x334455
+                  - arc:
+                      id: arc_acc
+                      width: 260
+                      height: 260
+                      align: TOP_MID
+                      y: 40
+                      min_value: 10
+                      max_value: 100
+                      value: 100
+                      adjustable: true
+                      arc_color: 0x885500
+                      arc_width: 15
+                      indicator:
+                        arc_color: 0xFF9933
+                        arc_width: 15
+                      knob:
+                        bg_color: 0xFF9933
+                        width: 22
+                        height: 22
+                        radius: 11
+                      on_value:
+                        - lambda: |-
+                            id(sw_acc) = (int)x;
+                            char buf[8];
+                            snprintf(buf, sizeof(buf), "%d%%", (int)x);
+                            lv_label_set_text(id(lbl_arc_acc_val), buf);
+                  - label:
+                      id: lbl_arc_acc_val
+                      text: "100%"
+                      align: TOP_MID
+                      y: 148
+                      text_font: font_arc_val
+                      text_color: 0xCC7700
+                      text_align: CENTER
+                  - label:
+                      text: "Rampe"
+                      align: TOP_MID
+                      y: 203
+                      text_font: font_small
+                      text_color: 0x556677
+
+            # ── Arc 3: Max RPM ─────────────────────────────────────
             - obj:
                 id: arc_area_rpm
-                width: 420
+                width: 320
                 height: 340
                 align: TOP_RIGHT
-                x: -60
+                x: -20
                 y: 100
                 bg_opa: TRANSP
                 border_width: 0
@@ -247,15 +308,15 @@ lvgl:
                       value: 15          # default
                       adjustable: true
                       arc_color: 0x226622
-                      arc_width: 18
+                      arc_width: 15
                       indicator:
                         arc_color: 0x44FF88
-                        arc_width: 18
+                        arc_width: 15
                       knob:
                         bg_color: 0x44FF88
-                        width: 26
-                        height: 26
-                        radius: 13
+                        width: 22
+                        height: 22
+                        radius: 11
                       on_value:
                         - lambda: |-
                             id(sw_max_speed_rpm) = (int)x;
