@@ -524,7 +524,7 @@ lvgl:
                       align: TOP_MID
                       y: 32
                       min_value: 1
-                      max_value: 90
+                      max_value: 180
                       value: 20
                       adjustable: true
                       arc_color: 0x442288
@@ -579,7 +579,7 @@ lvgl:
                       align: TOP_MID
                       y: 32
                       min_value: 1
-                      max_value: 60
+                      max_value: 240
                       value: 5
                       adjustable: true
                       arc_color: 0x113355
