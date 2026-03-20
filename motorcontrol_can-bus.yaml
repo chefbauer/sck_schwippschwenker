@@ -1,3 +1,32 @@
+# ── Komponenten ──────────────────────────────────────────────────────────────────
+#  globals:        v_energy_idle
+#  canbus:         can_bus
+#  binary_sensor:  dreher_auswurfstellung
+#  number:         Motor_set_Work_mA  (kein id)
+#  sensor:         sensor_motor_status, sensor_motor_position_abs_axis,
+#                  sensor_motor_position, sensor_motor_position_error,
+#                  sensor_motor_winkel
+#  button:         Button_Motor_Calibrate, Button_Motor_Setze_0,
+#                  Button_Motor_Status_Update, Button_Motor_Winkelerkennung,
+#                  Button_Motor_GET_Pos_ABS_Axis, Button_Motor_30re,
+#                  Button_Motor_Nullstellung_DRITTEL, Button_Motor_RE5000,
+#                  Button_script_change_can_id_9_to_motor_can_id,
+#                  Motor_SET_Default, Motor_Speed_200/250/30/600/1200/3000,
+#                  Motor_SET_CL_256/64, Motor_Speed_Stop_SLOW/Stop/Stop_Fast,
+#                  CAN_TEST
+#  script:         script_motor_set_zero, script_motor_set_respond_on/off,
+#                  script_motor_set_work_current_mA, script_motor_set_idle_current_perc,
+#                  script_motor_get_status, script_motor_get_winkel,
+#                  script_motor_get_pos_abs_axis, script_motor_set_default,
+#                  script_motor_set_cl_Steps, script_motor_set_speed,
+#                  script_motor_set_speed_dir, script_motor_goto_position_abs_axis,
+#                  script_motor_goto_position_abs_axis_degree,
+#                  script_Motor_Nullstellung_DRITTEL/VIERTEL,
+#                  script_Button_Motor_Nullstellung,
+#                  script_change_can_id_9_to_motor_can_id,
+#                  script_motor_goto_relative_degree
+# ─────────────────────────────────────────────────────────────────────────────────
+
 globals:
   - id: v_energy_idle
     type: float

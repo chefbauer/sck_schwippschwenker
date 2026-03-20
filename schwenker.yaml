@@ -21,6 +21,19 @@
 #   sw_motor_ramp     :  Motor-internes acc-Byte (1–254) für 50ms-Stufenglättung
 #
 # ============================================================
+# ── Komponenten ──────────────────────────────────────────────────────────────────
+#  globals:  sw_aktiv, sw_richtung, sw_phase_ms, sw_halbperiode_ms,
+#            sw_max_speed_rpm, sw_acc, sw_motor_ramp, sw_work_current_mA,
+#            sw_motor_last_move_ms, sw_motor_busy, sw_stop_pending,
+#            slider_trim_last, pumpe_a_aktiv,
+#            preset[1..5]_hp_ms / _rpm / _acc
+#  script:   script_schwenker_settings_open, script_schwenker_start,
+#            script_schwenker_stop, script_schwenker_goto_slot,
+#            script_motor_reboot, script_pumpe_a_kurz, script_pumpe_a_lang,
+#            script_pumpe_a_aus, script_system_ein, script_system_aus
+#  button:   btn_schwenker_toggle
+#  interval: (kein id)
+# ─────────────────────────────────────────────────────────────────────────────────
 
 globals:
   # ── Laufzustand ──────────────────────────────────────────
@@ -379,8 +392,8 @@ script:
           ESP_LOGI("pumpe", "Beckenfüllung KURZ start");
       - delay: 300ms
       - lambda: |-
-          id(output_pumpe_dacA).set_level(0.02f);  // 5% Dauer
-          lv_slider_set_value(id(slider_turmpumpe), 5, LV_ANIM_OFF);
+          id(output_pumpe_dacA).set_level(0.02f);  // 2% Dauer
+          lv_slider_set_value(id(slider_turmpumpe), 2, LV_ANIM_OFF);
 
   # ── Beckenfüllung Lang (25% → 15% → 100% → 5% Dauer) ─────
   - id: script_pumpe_a_lang
@@ -397,10 +410,10 @@ script:
       - delay: 2000ms
       - lambda: |-
           id(output_pumpe_dacA).set_level(1.0f);   // 100% Spülen
-      - delay: 8000ms
+      - delay: 10000ms
       - lambda: |-
-          id(output_pumpe_dacA).set_level(0.05f);  // 5% Dauer
-          lv_slider_set_value(id(slider_turmpumpe), 5, LV_ANIM_OFF);
+          id(output_pumpe_dacA).set_level(0.05f);  // 2% Dauer
+          lv_slider_set_value(id(slider_turmpumpe), 2, LV_ANIM_OFF);
 
   # ── Beckenfüllung AUS ────────────────────────────────────
   - id: script_pumpe_a_aus

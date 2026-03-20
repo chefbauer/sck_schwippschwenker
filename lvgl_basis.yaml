@@ -7,6 +7,14 @@
 # packages:
 #   lvgl_config: !include lvgl_basis.yaml
 # ================================
+# ── Komponenten ──────────────────────────────────────────────────────────────────
+#  font:      font_title, font_normal, font_preset_num, font_tab, font_small,
+#             font_clock, font_temp, font_icons, font_timer, font_arc_val, font_icon_xl
+#  globals:   slot_start_ms, slot_elapsed_ms, slot_status,
+#             brightness_auto_mode, brightness_auto_updating, system_ein
+#  interval:  (kein id)
+#  lvgl:      page_main, page_settings
+# ─────────────────────────────────────────────────────────────────────────────────
 
 # Font Definitionen (Top-Level, nicht unter lvgl!)
 font:
@@ -20,7 +28,13 @@ font:
     id: font_normal
     size: 28
     bpp: 4
-    glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~°·–①②③④⑤"
+    glyphs: " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyzäöüÄÖÜß{|}~°·–"
+
+  - file: "gfonts://Noto+Sans+Symbols@400"
+    id: font_preset_num
+    size: 28
+    bpp: 4
+    glyphs: "①②③④⑤"
 
   - file: "gfonts://Roboto@400"
     id: font_tab

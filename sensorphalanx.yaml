@@ -5,6 +5,14 @@
 # Alle Sensoren teilen sich den gemeinsamen I²C-Bus
 # der Hauptkonfiguration (main_config): "i2c_bus"
 # ================================
+# ── Komponenten ──────────────────────────────────────────────────────────────────
+#  sensor:   distance_sensor, sensor_sht4x_temp, sensor_sht4x_humi,
+#            bmp_temperature, bmp_pressure, indoor_altitude,
+#            sensor_veml7700_lux, sensor_Temp_OBJECT
+#  button:   mlx_set_extended
+#  script:   script_mlx90632_set_mode_continous_extended_16hz
+# ─────────────────────────────────────────────────────────────────────────────────
+
 esphome:
   includes: 
       - includes/mlx_functions.h

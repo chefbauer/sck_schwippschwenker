@@ -7,6 +7,13 @@
 > ohne dass der Benutzer es explizit fordert. Relevante Daten: Pin-Belegungen,
 > Plattform-/Bus-Entscheidungen, Sensor-IDs, neue Komponenten, geänderte Logik,
 > offene TODOs. Änderungen im Abschnitt **Changelog** dokumentieren.
+>
+> **YAML-Komponenten-Übersichten:** Jede YAML-Datei hat am Anfang einen `# ── Komponenten ──`
+> Kommentarblock mit allen ESPHome-Typen und ihren IDs. Dieser Kommentarblock **muss
+> ebenfalls aktualisiert werden**, wenn Komponenten hinzukommen, wegfallen oder umbenannt werden.
+> Gilt für alle 9 Dateien: `ble.yaml`, `cooler.yaml`, `display.yaml`, `hardware.yaml`,
+> `lvgl_basis.yaml`, `lvgl_overlay.yaml`, `motorcontrol_can-bus.yaml`, `schwenker.yaml`,
+> `sensorphalanx.yaml`.
 
 ---
 
@@ -118,15 +125,19 @@ Bei Änderungen von Texten mit `font_title` muss die Glyph-Liste manuell aktuali
 
 | ID | Datei | Größe | Verwendung |
 |---|---|---|---|
-| `font_title` | Roboto 700 (gfonts) | 60 | Seitentitel |
+| `font_title` | Roboto 700 (gfonts) | 60 | Seitentitel (minimale Glyph-Liste!) |
 | `font_normal` | Roboto 400 (gfonts) | 28 | Labels, Buttons, allgemein |
 | `font_tab` | Roboto 400 (gfonts) | 30 | Tab-Beschriftungen |
-| `font_small` | Roboto 400 (gfonts) | 18 | Beschriftungen, Overlay-Hilfstexte |
-| `font_icons` | Font Awesome Solid 6.5.0 (CDN) | 40 | Play/Pause/Schneeflocke/Zahnrad (U+F04B, U+F04C, U+F2DC, U+F013) |
+| `font_small` | Roboto 700 (gfonts) | 18 | Beschriftungen, Overlay-Hilfstexte |
+| `font_preset_num` | Noto Sans Symbols 400 (gfonts) | 28 | Eingekreiste Ziffern ①②③④⑤ (Preset-Labels) |
+| `font_icons` | Font Awesome Solid 6.5.0 (CDN) | 40 | Icons: U+F773 (Water), U+F021 (arrows-rotate), U+F011 (Power), U+F013 (Gear), … |
 | `font_timer` | 5x7-dot-matrix.ttf (lokal) | 35 | Timer-Anzeige MM:SS |
 | `font_clock` | Roboto 400 (gfonts) | 22 | Uhrzeit HH:MM:SS in Statusleiste |
+| `font_arc_val` | Roboto 400 (gfonts) | 56 | Arc-Wert-Labels (Glyphs: `0–9 . s % `) |
+| `font_icon_xl` | Font Awesome Solid (CDN) | 120 | Nur U+F021 – aktuell nicht mehr in Overlays verwendet |
 
-**Sonderzeichen in Glyphs** (alle vier Text-Fonts): `äöüÄÖÜß°·–`  
+**Sonderzeichen in Glyphs** (Text-Fonts): `äöüÄÖÜß°·–%`  
+`font_preset_num` enthält **nur** `①②③④⑤` (Roboto hat diese Zeichen nicht → Noto Sans Symbols)  
 Icon-Bytes in Lambdas: Play = `\xef\x81\x8b`, Pause = `\xef\x81\x8c`, Schneeflocke = `\xef\x8b\x9c`
 
 ---
@@ -273,6 +284,21 @@ Tab-Reihenfolge: **System · Bildschirm · Kühler · Test**
 ---
 
 ## Overlays (`lvgl_overlay.yaml`, `top_layer`)
+
+### `overlay_schwenker_settings` — Schwenker-Einstellungen
+- Vollflächig (100%×100%), weiß, `bg_opa: 97%`, initial `hidden: true`
+- **Start/Stop-Button** `btn_schwenker_overlay_toggle` (TOP_LEFT 80×55, grau, U+F021): `on_press` → Schwenker start/stop
+- **Exit-Button** `btn_schwenker_settings_exit` (TOP_RIGHT 80×55, rot `#CC3333`)
+- **3 Arcs** (y=145, je 320×340 px), nebeneinander:
+  - `arc_schwenkzeit` (blau, min=10 max=200, Einheit ×100ms → 1–20 s) → `lbl_arc_zeit_val`
+  - `arc_acc` (orange, min=10 max=100, Einheit %) → `lbl_arc_acc_val` + `lbl_trapez_shape` (ASCII: `/\` bis `/___\`)
+  - `arc_rpm` (grün, min=1 max=100) → `lbl_arc_rpm_val`
+- **Trapez-Form ASCII** (kein Unicode – nicht in Roboto): `a≥80` → `/\`, `a≥55` → `/_\`, `a≥35` → `/___\`, sonst → `/_____\`
+- **5 Preset-Buttons** `btn_preset[1..5]` (178×80 px, je ①–⑤ via `font_preset_num`):
+  - `on_short_click`: lädt hp_ms + rpm + acc, setzt alle 3 Arcs + Labels
+  - `on_long_press`: speichert aktuelle Globals in preset[N]_*, aktualisiert `lbl_preset[N]_vals`
+- **Öffnen:** `script_schwenker_settings_open` (zentral, von Long-Press Hauptbutton + Einstellungen-Tab)
+- **Start/Stop Hauptseite:** `btn_schwenker_main` → `on_short_click` (Long-Press öffnet nur Overlay, startet/stoppt **nicht**)
 
 ### `overlay_amg8833` — AMG8833 Live-Ansicht
 - Vollflächig (100%×100%), weiß, `bg_opa: 90%`, initial `hidden: true`
@@ -427,12 +453,16 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | `sw_richtung` | int | +1 | +1 = CW, -1 = CCW |
 | `sw_phase_ms` | uint32_t | 0 | Fortschritt in aktueller Halbperiode |
 | `sw_halbperiode_ms` | uint32_t | 3000 | Zeit pro Richtung (ms) |
-| `sw_max_speed_rpm` | int | 100 | Spitzengeschwindigkeit (kein Upper-Clamp) |
-| `sw_acc` | int | 200 | Internes Ramping 1–254 (Motor interpoliert Stufen) |
+| `sw_max_speed_rpm` | int | 100 | Spitzengeschwindigkeit |
+| `sw_acc` | int | 100 | **10–100 %** = Rampenanteil der Halbperiode (acc+dec zusammen); 100 % = purer Sinus, 50 % = 25 % rauf + 50 % Plateau + 25 % runter |
+| `sw_motor_ramp` | int | 20 | Motor-internes acc-Byte (1–254) für 50ms-Stufenglättung (NVS persistent) |
 | `sw_work_current_mA` | int | 1000 | Arbeitsstrom in mA (NVS persistent, 500–2000) |
 | `sw_motor_last_move_ms` | uint32_t | 0 | millis() beim letzten Stopp (0 = inaktiv) |
 | `sw_motor_busy` | bool | false | Blockiert Idle-Timeout während Bewegung |
 | `sw_stop_pending` | bool | false | Sanfter Stop angefordert – wartet auf Zyklusende |
+| `preset[1..5]_hp_ms` | uint32_t | — | Gespeicherte Halbperiode je Preset |
+| `preset[1..5]_rpm` | int | — | Gespeicherte RPM je Preset |
+| `preset[1..5]_acc` | int | 100 | Gespeicherter Acc-% je Preset |
 
 **Takt (50ms):**
 - `speed = max_rpm * sin(π * phase_ms / T_half)` → 0→max→0 pro Halbperiode
@@ -444,7 +474,8 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 
 | Script | Beschreibung |
 |---|---|
-| `script_schwenker_start` | Motor-Init (Mode 4, 64 Steps, `sw_work_current_mA`, idle min) → Sinus starten |
+| `script_schwenker_settings_open` | **Zentrale Sync-Funktion**: setzt alle 3 Arcs + Value-Labels + lbl_trapez_shape auf aktuelle Globals → öffnet overlay_schwenker_settings |
+| `script_schwenker_start` | Motor-Init (Closed Loop 0x04 hardcoded, 64 Steps, `sw_work_current_mA`, idle min) → Sinus starten |
 | `script_schwenker_stop` | Setzt `sw_stop_pending=true` + Buttons orange → Stop erfolgt am nächsten Richtungswechsel |
 | `script_system_ein` | system_ein=true → Power-Button grün → Thermostat COOL |
 | `script_system_aus` | system_ein=false → Power-Button rot → Schwenker stopp → Thermostat OFF → Pumpen aus |
@@ -526,6 +557,14 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | 2026-03-20 (session) | — | schwenker.yaml: goto_slot stoppt Schwenker geordnet (F5+800ms) vor Positionsfahrt |
 | 2026-03-20 (session) | — | schwenker.yaml: Speed-Clamp entfernt, max_value arc_rpm=100, default=15 RPM |
 | 2026-03-20 (session) | — | lvgl_basis.yaml: Wochentag-Fix `t.day_of_week - 1` (1-basiert → 0-basiert) |
+| 2026-03-20 (session) | — | `overlay_schwenker_settings` komplett redesignt: 3 Arcs (y=145), Trapez-ASCII, 5 Presets (①–⑤) |
+| 2026-03-20 (session) | — | overlay_schwenker_test + btn_sw_motor_mode_toggle (Closed Loop/FOC) entfernt; Closed Loop hardcoded 0x04 |
+| 2026-03-20 (session) | — | `btn_schwenker_main`: on_press → on_short_click (Long-Press startet/stoppt nicht mehr) |
+| 2026-03-20 (session) | — | `script_schwenker_settings_open` neu: zentrale Sync-Funktion für Overlay-Öffnen |
+| 2026-03-20 (session) | — | `sw_acc` Bedeutung geändert: 10–100 % Rampenanteil (war Motor-Rampenbyte); `sw_motor_ramp` = Motor-internes Byte |
+| 2026-03-20 (session) | — | `font_arc_val` Glyphs: `%` ergänzt; `font_icons` Glyphs: U+F021 ergänzt |
+| 2026-03-20 (session) | — | `font_preset_num` neu: Noto+Sans+Symbols size=28, nur ①②③④⑤ (Roboto hat diese Zeichen nicht) |
+| 2026-03-20 (session) | — | Alle 9 YAML-Dateien: `# ── Komponenten ──` Übersicht am Anfang jeder Datei eingefügt |
 
 
 ---

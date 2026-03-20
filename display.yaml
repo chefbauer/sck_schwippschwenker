@@ -1,3 +1,11 @@
+# ── Komponenten ──────────────────────────────────────────────────────────────────
+#  substitutions:  pin_i2c_scl, pin_i2c_sda, pin_can_rx_pin, pin_can_tx_pin,
+#                  pin_pwm1..4, pin_led_h1, pin_led_h2, pin_led_v1, pin_led_v2,
+#                  pin_1w, fan_kompressor_min_perc, fan_kompressor_max_perc,
+#                  master_can_id, motor_can_id, c_motor_direction,
+#                  c_pumpe_umwaelzung_ein_perc
+# ─────────────────────────────────────────────────────────────────────────────────
+
 substitutions:
   # PINS
   pin_i2c_scl: GPIO8

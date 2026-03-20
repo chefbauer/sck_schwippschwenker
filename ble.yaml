@@ -5,6 +5,11 @@
 # Externe Komponente: github://dz0ny/esphome-bthome
 # ble_stack: bluedroid (Standard) – passend für P4+C6.
 # ================================
+# ── Komponenten ──────────────────────────────────────────────────────────────────
+#  esp32_ble_tracker:  scan_parameters
+#  bthome_receiver:    (kein id)
+#  sensor:             sensor_temp_becken
+# ─────────────────────────────────────────────────────────────────────────────────
 
 external_components:
   - source:

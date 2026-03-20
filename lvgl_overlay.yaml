@@ -1,3 +1,18 @@
+# ── Komponenten ──────────────────────────────────────────────────────────────────
+#  lvgl / top_layer:
+#    overlay_amg8833:
+#      amg_grid_container, btn_amg_exit, btn_amg_mode, lbl_amg_mode
+#    overlay_schwenker_settings:
+#      btn_schwenker_settings_exit, btn_schwenker_overlay_toggle,
+#      arc_area_zeit → arc_schwenkzeit, lbl_arc_zeit_val
+#      arc_area_acc  → arc_acc, lbl_arc_acc_val, lbl_trapez_shape
+#      arc_area_rpm  → arc_rpm, lbl_arc_rpm_val
+#      row_presets   → btn_preset[1..5], lbl_preset[1..5]_name/vals
+#    overlay_sensorphalanx:
+#      btn_sensorphalanx_exit,
+#      row_sp_tof/temp/humi/pressure/altitude/light/mlx + je badge + value_label
+# ─────────────────────────────────────────────────────────────────────────────────
+
 lvgl:
   top_layer:
     widgets:
@@ -353,11 +368,11 @@ lvgl:
                       widgets:
                         - label:
                             id: lbl_preset1_name
-                            text: "\u2460"
+                            text: "①"
                             align: TOP_LEFT
                             x: 12
                             y: 8
-                            text_font: font_normal
+                            text_font: font_preset_num
                             text_color: 0xFFFFFF
                         - label:
                             id: lbl_preset1_vals
@@ -411,11 +426,11 @@ lvgl:
                       widgets:
                         - label:
                             id: lbl_preset2_name
-                            text: "\u2461"
+                            text: "②"
                             align: TOP_LEFT
                             x: 12
                             y: 8
-                            text_font: font_normal
+                            text_font: font_preset_num
                             text_color: 0xFFFFFF
                         - label:
                             id: lbl_preset2_vals
@@ -469,11 +484,11 @@ lvgl:
                       widgets:
                         - label:
                             id: lbl_preset3_name
-                            text: "\u2462"
+                            text: "③"
                             align: TOP_LEFT
                             x: 12
                             y: 8
-                            text_font: font_normal
+                            text_font: font_preset_num
                             text_color: 0xFFFFFF
                         - label:
                             id: lbl_preset3_vals
@@ -527,11 +542,11 @@ lvgl:
                       widgets:
                         - label:
                             id: lbl_preset4_name
-                            text: "\u2463"
+                            text: "④"
                             align: TOP_LEFT
                             x: 12
                             y: 8
-                            text_font: font_normal
+                            text_font: font_preset_num
                             text_color: 0xFFFFFF
                         - label:
                             id: lbl_preset4_vals
@@ -585,11 +600,11 @@ lvgl:
                       widgets:
                         - label:
                             id: lbl_preset5_name
-                            text: "\u2464"
+                            text: "⑤"
                             align: TOP_LEFT
                             x: 12
                             y: 8
-                            text_font: font_normal
+                            text_font: font_preset_num
                             text_color: 0xFFFFFF
                         - label:
                             id: lbl_preset5_vals
