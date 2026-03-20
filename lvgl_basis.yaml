@@ -1629,7 +1629,6 @@ lvgl:
                                   min_value: 500
                                   max_value: 2000
                                   value: 1000
-                                  step: 50
                                   on_release:
                                     - lambda: |-
                                         id(sw_work_current_mA) = (int)x;  // in NVS speichern
