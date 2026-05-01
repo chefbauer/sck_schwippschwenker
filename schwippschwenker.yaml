@@ -36,6 +36,9 @@ substitutions:
   fan_kompressor_max_perc:        "92"
   c_pumpe_umwaelzung_ein_perc:    "30"
   c_thermostat_deadband:          "0.9"   # °C – Thermostat schaltet EIN bei Zieltemp + Deadband
+  c_icebank_pump_interval_length: "10"   # s  – Gesamt-Intervall des Pumpenpulses
+  c_icebank_pump_ed:              "10"   # %  – Einschaltdauer (10% von 10s = 1s EIN)
+  c_icebank_pump_power:           "20"   # %  – Pumpenleistung während Eisbank-Puls
 
   # ── Sensor-Phalanx Update-Intervalle ─────────────────────
   c_tof_update_interval:       500ms

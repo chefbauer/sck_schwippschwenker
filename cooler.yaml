@@ -62,9 +62,10 @@ script:
           // Eisbank aktiv markieren
           id(eisbank_laeuft) = true;
           id(eisbank_start_ms) = millis();
-          // Tankkühlung (Umwälzpumpe dacB) sofort aus → Kühlschlangen gefrieren
+          // Tankkühlung: Pumpenpuls-Modus starten (verhindert Düsenzufrieren)
           id(output_pumpe_dacB).turn_off();
           lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
+          id(script_eisbank_pump_tick).execute();  // ersten Puls sofort
           // Thermostat auf Turbo-Ziel −1 °C → Kompressor läuft durch (nie erreichbar im Wasser)
           auto call = id(climate_thermostat).make_call();
           call.set_target_temperature(-1.0f);
@@ -77,6 +78,23 @@ script:
           ESP_LOGI("eisbank", "Gestartet – Dauer %d min, Normaltemp %.1f °C",
                    id(eisbank_dauer_min), id(eisbank_normal_target_x10) / 10.0f);
 
+  # ── Eisbank-Pumpenpuls ────────────────────────────────────────────────────────
+  # Verhindert Düsenzufrieren: kurzer Pumpenimpuls alle c_icebank_pump_interval_length s
+  # ED% bestimmt ON-Zeit: z.B. 10s × 10% = 1s EIN bei c_icebank_pump_power%
+  - id: script_eisbank_pump_tick
+    mode: single
+    then:
+      - if:
+          condition:
+            lambda: "return id(eisbank_laeuft);"
+          then:
+            - output.set_level:
+                id: output_pumpe_dacB
+                level: !lambda "return ${c_icebank_pump_power} / 100.0f;"
+            - delay: !lambda "return (uint32_t)(${c_icebank_pump_interval_length} * 1000.0f * ${c_icebank_pump_ed} / 100.0f);"
+            - lambda: |-
+                if (id(eisbank_laeuft)) id(output_pumpe_dacB).turn_off();
+
   # ── Eisbank stoppen ──────────────────────────────────────────────────────────
   # Stellt Normaltemp wieder her; Thermostat übernimmt dacB via cool_action
   - id: script_eisbank_stop
@@ -86,6 +104,9 @@ script:
           if (!id(eisbank_laeuft)) return;
           id(eisbank_laeuft) = false;
           id(eisbank_start_ms) = 0;
+          // Pumpenpuls stoppen (falls gerade ON-Phase läuft)
+          id(script_eisbank_pump_tick).stop();
+          id(output_pumpe_dacB).turn_off();
           // Thermostat auf gesicherte Normaltemp zurücksetzen
           float t = id(eisbank_normal_target_x10) / 10.0f;
           if (t < 0.0f || t > 5.0f) t = 0.8f;
@@ -149,3 +170,13 @@ interval:
               id(script_eisbank_start).execute();
             }
           }
+
+  # ── Eisbank-Pumpenpuls-Intervall ─────────────────────────────────────────────
+  # Trigger alle c_icebank_pump_interval_length Sekunden; Script übernimmt ON/OFF-Timing
+  - interval: ${c_icebank_pump_interval_length}s
+    then:
+      - if:
+          condition:
+            lambda: "return id(eisbank_laeuft);"
+          then:
+            - script.execute: script_eisbank_pump_tick
