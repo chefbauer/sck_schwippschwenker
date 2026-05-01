@@ -296,8 +296,7 @@ light:
             const int dir     = ${c_led_strip_outer_direction};
 
             // Echtzeit-Drehzahl via CAN 0x32 (sensor_motor_rt_speed, 5 Hz, thread-safe)
-            // Skalierung: ÷8 bereits im CAN-Handler → Wert = echte Wellen-UPM
-            // Falls Wert unplausibel (z.B. 8× zu hoch) → in motorcontrol_can-bus.yaml ÷8 entfernen
+            // raw = tatsächliche Wellen-RPM (kein Skalierungsfaktor), Betrag bereits im CAN-Handler
             float rpm = id(sensor_motor_rt_speed).state;
             if (isnan(rpm) || rpm < 1.0f) rpm = 1.0f;
             if (rpm > 400.0f)             rpm = 400.0f;

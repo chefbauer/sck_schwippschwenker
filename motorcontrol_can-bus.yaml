@@ -83,14 +83,12 @@ canbus:
             {
               // 32 = RT Speed
               // Byte []1-[]2! → int16_t (CCW > 0, CW < 0 laut Doku)
+              // raw = tatsächliche Wellen-RPM direkt (kein Skalierungsfaktor nötig)
               int16_t speed_raw = (static_cast<int16_t>(x[1]) << 8) |
                                    static_cast<uint8_t>(x[2]);
-              // ÷8: Firmware-interne Skalierung identisch zum F5-Setzen (×8 wegen 128 Sub)
-              // Falls Motor echte UPM liefert → ÷8 entfernen und Kommentar anpassen
-              float speed_rpm = (float)speed_raw / 8.0f;
-              if (speed_rpm < 0.0f) speed_rpm = -speed_rpm;  // Vorzeichen: CCW positiv
+              float speed_rpm = (speed_raw < 0) ? (float)(-speed_raw) : (float)speed_raw;
               id(sensor_motor_rt_speed).publish_state(speed_rpm);
-              ESP_LOGD("candump_32", "Motor RT RPM (raw=%i div8=%.1f)", speed_raw, speed_rpm);
+              ESP_LOGD("candump_32", "Motor RT RPM (raw=%i rpm=%.1f)", speed_raw, speed_rpm);
             }
             else if (command == 0x39)
             {
