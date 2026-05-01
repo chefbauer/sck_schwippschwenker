@@ -668,6 +668,9 @@ script:
           }
           lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(color), 0);
           lv_label_set_text(id(lbl_pumpe_modus), lbl);
+          // Labelfarbe: hellblau wenn A oder M, hellgrau wenn AUS
+          lv_obj_set_style_text_color(id(lbl_pumpe_modus),
+            lv_color_hex(modus > 0 ? 0xAADDFF : 0xAAAAAA), 0);
           // Aktion je Modus
           if (modus == 0) {
             // AUS: Pumpe stoppen

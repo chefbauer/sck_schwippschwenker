@@ -553,12 +553,12 @@ lvgl:
                         text_font: font_icons
                         text_color: 0xFFFFFF
                         text_opa: 45%
-                    - label:  # Modus-Overlay: A / M / leer (oben drüber)
+                    - label:  # Modus-Overlay: A / M / leer (oben drüber); hellblau wenn aktiv, hellgrau wenn AUS
                         id: lbl_pumpe_modus
                         align: CENTER
                         text: "A"
                         text_font: font_arc_val
-                        text_color: 0xFFFFFF
+                        text_color: 0xAADDFF
 
               # Schwenker-Steuerung: Großer runder Toggle-Button
               - obj:
