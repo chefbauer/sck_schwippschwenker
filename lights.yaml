@@ -5,6 +5,8 @@
 #
 #  sensor (extern, definiert in lvgl_basis.yaml):
 #    sensor_leds_per_slot  → Slot-Breite zur Laufzeit (1 … led_num/6)
+#  sensor (extern, definiert in schwenker.yaml):
+#    sensor_dr_speed_rpm   → Drehzahl in UPM (Global-Wrapper, für Strobo-Effekt)
 #
 #  binary_sensor (extern, definiert in lvgl_basis.yaml):
 #    bin_slot1_blink .. bin_slot6_blink  → Blink-Zustand je Slot (->state: plain bool)
@@ -261,5 +263,71 @@ light:
                     (uint8_t)(base.b * br)
                   );
                 }
+              }
+            }
+      - addressable_lambda:
+          name: "Strobo"
+          update_interval: 10ms
+          lambda: |-
+            // ── Stroboskop-Effekt ─────────────────────────────────────────────────────
+            // Blitzt synchron zur Motorgeschwindigkeit (sensor_dr_speed_rpm).
+            // Mit drift_factor % Versatz → langsame Scheinrotation sichtbar.
+            //
+            // Variablen:
+            //   drift_factor : Wie viel % langsamer als exakt-synchron (→ sichtbare Drift)
+            //   spot_half    : Halbbreite der Slot-Farb-Spots (spot_half*2+1 = LED-Anzahl)
+            //   flash_ms     : Dauer des Weiß-Blitzes in ms
+            //
+            const float    drift_factor = 0.05f;   // 5 % → Scheinrotation sichtbar
+            const int      spot_half    = 2;        // Spot-Breite = 5 LEDs (anpassbar)
+            const uint32_t flash_ms     = 20;       // Blitzdauer in ms
+
+            const Color slot_colors[6] = {
+              Color(255,   0,   0),   // Slot 1: Rot
+              Color(255, 255,   0),   // Slot 2: Gelb
+              Color(  0, 255,   0),   // Slot 3: Grün
+              Color(  0, 255, 255),   // Slot 4: Cyan
+              Color(  0,   0, 255),   // Slot 5: Blau
+              Color(255,   0, 255),   // Slot 6: Magenta
+            };
+
+            const int total   = ${c_led_strip_outer_led_num};
+            const int led0deg = ${c_led_strip_outer_led_0deg};
+            const int dir     = ${c_led_strip_outer_direction};
+
+            // Drehzahl aus Template-Sensor (Global dr_speed_rpm, thread-safe)
+            float rpm = id(sensor_dr_speed_rpm).state;
+            if (isnan(rpm) || rpm < 1.0f) rpm = 1.0f;
+            if (rpm > 400.0f)             rpm = 400.0f;
+
+            // Blitzperiode: 1 Blitz pro Umdrehung, aber (1 - drift_factor) × Rotationsfrequenz
+            // → scheinbare Restdrehung = drift_factor × rpm (z. B. 5 % → 3 UPM bei 60 UPM)
+            float freq_hz      = (rpm / 60.0f) * (1.0f - drift_factor);
+            uint32_t period_ms = (uint32_t)(1000.0f / freq_hz);
+            if (period_ms < 10u) period_ms = 10u;
+
+            bool flash_on = ((millis() % period_ms) < flash_ms);
+
+            // Motor-Position → Slot-Positionen
+            float raw = id(sensor_motor_position).state;
+            if (isnan(raw) || raw < 0.0f) raw = 0.0f;
+            float motor_deg = raw * 360.0f / 16384.0f;
+            if (${c_motor_direction} == 0) { motor_deg = 360.0f - motor_deg; }
+
+            // Hintergrund: weiß im Blitz, sonst schwarz
+            Color bg = flash_on ? Color(255, 255, 255) : Color::BLACK;
+            for (int i = 0; i < it.size(); i++) { it[i] = bg; }
+
+            // Slot-Farb-Spots immer sichtbar (feste Breite = spot_half*2+1)
+            for (int s = 0; s < 6; s++) {
+              float slot_step = (${c_led_strip_color_mirror} == 0) ? 60.0f : -60.0f;
+              float slot_deg  = fmod(motor_deg + s * slot_step, 360.0f);
+              if (slot_deg < 0.0f) slot_deg += 360.0f;
+              float offset = slot_deg * total / 360.0f;
+              int center = (int)(led0deg + (dir == 0 ? offset : -offset) + 0.5f);
+              center = ((center % total) + total) % total;
+              for (int d = -spot_half; d <= spot_half; d++) {
+                int idx = ((center + d) % total + total) % total;
+                it[idx] = slot_colors[s];
               }
             }

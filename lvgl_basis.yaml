@@ -2343,10 +2343,10 @@ lvgl:
                                   text_color: 0x000000
                               - button:
                                   id: btn_led_effekt_aus
-                                  width: 160
+                                  width: 140
                                   height: 58
                                   align: LEFT_MID
-                                  x: 240
+                                  x: 140
                                   bg_color: 0x555555
                                   on_click:
                                     - lambda: |-
@@ -2361,10 +2361,10 @@ lvgl:
                                         text_color: 0xFFFFFF
                               - button:
                                   id: btn_led_effekt_slot
-                                  width: 160
+                                  width: 140
                                   height: 58
                                   align: LEFT_MID
-                                  x: 420
+                                  x: 295
                                   bg_color: 0x224488
                                   on_click:
                                     - lambda: |-
@@ -2379,10 +2379,10 @@ lvgl:
                                         text_color: 0xFFFFFF
                               - button:
                                   id: btn_led_effekt_slot_plus
-                                  width: 160
+                                  width: 140
                                   height: 58
                                   align: LEFT_MID
-                                  x: 600
+                                  x: 450
                                   bg_color: 0x335599
                                   on_click:
                                     - lambda: |-
@@ -2397,10 +2397,10 @@ lvgl:
                                         text_color: 0xFFFFFF
                               - button:
                                   id: btn_led_effekt_slot_mix
-                                  width: 160
+                                  width: 140
                                   height: 58
                                   align: LEFT_MID
-                                  x: 780
+                                  x: 605
                                   bg_color: 0x446622
                                   on_click:
                                     - lambda: |-
@@ -2410,6 +2410,24 @@ lvgl:
                                   widgets:
                                     - label:
                                         text: "Mix"
+                                        align: CENTER
+                                        text_font: font_normal
+                                        text_color: 0xFFFFFF
+                              - button:
+                                  id: btn_led_effekt_strobo
+                                  width: 140
+                                  height: 58
+                                  align: LEFT_MID
+                                  x: 760
+                                  bg_color: 0x774400
+                                  on_click:
+                                    - lambda: |-
+                                        auto call = id(light_slots_outer).turn_on();
+                                        call.set_effect("Strobo");
+                                        call.perform();
+                                  widgets:
+                                    - label:
+                                        text: "Strobo"
                                         align: CENTER
                                         text_font: font_normal
                                         text_color: 0xFFFFFF

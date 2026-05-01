@@ -35,6 +35,7 @@
 #            script_motor_reboot, script_pumpe_a_kurz, script_pumpe_a_lang,
 #            script_pumpe_a_aus, script_system_ein, script_system_aus,
 #            script_drehen_start, script_drehen_stop, script_drehen_settings_open
+#  sensor:   sensor_dr_speed_rpm
 #  button:   btn_schwenker_toggle
 #  interval: (kein id)
 # ─────────────────────────────────────────────────────────────────────────────────
@@ -393,6 +394,15 @@ globals:
     type: bool
     restore_value: yes
     initial_value: 'true'
+
+# ============================================================
+# Sensor-Wrapper für addressable_lambda (GlobalsComponent !thread-safe)
+# ============================================================
+sensor:
+  - platform: template
+    id: sensor_dr_speed_rpm   # Wrapper für global dr_speed_rpm → sicher in addressable_lambda
+    lambda: return (float)id(dr_speed_rpm);
+    update_interval: 200ms
 
 # ============================================================
 # Scripts

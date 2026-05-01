@@ -870,3 +870,5 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | (session) | — | Button `btn_led_effekt_slot_mix` (Tab Licht, x=780) für neuen Mix-Effekt | `lvgl_basis.yaml` |
 | (session) | — | `sc_arbeitsanweisungen.md` neu: permanente Arbeitsanweisungen für KI | `sc_arbeitsanweisungen.md` |
 | 2026-04-28 (session) | — | Upgrade auf **ESPHome 2026.4 + LVGL 9.5** — kompiliert fehlerfrei; LVGL-8-Einschränkungen aktualisiert | alle YAML, `sc_projektinfo.md`, `sc_arbeitsanweisungen.md` |
+| 2026-05-01 (session) | — | Neuer LED-Effekt **„Strobo"**: Stroboskop synchron zu Motor-UPM (`sensor_dr_speed_rpm`), 5 % Drift für sichtbare Scheinrotation; Blitz=weiß, Slot-Farben feste 5 LEDs immer sichtbar | `lights.yaml`, `schwenker.yaml` |
+| 2026-05-01 (session) | — | Tab Licht: Button `btn_led_effekt_strobo` (braun `#774400`) für Effekt „Strobo"; alle 5 Effektbuttons auf 140 px Breite verkleinert und neu verteilt (x: 140/295/450/605/760) | `lvgl_basis.yaml` |
