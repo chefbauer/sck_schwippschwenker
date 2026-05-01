@@ -5,8 +5,8 @@
 #
 #  sensor (extern, definiert in lvgl_basis.yaml):
 #    sensor_leds_per_slot  → Slot-Breite zur Laufzeit (1 … led_num/6)
-#  sensor (extern, definiert in schwenker.yaml):
-#    sensor_dr_speed_rpm   → Drehzahl in UPM (Global-Wrapper, für Strobo-Effekt)
+#  sensor (extern, definiert in motorcontrol_can-bus.yaml):
+#    sensor_motor_rt_speed → Echtzeit-Drehzahl via CAN 0x32, 5 Hz (für Strobo-Effekt)
 #
 #  binary_sensor (extern, definiert in lvgl_basis.yaml):
 #    bin_slot1_blink .. bin_slot6_blink  → Blink-Zustand je Slot (->state: plain bool)
@@ -295,8 +295,10 @@ light:
             const int led0deg = ${c_led_strip_outer_led_0deg};
             const int dir     = ${c_led_strip_outer_direction};
 
-            // Drehzahl aus Template-Sensor (Global dr_speed_rpm, thread-safe)
-            float rpm = id(sensor_dr_speed_rpm).state;
+            // Echtzeit-Drehzahl via CAN 0x32 (sensor_motor_rt_speed, 5 Hz, thread-safe)
+            // Skalierung: ÷8 bereits im CAN-Handler → Wert = echte Wellen-UPM
+            // Falls Wert unplausibel (z.B. 8× zu hoch) → in motorcontrol_can-bus.yaml ÷8 entfernen
+            float rpm = id(sensor_motor_rt_speed).state;
             if (isnan(rpm) || rpm < 1.0f) rpm = 1.0f;
             if (rpm > 400.0f)             rpm = 400.0f;
 

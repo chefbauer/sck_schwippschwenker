@@ -3,7 +3,8 @@
 #  canbus:         can_bus
 #  binary_sensor:  dreher_auswurfstellung
 #  number:         Motor_set_Work_mA  (kein id)
-#  sensor:         sensor_motor_status, sensor_motor_position_abs_axis,
+#  sensor:         sensor_motor_rt_speed,
+#                  sensor_motor_status, sensor_motor_position_abs_axis,
 #                  sensor_motor_position, sensor_motor_position_error,
 #                  sensor_motor_winkel
 #  button:         Button_Motor_Calibrate, Button_Motor_Setze_0,
@@ -81,12 +82,15 @@ canbus:
             else if (command == 0x32)
             {
               // 32 = RT Speed
-              // Byte []1-[]2!
-              int32_t speed_rpm = (static_cast<int32_t>(x[1]) << 8) |
-                                      static_cast<uint32_t>(x[2]);
-              
-              ESP_LOGI("candump_39", "Motor RPM: %i", speed_rpm);
-              // id(sensor_motor_position_error).publish_state(position_error);
+              // Byte []1-[]2! → int16_t (CCW > 0, CW < 0 laut Doku)
+              int16_t speed_raw = (static_cast<int16_t>(x[1]) << 8) |
+                                   static_cast<uint8_t>(x[2]);
+              // ÷8: Firmware-interne Skalierung identisch zum F5-Setzen (×8 wegen 128 Sub)
+              // Falls Motor echte UPM liefert → ÷8 entfernen und Kommentar anpassen
+              float speed_rpm = (float)speed_raw / 8.0f;
+              if (speed_rpm < 0.0f) speed_rpm = -speed_rpm;  // Vorzeichen: CCW positiv
+              id(sensor_motor_rt_speed).publish_state(speed_rpm);
+              ESP_LOGD("candump_32", "Motor RT RPM (raw=%i div8=%.1f)", speed_raw, speed_rpm);
             }
             else if (command == 0x39)
             {
@@ -793,6 +797,12 @@ button:
       #     can_id: 3 # override the can_id configured in the can bus
 
 sensor:
+
+  - platform: template
+    id: sensor_motor_rt_speed    # Echtzeit-Drehzahl via CAN 0x32 (5 Hz), thread-safe für addressable_lambda
+    name: "Motor Echtzeit-RPM"
+    accuracy_decimals: 1
+    unit_of_measurement: "RPM"
 
   - platform: template
     id: sensor_motor_status

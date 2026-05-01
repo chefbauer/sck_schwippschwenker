@@ -35,7 +35,6 @@
 #            script_motor_reboot, script_pumpe_a_kurz, script_pumpe_a_lang,
 #            script_pumpe_a_aus, script_system_ein, script_system_aus,
 #            script_drehen_start, script_drehen_stop, script_drehen_settings_open
-#  sensor:   sensor_dr_speed_rpm
 #  button:   btn_schwenker_toggle
 #  interval: (kein id)
 # ─────────────────────────────────────────────────────────────────────────────────
@@ -394,15 +393,6 @@ globals:
     type: bool
     restore_value: yes
     initial_value: 'true'
-
-# ============================================================
-# Sensor-Wrapper für addressable_lambda (GlobalsComponent !thread-safe)
-# ============================================================
-sensor:
-  - platform: template
-    id: sensor_dr_speed_rpm   # Wrapper für global dr_speed_rpm → sicher in addressable_lambda
-    lambda: return (float)id(dr_speed_rpm);
-    update_interval: 200ms
 
 # ============================================================
 # Scripts
@@ -965,6 +955,7 @@ script:
 # ============================================================
 # Interval-Blöcke
 #   10 ms – Motorposition (0x30)  → 100 Hz → LED-Ring immer frisch
+#  200 ms – Echtzeit-RPM (0x32)   →   5 Hz → Strobo-Effekt
 #   50 ms – Sinus-Regelschleife   → 20 Hz
 # ============================================================
 interval:
@@ -973,6 +964,12 @@ interval:
     then:
       - lambda: |-
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x30 }));
+
+  # ── Echtzeit-RPM: 5 Hz – für Strobo-LED-Effekt ──────────────────────────────
+  - interval: 200ms
+    then:
+      - lambda: |-
+          id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x32 }));
 
   # ── Schwenker-Regelzyklus: 20 Hz ───────────────────────────────────────────
   - interval: 50ms
