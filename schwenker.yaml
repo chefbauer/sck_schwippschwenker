@@ -714,9 +714,15 @@ script:
       - delay: 10s
       - lambda: |-
           if (id(pumpe_a_modus) == 2 && (id(sw_aktiv) || id(dr_aktiv))) {
-            float level = lv_slider_get_value(id(slider_turmpumpe)) / 100.0f;
+            // Initialisierungs-Fix: Slider kann nach Reboot 0 sein → Mindestwert 5%
+            int sv = lv_slider_get_value(id(slider_turmpumpe));
+            if (sv < 5) {
+              sv = 5;
+              lv_slider_set_value(id(slider_turmpumpe), sv, LV_ANIM_OFF);
+            }
+            float level = sv / 100.0f;
             id(output_pumpe_dacA).set_level(level);
-            ESP_LOGI("pumpe", "AUTO: Spülstoß Ende → Slider %.0f%%", level * 100.0f);
+            ESP_LOGI("pumpe", "AUTO: Spülstoß Ende → Pumpe %.0f%%", level * 100.0f);
           }
 
   # ── Beckenfüllung Kurz (25% → 5% Dauer) ──────────────────

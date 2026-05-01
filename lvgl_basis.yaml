@@ -113,6 +113,21 @@ font:
       - "\uF021"  # arrows-rotate (Schwenken, links+rechts)
       - "\uF2F9"  # rotate-right  (Drehen, nur rechts)
 
+  # Auto-Motor-Button: Drehsymbol ~30% größer als font_icons (40→52px)
+  - file: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.ttf"
+    id: font_icons_md
+    size: 52
+    bpp: 4
+    glyphs:
+      - "\uF021"  # arrows-rotate
+
+  # Auto-Motor-Button: A ~30% größer als font_normal (28→36px)
+  - file: "gfonts://Roboto@700"
+    id: font_auto_a
+    size: 36
+    bpp: 4
+    glyphs: "A"
+
   # IR-Temperatur-Overlay: Laser-Icon 80px (bewusst kleiner als Temp-Wert)
   - file: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.ttf"
     id: font_icon_ts
@@ -474,18 +489,18 @@ lvgl:
                         text_font: font_icons
                         text_color: 0xFFFFFF
               
-              # Auto-Rotations-Button (rund, tangential 45° links oben am Ring)
+              # Auto-Motor-Button (rund, tangential 45° links oben am Ring)
               # AN (auto_rotation=true):  grüner BG 0x00FF00, Pfeil+A weiß
               # AUS (auto_rotation=false): dunkelgrauer BG, Pfeil hellgrau, A dunkelgrau
-              # Short: Toggle AN ↔ AUS; Funktion folgt später
+              # Short: Toggle AN ↔ AUS
               - button:
                   id: btn_auto_rotation
-                  width: 80
-                  height: 80
+                  width: 104
+                  height: 104
                   align: CENTER
                   x: -156
                   y: -136
-                  radius: 40
+                  radius: 52
                   bg_color: 0x00FF00
                   bg_opa: COVER
                   border_width: 0
@@ -505,17 +520,17 @@ lvgl:
                           lv_obj_set_style_text_color(id(lbl_auto_rotation_a), lv_color_hex(0x555555), 0);
                         }
                   widgets:
-                    - label:  # Dreh-Icon: groß, weiß (AN) / hellgrau (AUS)
+                    - label:  # Dreh-Icon: ~30% größer als Standard (52px), weiß (AN) / hellgrau (AUS)
                         id: lbl_auto_rotation_icon
                         align: CENTER
                         text: "\uF021"
-                        text_font: font_icons
+                        text_font: font_icons_md
                         text_color: 0xFFFFFF
-                    - label:  # A-Overlay: kleiner, weiß (AN) / dunkelgrau (AUS)
+                    - label:  # A-Overlay: ~30% größer (36px), passt in Drehsymbol, weiß (AN) / dunkelgrau (AUS)
                         id: lbl_auto_rotation_a
                         align: CENTER
                         text: "A"
-                        text_font: font_normal
+                        text_font: font_auto_a
                         text_color: 0xFFFFFF
 
               # Beckenfüllungs-Button (rund, tangential 45° rechts unten am Ring)
@@ -1739,14 +1754,14 @@ lvgl:
                               text_font: font_small
                               text_color: 0xFFFFFF
                               align: CENTER
-                    # ICE-Badge unten rechts, überlagert Schneeflocke (grau=aus, eisblau=aktiv)
+                    # ICE-Badge rechts vom Wasserblock (grau=aus, eisblau=aktiv)
                     - obj:
                         id: obj_eisbank_badge
                         width: 44
                         height: 22
                         align: CENTER
-                        x: 27
-                        y: 18
+                        x: 220
+                        y: 0
                         bg_color: 0x888888
                         bg_opa: COVER
                         radius: 3
