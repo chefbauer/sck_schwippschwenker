@@ -35,6 +35,7 @@ substitutions:
   fan_kompressor_min_perc:        "25"
   fan_kompressor_max_perc:        "92"
   c_pumpe_umwaelzung_ein_perc:    "30"
+  c_thermostat_deadband:          "0.9"   # °C – Thermostat schaltet EIN bei Zieltemp + Deadband
 
   # ── Sensor-Phalanx Update-Intervalle ─────────────────────
   c_tof_update_interval:       500ms

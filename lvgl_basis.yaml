@@ -1718,6 +1718,26 @@ lvgl:
                         text_font: font_icons
                         align: CENTER
                         text_color: 0xCCCCCC  # Grau = Kompressor aus
+                    # ICE-Badge rechts neben Schneeflocke (grau=aus, eisblau=Eisbank aktiv)
+                    - obj:
+                        id: obj_eisbank_badge
+                        width: 44
+                        height: 22
+                        align: CENTER
+                        x: 46
+                        y: 0
+                        bg_color: 0x888888
+                        bg_opa: COVER
+                        radius: 4
+                        border_width: 0
+                        scrollable: false
+                        widgets:
+                          - label:
+                              id: lbl_eisbank_badge
+                              text: "ICE"
+                              text_font: font_small
+                              text_color: 0xFFFFFF
+                              align: CENTER
                     # ED%-Badge am unteren Rand der Schneeflocke
                     - obj:
                         id: obj_ed_badge
