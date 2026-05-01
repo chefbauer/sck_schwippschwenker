@@ -113,18 +113,18 @@ font:
       - "\uF021"  # arrows-rotate (Schwenken, links+rechts)
       - "\uF2F9"  # rotate-right  (Drehen, nur rechts)
 
-  # Auto-Motor-Button: Drehsymbol ~10% größer als font_icons (40→44px)
+  # Auto-Motor-Button: Drehsymbol ~30% größer als font_icons (40→53px)
   - file: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.ttf"
     id: font_icons_md
-    size: 44
+    size: 53
     bpp: 4
     glyphs:
       - "\uF021"  # arrows-rotate
 
-  # Auto-Motor-Button: A ~10% größer als font_normal (28→31px)
+  # Auto-Motor-Button: A ~30% größer als font_normal (28→37px)
   - file: "gfonts://Roboto@700"
     id: font_auto_a
-    size: 31
+    size: 37
     bpp: 4
     glyphs: "A"
 
@@ -2784,6 +2784,7 @@ lvgl:
                                   value: 15
                                   on_value:
                                     - lambda: |-
+                                        id(eisbank_normal_target_x10) = x;  // Authority: Ziel-Global immer zuerst
                                         auto call = id(climate_thermostat).make_call();
                                         call.set_target_temperature(x / 10.0f);
                                         call.perform();
@@ -2849,6 +2850,7 @@ lvgl:
                                         text_color: 0xFFFFFF
                                   on_click:
                                     - lambda: |-
+                                        id(eisbank_normal_target_x10) = 10;
                                         auto call = id(climate_thermostat).make_call();
                                         call.set_target_temperature(1.0f);
                                         call.perform();
@@ -2868,6 +2870,7 @@ lvgl:
                                         text_color: 0xFFFFFF
                                   on_click:
                                     - lambda: |-
+                                        id(eisbank_normal_target_x10) = 15;
                                         auto call = id(climate_thermostat).make_call();
                                         call.set_target_temperature(1.5f);
                                         call.perform();
@@ -2887,6 +2890,7 @@ lvgl:
                                         text_color: 0xFFFFFF
                                   on_click:
                                     - lambda: |-
+                                        id(eisbank_normal_target_x10) = 50;
                                         auto call = id(climate_thermostat).make_call();
                                         call.set_target_temperature(5.0f);
                                         call.perform();

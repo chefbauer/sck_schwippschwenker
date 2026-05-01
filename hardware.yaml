@@ -59,17 +59,20 @@ esphome:
             // Einstellungs-TabView: horizontales Wischen (Tab-Wechsel per Swipe) deaktivieren
             // Vertikales Scrollen einzelner Tabs bleibt unberührt (separate child-Objekte)
             lv_obj_set_scroll_dir(lv_tabview_get_content(id(settings_tabs)), LV_DIR_NONE);
-            // Crash-Recovery: Thermostat könnte bei Absturz während Eisbank auf -1 °C stehen
-            // eisbank_laeuft hat restore_value: no → immer false nach Reboot
-            // → prüfen ob Thermostat-Ziel negativ, dann Normaltemp wiederherstellen
-            if (id(climate_thermostat).target_temperature < 0.0f) {
-              float t = id(eisbank_normal_target_x10) / 10.0f;
-              if (t < 0.1f || t > 5.0f) t = 0.8f;
+            // eisbank_normal_target_x10 ist die Authority für Zieltemp (restore_value: yes)
+            // Thermostat startet mit default_preset (Eco/5°C) → wir überschreiben mit dem gespeicherten Wert
+            {
+              int ziel = id(eisbank_normal_target_x10);
+              if (ziel < 1 || ziel > 50) ziel = 8;  // Fallback 0.8°C
+              float t = ziel / 10.0f;
               auto call = id(climate_thermostat).make_call();
               call.set_target_temperature(t);
               call.perform();
-              ESP_LOGW("eisbank", "Crash-Recovery: Thermostat war auf %.1f°C – zurückgesetzt auf %.1f°C",
-                       id(climate_thermostat).target_temperature, t);
+              lv_slider_set_value(id(slider_temp), ziel, LV_ANIM_OFF);
+              char buf[8];
+              snprintf(buf, sizeof(buf), "%.1f\xc2\xb0", t);
+              lv_label_set_text(id(lbl_temp_wert), buf);
+              ESP_LOGI("thermostat", "Boot: Authority-Global %d \u2192 %.1f\xc2\xb0C gesetzt", ziel, t);
             }
             // Eisbank-Schalter und Dauer-Slider aus NVS synchronisieren
             if (id(eisbank_aktiv)) lv_obj_add_state(id(sw_eisbank_aktiv), LV_STATE_CHECKED);
@@ -370,6 +373,7 @@ climate:
           }
           id(kompressor_aus_ms) = millis();
     default_preset: Eco
+    on_boot_restore_from: default_preset
     preset:
       - name: Eco
         default_target_temperature_high: 5 °C

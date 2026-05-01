@@ -59,10 +59,6 @@ script:
           if (!id(eisbank_aktiv) || id(eisbank_dauer_min) <= 0) return;
           if (id(sw_aktiv) || id(dr_aktiv)) return;
           if (id(eisbank_laeuft)) return;
-          // Normaltemp sichern (× 10 für int-NVS-Speicherung)
-          float cur = id(climate_thermostat).target_temperature;
-          if (cur >= 0.0f && cur <= 5.0f)
-            id(eisbank_normal_target_x10) = (int)(cur * 10.0f + 0.5f);
           // Eisbank aktiv markieren
           id(eisbank_laeuft) = true;
           id(eisbank_start_ms) = millis();
