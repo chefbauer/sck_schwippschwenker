@@ -1780,7 +1780,7 @@ lvgl:
                         width: 165
                         height: 56
                         align: CENTER
-                        x: 135
+                        x: 145
                         bg_color: 0xADE8F4
                         bg_opa: COVER
                         radius: 8
