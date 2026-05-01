@@ -914,6 +914,13 @@ obj:
                               id(dr_pumpe_auto) = id(drp1_pumpe);
                               lv_arc_set_value(id(arc_dr_rpm), id(drp1_rpm));
                               lv_arc_set_value(id(arc_dr_acc), id(drp1_acc));
+                              char b_rpm1[8]; snprintf(b_rpm1, sizeof(b_rpm1), "%d", id(drp1_rpm));
+                              lv_label_set_text(id(lbl_dr_rpm_val), b_rpm1);
+                              char b_acc1[8]; snprintf(b_acc1, sizeof(b_acc1), "%d", id(drp1_acc));
+                              lv_label_set_text(id(lbl_dr_acc_val), b_acc1);
+                              { float _rt = (float)(id(drp1_rpm) * 8) * (256 - id(drp1_acc)) * 0.00005f;
+                                char b_rt1[10]; snprintf(b_rt1, sizeof(b_rt1), "%.1fs", _rt);
+                                lv_label_set_text(id(lbl_dr_ramp_info), b_rt1); }
                               if (id(drp1_richtung) > 0) {
                                 lv_label_set_text(id(lbl_dr_richtung), "Rechts \xef\x81\x8b");
                                 lv_obj_set_style_bg_color(id(btn_dr_richtung), lv_color_hex(0x1a6b4a), 0);
@@ -985,6 +992,13 @@ obj:
                               id(dr_pumpe_auto) = id(drp2_pumpe);
                               lv_arc_set_value(id(arc_dr_rpm), id(drp2_rpm));
                               lv_arc_set_value(id(arc_dr_acc), id(drp2_acc));
+                              char b_rpm2[8]; snprintf(b_rpm2, sizeof(b_rpm2), "%d", id(drp2_rpm));
+                              lv_label_set_text(id(lbl_dr_rpm_val), b_rpm2);
+                              char b_acc2[8]; snprintf(b_acc2, sizeof(b_acc2), "%d", id(drp2_acc));
+                              lv_label_set_text(id(lbl_dr_acc_val), b_acc2);
+                              { float _rt = (float)(id(drp2_rpm) * 8) * (256 - id(drp2_acc)) * 0.00005f;
+                                char b_rt2[10]; snprintf(b_rt2, sizeof(b_rt2), "%.1fs", _rt);
+                                lv_label_set_text(id(lbl_dr_ramp_info), b_rt2); }
                               if (id(drp2_richtung) > 0) {
                                 lv_label_set_text(id(lbl_dr_richtung), "Rechts \xef\x81\x8b");
                                 lv_obj_set_style_bg_color(id(btn_dr_richtung), lv_color_hex(0x1a6b4a), 0);
@@ -1056,6 +1070,13 @@ obj:
                               id(dr_pumpe_auto) = id(drp3_pumpe);
                               lv_arc_set_value(id(arc_dr_rpm), id(drp3_rpm));
                               lv_arc_set_value(id(arc_dr_acc), id(drp3_acc));
+                              char b_rpm3[8]; snprintf(b_rpm3, sizeof(b_rpm3), "%d", id(drp3_rpm));
+                              lv_label_set_text(id(lbl_dr_rpm_val), b_rpm3);
+                              char b_acc3[8]; snprintf(b_acc3, sizeof(b_acc3), "%d", id(drp3_acc));
+                              lv_label_set_text(id(lbl_dr_acc_val), b_acc3);
+                              { float _rt = (float)(id(drp3_rpm) * 8) * (256 - id(drp3_acc)) * 0.00005f;
+                                char b_rt3[10]; snprintf(b_rt3, sizeof(b_rt3), "%.1fs", _rt);
+                                lv_label_set_text(id(lbl_dr_ramp_info), b_rt3); }
                               if (id(drp3_richtung) > 0) {
                                 lv_label_set_text(id(lbl_dr_richtung), "Rechts \xef\x81\x8b");
                                 lv_obj_set_style_bg_color(id(btn_dr_richtung), lv_color_hex(0x1a6b4a), 0);
@@ -1127,6 +1148,13 @@ obj:
                               id(dr_pumpe_auto) = id(drp4_pumpe);
                               lv_arc_set_value(id(arc_dr_rpm), id(drp4_rpm));
                               lv_arc_set_value(id(arc_dr_acc), id(drp4_acc));
+                              char b_rpm4[8]; snprintf(b_rpm4, sizeof(b_rpm4), "%d", id(drp4_rpm));
+                              lv_label_set_text(id(lbl_dr_rpm_val), b_rpm4);
+                              char b_acc4[8]; snprintf(b_acc4, sizeof(b_acc4), "%d", id(drp4_acc));
+                              lv_label_set_text(id(lbl_dr_acc_val), b_acc4);
+                              { float _rt = (float)(id(drp4_rpm) * 8) * (256 - id(drp4_acc)) * 0.00005f;
+                                char b_rt4[10]; snprintf(b_rt4, sizeof(b_rt4), "%.1fs", _rt);
+                                lv_label_set_text(id(lbl_dr_ramp_info), b_rt4); }
                               if (id(drp4_richtung) > 0) {
                                 lv_label_set_text(id(lbl_dr_richtung), "Rechts \xef\x81\x8b");
                                 lv_obj_set_style_bg_color(id(btn_dr_richtung), lv_color_hex(0x1a6b4a), 0);
@@ -1198,6 +1226,13 @@ obj:
                               id(dr_pumpe_auto) = id(drp5_pumpe);
                               lv_arc_set_value(id(arc_dr_rpm), id(drp5_rpm));
                               lv_arc_set_value(id(arc_dr_acc), id(drp5_acc));
+                              char b_rpm5[8]; snprintf(b_rpm5, sizeof(b_rpm5), "%d", id(drp5_rpm));
+                              lv_label_set_text(id(lbl_dr_rpm_val), b_rpm5);
+                              char b_acc5[8]; snprintf(b_acc5, sizeof(b_acc5), "%d", id(drp5_acc));
+                              lv_label_set_text(id(lbl_dr_acc_val), b_acc5);
+                              { float _rt = (float)(id(drp5_rpm) * 8) * (256 - id(drp5_acc)) * 0.00005f;
+                                char b_rt5[10]; snprintf(b_rt5, sizeof(b_rt5), "%.1fs", _rt);
+                                lv_label_set_text(id(lbl_dr_ramp_info), b_rt5); }
                               if (id(drp5_richtung) > 0) {
                                 lv_label_set_text(id(lbl_dr_richtung), "Rechts \xef\x81\x8b");
                                 lv_obj_set_style_bg_color(id(btn_dr_richtung), lv_color_hex(0x1a6b4a), 0);
