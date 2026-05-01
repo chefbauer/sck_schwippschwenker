@@ -273,10 +273,11 @@ light:
             // Blitzt synchron zur Motorgeschwindigkeit (sensor_motor_rt_speed).
             // Mit drift_factor % Versatz → langsame Scheinrotation sichtbar.
             //
-            // Blinklogik: Phasen-Akkumulator (static float strobe_phase 0.0–1.0)
-            //   Jeder Tick: phase += dt_ms × freq_hz / 1000
-            //   Blitz wenn phase < flash_frac (= flash_ms / period_ms)
-            //   → stabil auch bei schwankender RPM (kein millis()%period Sprung-Bug)
+            // Blinklogik: Phasen-Akkumulator + Timestamp-Blitzfenster
+            //   Phase läuft 0.0 → 1.0 pro Blitzperiode
+            //   Bei Phase-Wrap (≥1.0): flash_end_ms = now + flash_ms setzen
+            //   Blitz AN solange now < flash_end_ms
+            //   → 1 Blitz pro Periode, garantiert, auch bei unregelmäßigen Ticks
             //
             // Variablen:
             //   drift_factor : Wie viel % langsamer als exakt-synchron (→ sichtbare Drift)
@@ -303,26 +304,47 @@ light:
             // Echtzeit-Drehzahl via CAN 0x32 (sensor_motor_rt_speed, 5 Hz, thread-safe)
             // raw = tatsächliche Wellen-RPM (kein Skalierungsfaktor), Betrag bereits im CAN-Handler
             float rpm = id(sensor_motor_rt_speed).state;
-            if (isnan(rpm) || rpm < 1.0f) rpm = 1.0f;
-            if (rpm > 400.0f)             rpm = 400.0f;
+            if (isnan(rpm) || rpm < 30.0f) {
+              // Unter 30 UPM (oder Stillstand): Ring dunkel, nur Slot-Farben
+              for (int i = 0; i < it.size(); i++) { it[i] = Color::BLACK; }
+              float raw2 = id(sensor_motor_position).state;
+              if (isnan(raw2) || raw2 < 0.0f) raw2 = 0.0f;
+              float md2 = raw2 * 360.0f / 16384.0f;
+              if (${c_motor_direction} == 0) { md2 = 360.0f - md2; }
+              for (int s = 0; s < 6; s++) {
+                float ss2 = (${c_led_strip_color_mirror} == 0) ? 60.0f : -60.0f;
+                float sd2 = fmod(md2 + s * ss2, 360.0f);
+                if (sd2 < 0.0f) sd2 += 360.0f;
+                int c2 = (int)(led0deg + (dir == 0 ? sd2 * total / 360.0f : -sd2 * total / 360.0f) + 0.5f);
+                c2 = ((c2 % total) + total) % total;
+                for (int d = -spot_half; d <= spot_half; d++)
+                  it[((c2 + d) % total + total) % total] = slot_colors[s];
+              }
+              return;
+            }
+            if (rpm > 400.0f) rpm = 400.0f;
 
             // Blitzfrequenz: (1 - drift_factor) × Rotationsfrequenz
             float freq_hz = (rpm / 60.0f) * (1.0f - drift_factor);
             if (freq_hz < 0.05f) freq_hz = 0.05f;
 
-            // Phasen-Akkumulator: verhindert Sprünge bei schwankender RPM
+            // Phasen-Akkumulator: Phase läuft 0.0 → 1.0, Wrap = 1 Blitz
+            // Blitz-Zeitfenster via Timestamp → kein Überspringen möglich
             static float     strobe_phase   = 0.0f;
             static uint32_t  strobe_last_ms = 0u;
+            static uint32_t  flash_end_ms   = 0u;
+
             uint32_t now = millis();
             uint32_t dt  = (strobe_last_ms == 0u) ? 0u : (now - strobe_last_ms);
             strobe_last_ms = now;
             if (dt > 500u) dt = 0u;   // Erstaufruf / lange Pause: Phase nicht springen
-            strobe_phase += (float)dt * freq_hz / 1000.0f;
-            if (strobe_phase >= 1.0f) strobe_phase -= floorf(strobe_phase);
 
-            float flash_frac = freq_hz * (float)flash_ms / 1000.0f;  // Anteil der Periode
-            if (flash_frac > 0.5f) flash_frac = 0.5f;                // max 50 % Tastverhältnis
-            bool flash_on = (strobe_phase < flash_frac);
+            strobe_phase += (float)dt * freq_hz / 1000.0f;
+            if (strobe_phase >= 1.0f) {
+              strobe_phase -= floorf(strobe_phase);  // Wrap → neues Blitz-Fenster
+              flash_end_ms = now + flash_ms;
+            }
+            bool flash_on = (now < flash_end_ms);
 
             // Motor-Position → Slot-Positionen
             float raw = id(sensor_motor_position).state;
