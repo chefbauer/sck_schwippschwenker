@@ -113,18 +113,18 @@ font:
       - "\uF021"  # arrows-rotate (Schwenken, links+rechts)
       - "\uF2F9"  # rotate-right  (Drehen, nur rechts)
 
-  # Auto-Motor-Button: Drehsymbol ~30% größer als font_icons (40→52px)
+  # Auto-Motor-Button: Drehsymbol ~10% größer als font_icons (40→44px)
   - file: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.ttf"
     id: font_icons_md
-    size: 52
+    size: 44
     bpp: 4
     glyphs:
       - "\uF021"  # arrows-rotate
 
-  # Auto-Motor-Button: A ~30% größer als font_normal (28→36px)
+  # Auto-Motor-Button: A ~10% größer als font_normal (28→31px)
   - file: "gfonts://Roboto@700"
     id: font_auto_a
-    size: 36
+    size: 31
     bpp: 4
     glyphs: "A"
 
@@ -495,12 +495,12 @@ lvgl:
               # Short: Toggle AN ↔ AUS
               - button:
                   id: btn_auto_rotation
-                  width: 104
-                  height: 104
+                  width: 80
+                  height: 80
                   align: CENTER
                   x: -156
                   y: -136
-                  radius: 52
+                  radius: 40
                   bg_color: 0x00FF00
                   bg_opa: COVER
                   border_width: 0
@@ -1754,14 +1754,14 @@ lvgl:
                               text_font: font_small
                               text_color: 0xFFFFFF
                               align: CENTER
-                    # ICE-Badge rechts vom Wasserblock (grau=aus, eisblau=aktiv)
+                    # ICE-Badge unten rechts neben ED, überlagert Schneeflocke (grau=aus, eisblau=aktiv)
                     - obj:
                         id: obj_eisbank_badge
                         width: 44
                         height: 22
                         align: CENTER
-                        x: 220
-                        y: 0
+                        x: 27
+                        y: 18
                         bg_color: 0x888888
                         bg_opa: COVER
                         radius: 3
@@ -1780,7 +1780,7 @@ lvgl:
                         width: 165
                         height: 56
                         align: CENTER
-                        x: 120
+                        x: 135
                         bg_color: 0xADE8F4
                         bg_opa: COVER
                         radius: 8
