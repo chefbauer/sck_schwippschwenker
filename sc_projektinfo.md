@@ -224,6 +224,15 @@ Aktualisiert auch das AMG8833-Overlay wenn es sichtbar ist.
 | `c_standby_tof_min_mm` | "800" | Mindestdistanz für Standby (kein Objekt vor Sensor) |
 | `c_motor_direction` | "1" | Motorrichtung: 0=links/1=rechts auf Welle |
 
+> **⚠️ Montage-Besonderheit (Motor-/Systemrichtung):**
+> Der Motor ist **senkrecht mit Welle nach oben** montiert.
+> Aus Systemsicht (Draufsicht auf den Drehteller):
+> - **Motor-Rechtslauf (CW Welle)** = **System-Linkslauf (CCW Draufsicht)**
+> - **Motor-Linkslauf (CCW Welle)** = **System-Rechtslauf (CW Draufsicht)**
+>
+> Alle Richtungs-Definitionen im Projekt (Display, LED-Ring, Slot-Farbreihenfolge, `c_motor_direction`, `c_led_strip_outer_direction`, `c_led_strip_color_mirror`) sind konsequent auf **Draufsicht** normiert.
+> `c_motor_direction = 1` (rechts auf Welle) → wird in den Effekten als CW-Kompensation genutzt, sodass Slot 1 (Rot) aus Draufsicht stets korrekt zeigt.
+
 **LED-Substitutionen (`lights.yaml`):**
 
 | Substitution | Wert | Bedeutung |

@@ -270,8 +270,13 @@ light:
           update_interval: 10ms
           lambda: |-
             // ── Stroboskop-Effekt ─────────────────────────────────────────────────────
-            // Blitzt synchron zur Motorgeschwindigkeit (sensor_dr_speed_rpm).
+            // Blitzt synchron zur Motorgeschwindigkeit (sensor_motor_rt_speed).
             // Mit drift_factor % Versatz → langsame Scheinrotation sichtbar.
+            //
+            // Blinklogik: Phasen-Akkumulator (static float strobe_phase 0.0–1.0)
+            //   Jeder Tick: phase += dt_ms × freq_hz / 1000
+            //   Blitz wenn phase < flash_frac (= flash_ms / period_ms)
+            //   → stabil auch bei schwankender RPM (kein millis()%period Sprung-Bug)
             //
             // Variablen:
             //   drift_factor : Wie viel % langsamer als exakt-synchron (→ sichtbare Drift)
@@ -301,13 +306,23 @@ light:
             if (isnan(rpm) || rpm < 1.0f) rpm = 1.0f;
             if (rpm > 400.0f)             rpm = 400.0f;
 
-            // Blitzperiode: 1 Blitz pro Umdrehung, aber (1 - drift_factor) × Rotationsfrequenz
-            // → scheinbare Restdrehung = drift_factor × rpm (z. B. 5 % → 3 UPM bei 60 UPM)
-            float freq_hz      = (rpm / 60.0f) * (1.0f - drift_factor);
-            uint32_t period_ms = (uint32_t)(1000.0f / freq_hz);
-            if (period_ms < 10u) period_ms = 10u;
+            // Blitzfrequenz: (1 - drift_factor) × Rotationsfrequenz
+            float freq_hz = (rpm / 60.0f) * (1.0f - drift_factor);
+            if (freq_hz < 0.05f) freq_hz = 0.05f;
 
-            bool flash_on = ((millis() % period_ms) < flash_ms);
+            // Phasen-Akkumulator: verhindert Sprünge bei schwankender RPM
+            static float     strobe_phase   = 0.0f;
+            static uint32_t  strobe_last_ms = 0u;
+            uint32_t now = millis();
+            uint32_t dt  = (strobe_last_ms == 0u) ? 0u : (now - strobe_last_ms);
+            strobe_last_ms = now;
+            if (dt > 500u) dt = 0u;   // Erstaufruf / lange Pause: Phase nicht springen
+            strobe_phase += (float)dt * freq_hz / 1000.0f;
+            if (strobe_phase >= 1.0f) strobe_phase -= floorf(strobe_phase);
+
+            float flash_frac = freq_hz * (float)flash_ms / 1000.0f;  // Anteil der Periode
+            if (flash_frac > 0.5f) flash_frac = 0.5f;                // max 50 % Tastverhältnis
+            bool flash_on = (strobe_phase < flash_frac);
 
             // Motor-Position → Slot-Positionen
             float raw = id(sensor_motor_position).state;
