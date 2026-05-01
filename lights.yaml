@@ -281,10 +281,16 @@ light:
             //
             // Variablen:
             //   drift_factor : Wie viel % langsamer als exakt-synchron (→ sichtbare Drift)
+            //   n_flashes    : Blitze pro Umdrehung (2 = doppelte Hz → besser bei niedrigen RPM)
             //   spot_half    : Halbbreite der Slot-Farb-Spots (spot_half*2+1 = LED-Anzahl)
             //   flash_ms     : Dauer des Weiß-Blitzes in ms
             //
+            // Mindest-RPM: 90 UPM → 3 Blitze/U × 1.5 rps = ~4.3 Hz
+            //               150 UPM → ~7.1 Hz – lebhaftes Blinken
+            // Unter 90 UPM: Ring komplett dunkel (kein statisches Bild)
+            //
             const float    drift_factor = 0.05f;   // 5 % → Scheinrotation sichtbar
+            const int      n_flashes    = 3;        // Blitze pro Umdrehung (3 → 4–7 Hz bei 90–150 UPM)
             const int      spot_half    = 2;        // Spot-Breite = 5 LEDs (anpassbar)
             const uint32_t flash_ms     = 20;       // Blitzdauer in ms
 
@@ -304,29 +310,17 @@ light:
             // Echtzeit-Drehzahl via CAN 0x32 (sensor_motor_rt_speed, 5 Hz, thread-safe)
             // raw = tatsächliche Wellen-RPM (kein Skalierungsfaktor), Betrag bereits im CAN-Handler
             float rpm = id(sensor_motor_rt_speed).state;
-            if (isnan(rpm) || rpm < 30.0f) {
-              // Unter 30 UPM (oder Stillstand): Ring dunkel, nur Slot-Farben
+            if (isnan(rpm) || rpm < 90.0f) {
+              // Unter 90 UPM: Ring komplett dunkel
               for (int i = 0; i < it.size(); i++) { it[i] = Color::BLACK; }
-              float raw2 = id(sensor_motor_position).state;
-              if (isnan(raw2) || raw2 < 0.0f) raw2 = 0.0f;
-              float md2 = raw2 * 360.0f / 16384.0f;
-              if (${c_motor_direction} == 0) { md2 = 360.0f - md2; }
-              for (int s = 0; s < 6; s++) {
-                float ss2 = (${c_led_strip_color_mirror} == 0) ? 60.0f : -60.0f;
-                float sd2 = fmod(md2 + s * ss2, 360.0f);
-                if (sd2 < 0.0f) sd2 += 360.0f;
-                int c2 = (int)(led0deg + (dir == 0 ? sd2 * total / 360.0f : -sd2 * total / 360.0f) + 0.5f);
-                c2 = ((c2 % total) + total) % total;
-                for (int d = -spot_half; d <= spot_half; d++)
-                  it[((c2 + d) % total + total) % total] = slot_colors[s];
-              }
               return;
             }
             if (rpm > 400.0f) rpm = 400.0f;
 
-            // Blitzfrequenz: (1 - drift_factor) × Rotationsfrequenz
-            float freq_hz = (rpm / 60.0f) * (1.0f - drift_factor);
-            if (freq_hz < 0.05f) freq_hz = 0.05f;
+            // Blitzfrequenz: n_flashes × (1 - drift_factor) × Rotationsfrequenz
+            // Bei n_flashes=3 und 90 RPM: ~4.3 Hz; bei 150 RPM: ~7.1 Hz
+            float freq_hz = (float)n_flashes * (rpm / 60.0f) * (1.0f - drift_factor);
+            if (freq_hz < 0.1f) freq_hz = 0.1f;
 
             // Phasen-Akkumulator: Phase läuft 0.0 → 1.0, Wrap = 1 Blitz
             // Blitz-Zeitfenster via Timestamp → kein Überspringen möglich
