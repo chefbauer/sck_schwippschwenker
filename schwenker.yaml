@@ -483,7 +483,8 @@ script:
             ESP_LOGW("schwenker", "sw_halbperiode_ms korrigiert auf %u", id(sw_halbperiode_ms));
           }
 
-          id(sw_richtung)     = 1;
+          // sw_richtung NICHT resetten → wechselt bei jedem Neustart die Seite
+          // (beim Stop wird sw_richtung negiert, nächster Start = Gegenrichtung)
           id(sw_phase_ms)     = 0;
           id(sw_stop_pending) = false;  // goto_slot kann dieses Flag hinterlassen → explizit löschen
           ESP_LOGI("schwenker", "START  halbperiode=%u ms  max=%d RPM",
@@ -1058,7 +1059,9 @@ interval:
               lv_obj_set_style_bg_color(id(btn_schwenker_overlay_toggle), lv_color_hex(0x666666), 0);
               id(sw_motor_busy) = false;
               id(sw_motor_last_move_ms) = millis();
-              ESP_LOGI("schwenker", "STOP: Zyklus beendet, Motor bremst");
+              // Richtung für nächsten Start vorbereiten (Gegenrichtung)
+              id(sw_richtung) = -(id(sw_richtung));
+              ESP_LOGI("schwenker", "STOP: Zyklus beendet, Motor bremst, nächste Richtung=%+d", id(sw_richtung));
               return;
             }
             id(sw_richtung) = -(id(sw_richtung));   // explizites Negieren (nicht *=)
