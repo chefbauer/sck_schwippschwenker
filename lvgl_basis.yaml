@@ -2856,6 +2856,87 @@ lvgl:
                                         lv_slider_set_value(id(slider_temp), 50, LV_ANIM_OFF);
                                         lv_label_set_text(id(lbl_temp_wert), "5.0°");
 
+                        # Zeile: Eisbank Ein/Aus + Status
+                        - obj:
+                            id: row_eisbank
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 370
+                            bg_opa: TRANSP
+                            border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
+                            widgets:
+                              - label:
+                                  text: "Eisbank"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - switch:
+                                  id: sw_eisbank_aktiv
+                                  align: LEFT_MID
+                                  x: 240
+                                  on_value:
+                                    - lambda: |-
+                                        id(eisbank_aktiv) = x;
+                                        if (!x && id(eisbank_laeuft)) {
+                                          id(script_eisbank_stop).execute();
+                                        }
+                              - label:
+                                  id: lbl_eisbank_status
+                                  text: ""
+                                  align: LEFT_MID
+                                  x: 450
+                                  text_font: font_normal
+                                  text_color: 0x0088FF
+
+                        # Zeile: Eisbank Dauer (0 = AUS, 1–30 Minuten)
+                        - obj:
+                            id: row_eisbank_dauer
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 460
+                            bg_opa: TRANSP
+                            border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
+                            widgets:
+                              - label:
+                                  text: "Dauer"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - slider:
+                                  id: slider_eisbank_dauer
+                                  width: 600
+                                  height: 20
+                                  align: RIGHT_MID
+                                  x: -70
+                                  min_value: 0
+                                  max_value: 30
+                                  value: 10
+                                  on_value:
+                                    - lambda: |-
+                                        id(eisbank_dauer_min) = x;
+                                        if (x == 0) {
+                                          lv_label_set_text(id(lbl_eisbank_dauer_val), "AUS");
+                                        } else {
+                                          char buf[12];
+                                          snprintf(buf, sizeof(buf), "%d min", x);
+                                          lv_label_set_text(id(lbl_eisbank_dauer_val), buf);
+                                        }
+                              - label:
+                                  id: lbl_eisbank_dauer_val
+                                  text: "10 min"
+                                  align: RIGHT_MID
+                                  x: -10
+                                  text_font: font_normal
+                                  text_color: 0x003366
+
                     # Tab 4: Test
                     - name: "Test"
                       id: tab_test

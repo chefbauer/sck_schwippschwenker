@@ -59,6 +59,26 @@ esphome:
             // Einstellungs-TabView: horizontales Wischen (Tab-Wechsel per Swipe) deaktivieren
             // Vertikales Scrollen einzelner Tabs bleibt unberührt (separate child-Objekte)
             lv_obj_set_scroll_dir(lv_tabview_get_content(id(settings_tabs)), LV_DIR_NONE);
+            // Crash-Recovery: Thermostat könnte bei Absturz während Eisbank auf -1 °C stehen
+            // eisbank_laeuft hat restore_value: no → immer false nach Reboot
+            // → prüfen ob Thermostat-Ziel negativ, dann Normaltemp wiederherstellen
+            if (id(climate_thermostat).target_temperature < 0.0f) {
+              float t = id(eisbank_normal_target_x10) / 10.0f;
+              if (t < 0.1f || t > 5.0f) t = 0.8f;
+              auto call = id(climate_thermostat).make_call();
+              call.set_target_temperature(t);
+              call.perform();
+              ESP_LOGW("eisbank", "Crash-Recovery: Thermostat war auf %.1f°C – zurückgesetzt auf %.1f°C",
+                       id(climate_thermostat).target_temperature, t);
+            }
+            // Eisbank-Schalter und Dauer-Slider aus NVS synchronisieren
+            if (id(eisbank_aktiv)) lv_obj_add_state(id(sw_eisbank_aktiv), LV_STATE_CHECKED);
+            else lv_obj_clear_state(id(sw_eisbank_aktiv), LV_STATE_CHECKED);
+            int edm = id(eisbank_dauer_min);
+            if (edm < 0) edm = 0; if (edm > 30) edm = 30;
+            lv_slider_set_value(id(slider_eisbank_dauer), edm, LV_ANIM_OFF);
+            if (edm == 0) lv_label_set_text(id(lbl_eisbank_dauer_val), "AUS");
+            else { char eb[12]; snprintf(eb, sizeof(eb), "%d min", edm); lv_label_set_text(id(lbl_eisbank_dauer_val), eb); }
     - priority: -150        # System in sicheren Aus-Zustand (Not-Aus beim Booten)
       then:
         - script.execute: script_system_aus
@@ -315,11 +335,12 @@ climate:
       - output.set_level:
           id: output_luefter_kompressor_pwm
           level: "${fan_kompressor_max_perc}%"
-      - output.set_level:
-          id: output_pumpe_dacB
-          level: "${c_pumpe_umwaelzung_ein_perc}%"
       - lambda: |-
-          lv_slider_set_value(id(slider_umwaelzpumpe), ${c_pumpe_umwaelzung_ein_perc}, LV_ANIM_OFF);
+          // Tankkühlung nur außerhalb Eisbank-Modus
+          if (!id(eisbank_laeuft)) {
+            id(output_pumpe_dacB).set_level(${c_pumpe_umwaelzung_ein_perc} / 100.0f);
+            lv_slider_set_value(id(slider_umwaelzpumpe), ${c_pumpe_umwaelzung_ein_perc}, LV_ANIM_OFF);
+          }
           // ED% Berechnung beim Wiedereinschalten
           if (id(kompressor_aus_ms) > 0 && id(kompressor_letzter_run_ms) > 0) {
             uint32_t aus_zeit = millis() - id(kompressor_aus_ms);
@@ -365,7 +386,7 @@ climate:
             id(output_pumpe_dacB).turn_off();
             lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
           }
-          else
+          else if (!id(eisbank_laeuft))
           {
             id(output_pumpe_dacB).set_level(${c_pumpe_umwaelzung_ein_perc} / 100.0);
             lv_slider_set_value(id(slider_umwaelzpumpe), ${c_pumpe_umwaelzung_ein_perc}, LV_ANIM_OFF);

@@ -1,5 +1,9 @@
 # ── Komponenten ──────────────────────────────────────────────────────────────────
-#  globals:  cooler_system_status_set
+#  globals:  cooler_system_status_set,
+#            eisbank_aktiv, eisbank_laeuft, eisbank_dauer_min,
+#            eisbank_start_ms, eisbank_normal_target_x10
+#  script:   script_eisbank_start, script_eisbank_stop
+#  interval: Eisbank-Wächter (5 s)
 # ─────────────────────────────────────────────────────────────────────────────────
 
 globals:
@@ -12,3 +16,124 @@ globals:
     # 1 = standby
     # 2 = ein
     # 3 = aktiv
+
+  # ── Eisbank ──────────────────────────────────────────────────────────────────
+  - id: eisbank_aktiv
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+    # Schalter: Eisbank-Feature ein/aus (persistiert über Reboot)
+
+  - id: eisbank_laeuft
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+    # True solange Eisbank-Modus aktiv läuft
+
+  - id: eisbank_dauer_min
+    type: int
+    restore_value: yes
+    initial_value: '10'
+    # Eisbank-Laufzeit in Minuten (0 = deaktiviert, 1–30)
+
+  - id: eisbank_start_ms
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+    # millis()-Zeitstempel beim Eisbank-Start
+
+  - id: eisbank_normal_target_x10
+    type: int
+    restore_value: yes
+    initial_value: '8'
+    # Gesicherte Normaltemp × 10 (z. B. 8 = 0.8 °C) für Rücksetzung nach Eisbank
+
+script:
+  # ── Eisbank starten ──────────────────────────────────────────────────────────
+  # Voraussetzungen: eisbank_aktiv=true, eisbank_dauer_min>0, idle (sw+dr=false)
+  # Aktion: Normaltemp sichern, dacB aus, Thermostat auf -1 °C (Turbo)
+  - id: script_eisbank_start
+    mode: single
+    then:
+      - lambda: |-
+          if (!id(eisbank_aktiv) || id(eisbank_dauer_min) <= 0) return;
+          if (id(sw_aktiv) || id(dr_aktiv)) return;
+          if (id(eisbank_laeuft)) return;
+          // Normaltemp sichern (× 10 für int-NVS-Speicherung)
+          float cur = id(climate_thermostat).target_temperature;
+          if (cur >= 0.0f && cur <= 5.0f)
+            id(eisbank_normal_target_x10) = (int)(cur * 10.0f + 0.5f);
+          // Eisbank aktiv markieren
+          id(eisbank_laeuft) = true;
+          id(eisbank_start_ms) = millis();
+          // Tankkühlung (Umwälzpumpe dacB) sofort aus → Kühlschlangen gefrieren
+          id(output_pumpe_dacB).turn_off();
+          lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
+          // Thermostat auf Turbo-Ziel −1 °C → Kompressor läuft durch (nie erreichbar im Wasser)
+          auto call = id(climate_thermostat).make_call();
+          call.set_target_temperature(-1.0f);
+          call.perform();
+          // UI-Status
+          lv_label_set_text(id(lbl_eisbank_status), "AKTIV");
+          lv_obj_set_style_text_color(id(lbl_eisbank_status), lv_color_hex(0x0088FF), 0);
+          ESP_LOGI("eisbank", "Gestartet – Dauer %d min, Normaltemp %.1f °C",
+                   id(eisbank_dauer_min), id(eisbank_normal_target_x10) / 10.0f);
+
+  # ── Eisbank stoppen ──────────────────────────────────────────────────────────
+  # Stellt Normaltemp wieder her; Thermostat übernimmt dacB via cool_action
+  - id: script_eisbank_stop
+    mode: single
+    then:
+      - lambda: |-
+          if (!id(eisbank_laeuft)) return;
+          id(eisbank_laeuft) = false;
+          id(eisbank_start_ms) = 0;
+          // Thermostat auf gesicherte Normaltemp zurücksetzen
+          float t = id(eisbank_normal_target_x10) / 10.0f;
+          if (t < 0.0f || t > 5.0f) t = 0.8f;
+          auto call = id(climate_thermostat).make_call();
+          call.set_target_temperature(t);
+          call.perform();
+          // Slider und Label synchronisieren
+          lv_slider_set_value(id(slider_temp), id(eisbank_normal_target_x10), LV_ANIM_OFF);
+          char buf[8];
+          snprintf(buf, sizeof(buf), "%.1f°", t);
+          lv_label_set_text(id(lbl_temp_wert), buf);
+          // UI-Status zurücksetzen
+          lv_label_set_text(id(lbl_eisbank_status), "");
+          ESP_LOGI("eisbank", "Gestoppt – Normaltemp %.1f °C wiederhergestellt", t);
+
+interval:
+  # ── Eisbank-Wächter: alle 5 s ────────────────────────────────────────────────
+  # Start:  eisbank_aktiv && dauer>0 && idle && temp ≤ Thermostat-Zieltemp
+  # Abbruch: sw/dr aktiv ODER Timer abgelaufen ODER Feature deaktiviert
+  - interval: 5s
+    then:
+      - lambda: |-
+          // Feature aus oder Dauer 0 → sicher stoppen
+          if (!id(eisbank_aktiv) || id(eisbank_dauer_min) <= 0) {
+            if (id(eisbank_laeuft)) id(script_eisbank_stop).execute();
+            return;
+          }
+          if (id(eisbank_laeuft)) {
+            // Abbruch-Checks
+            if (id(sw_aktiv) || id(dr_aktiv)) {
+              ESP_LOGI("eisbank", "Abbruch: Kühler aktiv");
+              id(script_eisbank_stop).execute();
+              return;
+            }
+            uint32_t elapsed = millis() - id(eisbank_start_ms);
+            if (elapsed >= (uint32_t)id(eisbank_dauer_min) * 60000u) {
+              ESP_LOGI("eisbank", "Abbruch: Timer %d min abgelaufen", id(eisbank_dauer_min));
+              id(script_eisbank_stop).execute();
+            }
+          } else {
+            // Start-Check: idle + temp ≤ aktueller Thermostat-Zieltemp
+            if (id(sw_aktiv) || id(dr_aktiv)) return;
+            float temp = id(sensor_temp_becken).state;
+            if (isnan(temp)) return;
+            float target = id(climate_thermostat).target_temperature;
+            if (temp <= target) {
+              id(script_eisbank_start).execute();
+            }
+          }
