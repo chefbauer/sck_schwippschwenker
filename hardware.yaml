@@ -425,8 +425,7 @@ climate:
 
 binary_sensor:
   # Motor läuft (Schwenken oder Drehen) – Template wird jeden Zyklus ausgewertet
-  # on_press:   Thermostat auf Cooling-Preset (-1°C) → Kompressor bleibt an während Rotation
-  # on_release: Nachlauf-Script startet (${c_motor_nachlauf_s}s), dann Normaltemp wieder
+  # on_press: Thermostat auf Cooling-Preset (-1°C) → Kompressor bleibt an während Rotation
   - platform: template
     id: bin_motor_laeuft
     name: "Motor läuft"
@@ -439,28 +438,8 @@ binary_sensor:
           call.set_preset("Cooling");
           call.perform();
           ESP_LOGI("motor", "Motor gestartet – Thermostat auf Cooling-Preset (-1°C)");
-    on_release:
-      - lambda: |-
-          id(script_motor_nachlauf).execute();
 
 script:
-  # Motor-Nachlauf: nach Motor-Stop ${c_motor_nachlauf_s}s warten, dann Normaltemp wiederherstellen
-  # mode: restart → erneuter Motor-Start+Stop setzt den Timer zurück
-  - id: script_motor_nachlauf
-    mode: restart
-    then:
-      - delay: ${c_motor_nachlauf_s}s
-      - lambda: |-
-          // Nur wenn Motor immer noch steht und kein Eisbank läuft
-          if (id(sw_aktiv) || id(dr_aktiv) || id(eisbank_laeuft)) return;
-          if (id(climate_thermostat).mode != CLIMATE_MODE_COOL) return;
-          float t = id(eisbank_normal_target_x10) / 10.0f;
-          if (t < 0.0f || t > 5.0f) t = 0.8f;
-          auto call = id(climate_thermostat).make_call();
-          call.set_target_temperature(t);
-          call.perform();
-          ESP_LOGI("motor", "Nachlauf: Thermostat zurück auf %.1f°C", t);
-
   # Verzögerter Kompressor-Start: wartet bis 120s ab Boot verstrichen, dann startet nur
   # wenn kein AUS-Befehl zwischenzeitlich kam (kompressor_soll_ein = false)
   - id: script_kompressor_delayed_start

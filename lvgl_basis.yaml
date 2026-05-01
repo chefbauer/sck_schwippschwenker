@@ -2962,12 +2962,13 @@ lvgl:
                                   value: 10
                                   on_value:
                                     - lambda: |-
-                                        id(eisbank_dauer_min) = x;
-                                        if (x == 0) {
+                                        int val = (int)lv_slider_get_value(id(slider_eisbank_dauer));
+                                        id(eisbank_dauer_min) = val;
+                                        if (val == 0) {
                                           lv_label_set_text(id(lbl_eisbank_dauer_val), "AUS");
                                         } else {
                                           char buf[12];
-                                          snprintf(buf, sizeof(buf), "%d min", x);
+                                          snprintf(buf, sizeof(buf), "%d min", val);
                                           lv_label_set_text(id(lbl_eisbank_dauer_val), buf);
                                         }
                               - label:

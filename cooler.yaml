@@ -138,11 +138,6 @@ interval:
           }
           if (id(eisbank_laeuft)) {
             // Abbruch-Checks
-            if (id(sw_aktiv) || id(dr_aktiv)) {
-              ESP_LOGI("eisbank", "Abbruch: Kühler aktiv");
-              id(script_eisbank_stop).execute();
-              return;
-            }
             uint32_t elapsed = millis() - id(eisbank_start_ms);
             if (elapsed >= (uint32_t)id(eisbank_dauer_min) * 60000u) {
               ESP_LOGI("eisbank", "Abbruch: Timer %d min abgelaufen", id(eisbank_dauer_min));
@@ -161,11 +156,11 @@ interval:
               }
             }
           } else {
-            // Start-Check: idle + temp ≤ aktueller Thermostat-Zieltemp
+            // Start-Check: idle + temp ≤ Authority-Global (nicht Thermostat – könnte Cooling-Preset sein!)
             if (id(sw_aktiv) || id(dr_aktiv)) return;
             float temp = id(sensor_temp_becken).state;
             if (isnan(temp)) return;
-            float target = id(climate_thermostat).target_temperature;
+            float target = id(eisbank_normal_target_x10) / 10.0f;
             if (temp <= target) {
               id(script_eisbank_start).execute();
             }
