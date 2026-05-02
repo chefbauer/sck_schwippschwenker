@@ -61,7 +61,7 @@ esphome:
             lv_obj_set_scroll_dir(lv_tabview_get_content(id(settings_tabs)), LV_DIR_NONE);
             // UI-Init: Slider und Label aus Authority-Global befüllen (Thermostat-Steuerung übernimmt per Intervall)
             {
-              int ziel = id(eisbank_normal_target_x10);
+              int ziel = id(thermostat_ziel_x10);
               if (ziel < 1 || ziel > 50) ziel = 8;
               lv_slider_set_value(id(slider_temp), ziel, LV_ANIM_OFF);
               char buf[8];
@@ -456,7 +456,7 @@ interval:
           }
 
           // Im Normal-Zustand: Authority-Global auf Änderungen prüfen (Slider/Preset)
-          int ziel_x10 = id(eisbank_normal_target_x10);
+          int ziel_x10 = id(thermostat_ziel_x10);
           if (ziel_x10 < 1 || ziel_x10 > 50) ziel_x10 = 8;
 
           bool muss_setzen = (neuer_state != ts_state);

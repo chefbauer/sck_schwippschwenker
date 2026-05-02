@@ -2784,7 +2784,7 @@ lvgl:
                                   value: 15
                                   on_value:
                                     - lambda: |-
-                                        id(eisbank_normal_target_x10) = x;  // Authority: thermostat_steuerung liest diesen Wert
+                                        id(thermostat_ziel_x10) = x;  // Authority: thermostat_steuerung liest diesen Wert
                                         char buf[8];
                                         snprintf(buf, sizeof(buf), "%.1f°", x / 10.0f);
                                         lv_label_set_text(id(lbl_temp_wert), buf);
@@ -2847,7 +2847,7 @@ lvgl:
                                         text_color: 0xFFFFFF
                                   on_click:
                                     - lambda: |-
-                                        id(eisbank_normal_target_x10) = 10;
+                                        id(thermostat_ziel_x10) = 10;
                                         lv_slider_set_value(id(slider_temp), 10, LV_ANIM_OFF);
                                         lv_label_set_text(id(lbl_temp_wert), "1.0°");
                               - button:
@@ -2864,7 +2864,7 @@ lvgl:
                                         text_color: 0xFFFFFF
                                   on_click:
                                     - lambda: |-
-                                        id(eisbank_normal_target_x10) = 15;
+                                        id(thermostat_ziel_x10) = 15;
                                         lv_slider_set_value(id(slider_temp), 15, LV_ANIM_OFF);
                                         lv_label_set_text(id(lbl_temp_wert), "1.5°");
                               - button:
@@ -2881,7 +2881,7 @@ lvgl:
                                         text_color: 0xFFFFFF
                                   on_click:
                                     - lambda: |-
-                                        id(eisbank_normal_target_x10) = 50;
+                                        id(thermostat_ziel_x10) = 50;
                                         lv_slider_set_value(id(slider_temp), 50, LV_ANIM_OFF);
                                         lv_label_set_text(id(lbl_temp_wert), "5.0°");
 

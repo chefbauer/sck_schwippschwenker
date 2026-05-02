@@ -1,7 +1,7 @@
 # ── Komponenten ──────────────────────────────────────────────────────────────────
 #  globals:  cooler_system_status_set,
 #            eisbank_aktiv, eisbank_laeuft, eisbank_dauer_min,
-#            eisbank_start_ms, eisbank_normal_target_x10
+#            eisbank_start_ms, thermostat_ziel_x10
 #  script:   script_eisbank_start, script_eisbank_stop
 #  interval: Eisbank-Wächter (5 s)
 # ─────────────────────────────────────────────────────────────────────────────────
@@ -42,7 +42,7 @@ globals:
     initial_value: '0'
     # millis()-Zeitstempel beim Eisbank-Start
 
-  - id: eisbank_normal_target_x10
+  - id: thermostat_ziel_x10
     type: int
     restore_value: yes
     initial_value: '8'
@@ -72,7 +72,7 @@ script:
           // ICE-Badge in Statusleiste: eisblau
           lv_obj_set_style_bg_color(id(obj_eisbank_badge), lv_color_hex(0x0055FF), 0);
           ESP_LOGI("eisbank", "Gestartet – Dauer %d min, Normaltemp %.1f °C",
-                   id(eisbank_dauer_min), id(eisbank_normal_target_x10) / 10.0f);
+                   id(eisbank_dauer_min), id(thermostat_ziel_x10) / 10.0f);
 
   # ── Eisbank-Pumpenpuls ────────────────────────────────────────────────────────
   # Verhindert Düsenzufrieren: kurzer Pumpenimpuls alle c_icebank_pump_interval_length s
@@ -132,7 +132,7 @@ interval:
             // → Thermostat übernimmt; Eisbank kann später neu starten wenn temp wieder ≤ Ziel
             float temp_eb = id(sensor_temp_becken).state;
             if (!isnan(temp_eb)) {
-              float wiederanlauf = id(eisbank_normal_target_x10) / 10.0f + ${c_thermostat_deadband}f;
+              float wiederanlauf = id(thermostat_ziel_x10) / 10.0f + ${c_thermostat_deadband}f;
               if (temp_eb > wiederanlauf) {
                 ESP_LOGI("eisbank", "Abbruch: Temp %.2f°C > Wiederanlauf %.2f°C – Thermostat übernimmt",
                          temp_eb, wiederanlauf);
@@ -144,7 +144,7 @@ interval:
             if (id(sw_aktiv) || id(dr_aktiv)) return;
             float temp = id(sensor_temp_becken).state;
             if (isnan(temp)) return;
-            float target = id(eisbank_normal_target_x10) / 10.0f;
+            float target = id(thermostat_ziel_x10) / 10.0f;
             if (temp <= target) {
               id(script_eisbank_start).execute();
             }
