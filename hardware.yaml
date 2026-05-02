@@ -59,20 +59,14 @@ esphome:
             // Einstellungs-TabView: horizontales Wischen (Tab-Wechsel per Swipe) deaktivieren
             // Vertikales Scrollen einzelner Tabs bleibt unberührt (separate child-Objekte)
             lv_obj_set_scroll_dir(lv_tabview_get_content(id(settings_tabs)), LV_DIR_NONE);
-            // eisbank_normal_target_x10 ist die Authority für Zieltemp (restore_value: yes)
-            // Thermostat startet mit default_preset (Eco/5°C) → wir überschreiben mit dem gespeicherten Wert
+            // UI-Init: Slider und Label aus Authority-Global befüllen (Thermostat-Steuerung übernimmt per Intervall)
             {
               int ziel = id(eisbank_normal_target_x10);
-              if (ziel < 1 || ziel > 50) ziel = 8;  // Fallback 0.8°C
-              float t = ziel / 10.0f;
-              auto call = id(climate_thermostat).make_call();
-              call.set_target_temperature(t);
-              call.perform();
+              if (ziel < 1 || ziel > 50) ziel = 8;
               lv_slider_set_value(id(slider_temp), ziel, LV_ANIM_OFF);
               char buf[8];
-              snprintf(buf, sizeof(buf), "%.1f\xc2\xb0", t);
+              snprintf(buf, sizeof(buf), "%.1f\xc2\xb0", ziel / 10.0f);
               lv_label_set_text(id(lbl_temp_wert), buf);
-              ESP_LOGI("thermostat", "Boot: Authority-Global %d \u2192 %.1f\xc2\xb0C gesetzt", ziel, t);
             }
             // Eisbank-Schalter und Dauer-Slider aus NVS synchronisieren
             if (id(eisbank_aktiv)) lv_obj_add_state(id(sw_eisbank_aktiv), LV_STATE_CHECKED);
@@ -339,11 +333,6 @@ climate:
           id: output_luefter_kompressor_pwm
           level: "${fan_kompressor_max_perc}%"
       - lambda: |-
-          // Tankkühlung nur außerhalb Eisbank-Modus
-          if (!id(eisbank_laeuft)) {
-            id(output_pumpe_dacB).set_level(${c_pumpe_umwaelzung_ein_perc} / 100.0f);
-            lv_slider_set_value(id(slider_umwaelzpumpe), ${c_pumpe_umwaelzung_ein_perc}, LV_ANIM_OFF);
-          }
           // ED% Berechnung beim Wiedereinschalten
           if (id(kompressor_aus_ms) > 0 && id(kompressor_letzter_run_ms) > 0) {
             uint32_t aus_zeit = millis() - id(kompressor_aus_ms);
@@ -364,9 +353,7 @@ climate:
       - output.set_level:
           id: output_luefter_kompressor_pwm
           level: "${fan_kompressor_min_perc}%"
-      - output.turn_off: output_pumpe_dacB
       - lambda: |-
-          lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
           // ED% Tracking: Laufzeit speichern
           if (id(kompressor_ein_ms) > 0) {
             id(kompressor_letzter_run_ms) = millis() - id(kompressor_ein_ms);
@@ -385,18 +372,6 @@ climate:
       min_temperature: 0
       max_temperature: 5
       temperature_step: 0.1
-    on_control:
-      - lambda: |-
-          if (x.get_mode() == CLIMATE_MODE_OFF)
-          {
-            id(output_pumpe_dacB).turn_off();
-            lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
-          }
-          else if (!id(eisbank_laeuft))
-          {
-            id(output_pumpe_dacB).set_level(${c_pumpe_umwaelzung_ein_perc} / 100.0);
-            lv_slider_set_value(id(slider_umwaelzpumpe), ${c_pumpe_umwaelzung_ein_perc}, LV_ANIM_OFF);
-          }
     on_state:
       - lvgl.label.update:
           id: lbl_kompressor_icon
@@ -430,14 +405,6 @@ binary_sensor:
     id: bin_motor_laeuft
     name: "Motor läuft"
     lambda: "return id(sw_aktiv) || id(dr_aktiv);"
-    on_press:
-      - lambda: |-
-          if (id(eisbank_laeuft)) return;  // Eisbank übernimmt selbst
-          if (id(climate_thermostat).mode != CLIMATE_MODE_COOL) return;
-          auto call = id(climate_thermostat).make_call();
-          call.set_preset("Cooling");
-          call.perform();
-          ESP_LOGI("motor", "Motor gestartet – Thermostat auf Cooling-Preset (-1°C)");
 
 script:
   # Verzögerter Kompressor-Start: wartet bis 120s ab Boot verstrichen, dann startet nur
@@ -452,4 +419,110 @@ script:
             ESP_LOGI("kompressor", "Verzögerter Start – Schutzzeit abgelaufen");
           } else {
             ESP_LOGI("kompressor", "Verzögerter Start abgebrochen (AUS kam zuerst)");
+          }
+
+interval:
+  # ── thermostat_steuerung: alle 500 ms ────────────────────────────────────────
+  # Zentrale, verriegelte Thermostat-Steuerung.
+  # Zustand: 0=Boot, 1=Normal, 2=Turbo (Motor oder ICE), 4=Warten_auf_Restore
+  # Nur bei echtem Zustandswechsel wird make_call() ausgeführt.
+  - interval: 500ms
+    then:
+      - lambda: |-
+          static int    ts_state        = 0;   // 0=Boot 1=Normal 2=Turbo 4=Restore-Countdown
+          static uint32_t ts_restore_ms = 0;   // millis() bei Start des Countdowns
+          static int    ts_applied_x10  = -1;  // zuletzt gesetzter Wert × 10
+          const uint32_t RESTORE_DELAY  = (uint32_t)(${c_thermostat_restore_time}) * 1000u;
+
+          bool motor_an = id(bin_motor_laeuft).state;
+          bool ice_an   = id(eisbank_laeuft);
+          bool turbo    = motor_an || ice_an;
+
+          int neuer_state = ts_state;
+
+          if (ts_state == 0) {
+            // Erster Lauf nach Boot: Zustand aus echten Signalen ableiten
+            neuer_state = turbo ? 2 : 1;
+          } else if (turbo) {
+            if (ts_state == 4) ts_restore_ms = 0;  // laufenden Countdown abbrechen
+            neuer_state = 2;
+          } else if (ts_state == 2) {
+            // Motor/ICE gerade gestoppt → Restore-Countdown starten
+            neuer_state = 4;
+            ts_restore_ms = millis();
+          } else if (ts_state == 4) {
+            if (millis() - ts_restore_ms >= RESTORE_DELAY)
+              neuer_state = 1;
+          }
+
+          // Im Normal-Zustand: Authority-Global auf Änderungen prüfen (Slider/Preset)
+          int ziel_x10 = id(eisbank_normal_target_x10);
+          if (ziel_x10 < 1 || ziel_x10 > 50) ziel_x10 = 8;
+
+          bool muss_setzen = (neuer_state != ts_state);
+          if (!muss_setzen && neuer_state == 1 && ziel_x10 != ts_applied_x10)
+            muss_setzen = true;
+
+          if (!muss_setzen) return;
+
+          ts_state = neuer_state;
+
+          if (neuer_state == 2) {
+            auto call = id(climate_thermostat).make_call();
+            call.set_target_temperature(-1.0f);
+            call.perform();
+            ts_applied_x10 = -10;
+            ESP_LOGI("ts", "TURBO: -1.0°C (motor=%d ice=%d)", (int)motor_an, (int)ice_an);
+          } else if (neuer_state == 1) {
+            float t = ziel_x10 / 10.0f;
+            auto call = id(climate_thermostat).make_call();
+            call.set_target_temperature(t);
+            call.perform();
+            ts_applied_x10 = ziel_x10;
+            lv_slider_set_value(id(slider_temp), ziel_x10, LV_ANIM_OFF);
+            char buf[8];
+            snprintf(buf, sizeof(buf), "%.1f\xc2\xb0", t);
+            lv_label_set_text(id(lbl_temp_wert), buf);
+            ESP_LOGI("ts", "NORMAL: %.1f°C", t);
+          }
+          // State 4: kein Thermostat-Aufruf – Countdown läuft, Thermostat bleibt auf -1°C
+
+  # ── umwaelzpumpe_steuerung: alle 500 ms ──────────────────────────────────────
+  # Zentrale, verriegelte Pumpen-Steuerung.
+  # Zustand: -1=unbekannt, 0=Aus, 1=Kühlung-EIN, 2=ICE-Puls-Modus
+  # Im ICE-Modus übernimmt script_eisbank_pump_tick das eigentliche Ein/Aus.
+  - interval: 500ms
+    then:
+      - lambda: |-
+          static int pumpe_state = -1;  // -1=unbekannt, 0=Aus, 1=Kühlung, 2=ICE
+
+          bool ice_an   = id(eisbank_laeuft);
+          bool kuehlend = (id(climate_thermostat).action == CLIMATE_ACTION_COOLING);
+
+          int neuer_state;
+          if (ice_an) {
+            neuer_state = 2;  // ICE: pump_tick verwaltet das Ein/Aus-Timing
+          } else if (kuehlend) {
+            neuer_state = 1;  // Kühlung aktiv: Umwälzpumpe EIN
+          } else {
+            neuer_state = 0;  // Alles aus
+          }
+
+          if (neuer_state == pumpe_state) return;  // Verriegelung: keine Änderung
+
+          pumpe_state = neuer_state;
+
+          if (neuer_state == 0) {
+            id(output_pumpe_dacB).turn_off();
+            lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
+            ESP_LOGI("pumpe", "AUS");
+          } else if (neuer_state == 1) {
+            id(output_pumpe_dacB).set_level(${c_pumpe_umwaelzung_ein_perc} / 100.0f);
+            lv_slider_set_value(id(slider_umwaelzpumpe), ${c_pumpe_umwaelzung_ein_perc}, LV_ANIM_OFF);
+            ESP_LOGI("pumpe", "EIN (%d%%)", ${c_pumpe_umwaelzung_ein_perc});
+          } else if (neuer_state == 2) {
+            // ICE-Modus: pump_tick übernimmt – Pumpe zu Beginn AUS
+            id(output_pumpe_dacB).turn_off();
+            lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
+            ESP_LOGI("pumpe", "ICE-Modus (pump_tick aktiv)");
           }

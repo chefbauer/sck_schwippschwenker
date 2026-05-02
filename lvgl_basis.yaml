@@ -2784,10 +2784,7 @@ lvgl:
                                   value: 15
                                   on_value:
                                     - lambda: |-
-                                        id(eisbank_normal_target_x10) = x;  // Authority: Ziel-Global immer zuerst
-                                        auto call = id(climate_thermostat).make_call();
-                                        call.set_target_temperature(x / 10.0f);
-                                        call.perform();
+                                        id(eisbank_normal_target_x10) = x;  // Authority: thermostat_steuerung liest diesen Wert
                                         char buf[8];
                                         snprintf(buf, sizeof(buf), "%.1f°", x / 10.0f);
                                         lv_label_set_text(id(lbl_temp_wert), buf);
@@ -2851,9 +2848,6 @@ lvgl:
                                   on_click:
                                     - lambda: |-
                                         id(eisbank_normal_target_x10) = 10;
-                                        auto call = id(climate_thermostat).make_call();
-                                        call.set_target_temperature(1.0f);
-                                        call.perform();
                                         lv_slider_set_value(id(slider_temp), 10, LV_ANIM_OFF);
                                         lv_label_set_text(id(lbl_temp_wert), "1.0°");
                               - button:
@@ -2871,9 +2865,6 @@ lvgl:
                                   on_click:
                                     - lambda: |-
                                         id(eisbank_normal_target_x10) = 15;
-                                        auto call = id(climate_thermostat).make_call();
-                                        call.set_target_temperature(1.5f);
-                                        call.perform();
                                         lv_slider_set_value(id(slider_temp), 15, LV_ANIM_OFF);
                                         lv_label_set_text(id(lbl_temp_wert), "1.5°");
                               - button:
@@ -2891,9 +2882,6 @@ lvgl:
                                   on_click:
                                     - lambda: |-
                                         id(eisbank_normal_target_x10) = 50;
-                                        auto call = id(climate_thermostat).make_call();
-                                        call.set_target_temperature(5.0f);
-                                        call.perform();
                                         lv_slider_set_value(id(slider_temp), 50, LV_ANIM_OFF);
                                         lv_label_set_text(id(lbl_temp_wert), "5.0°");
 

@@ -66,10 +66,6 @@ script:
           id(output_pumpe_dacB).turn_off();
           lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
           id(script_eisbank_pump_tick).execute();  // ersten Puls sofort
-          // Thermostat auf Turbo-Ziel −1 °C → Kompressor läuft durch (nie erreichbar im Wasser)
-          auto call = id(climate_thermostat).make_call();
-          call.set_target_temperature(-1.0f);
-          call.perform();
           // UI-Status
           lv_label_set_text(id(lbl_eisbank_status), "AKTIV");
           lv_obj_set_style_text_color(id(lbl_eisbank_status), lv_color_hex(0x0055FF), 0);
@@ -104,20 +100,8 @@ script:
           if (!id(eisbank_laeuft)) return;
           id(eisbank_laeuft) = false;
           id(eisbank_start_ms) = 0;
-          // Pumpenpuls stoppen (falls gerade ON-Phase läuft)
+          // Pumpenpuls stoppen (falls gerade ON-Phase läuft) – pump_steuerung übernimmt dacB
           id(script_eisbank_pump_tick).stop();
-          id(output_pumpe_dacB).turn_off();
-          // Thermostat auf gesicherte Normaltemp zurücksetzen
-          float t = id(eisbank_normal_target_x10) / 10.0f;
-          if (t < 0.0f || t > 5.0f) t = 0.8f;
-          auto call = id(climate_thermostat).make_call();
-          call.set_target_temperature(t);
-          call.perform();
-          // Slider und Label synchronisieren
-          lv_slider_set_value(id(slider_temp), id(eisbank_normal_target_x10), LV_ANIM_OFF);
-          char buf[8];
-          snprintf(buf, sizeof(buf), "%.1f°", t);
-          lv_label_set_text(id(lbl_temp_wert), buf);
           // UI-Status zurücksetzen
           lv_label_set_text(id(lbl_eisbank_status), "");
           // ICE-Badge: grau
