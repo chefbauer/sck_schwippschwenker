@@ -645,14 +645,13 @@ script:
           id(can_bus)->send_data(${motor_can_id}, false, data);
           ESP_LOGI("schwenker", "Motor Re-Init abgeschlossen");
 
-  # ── Pumpe: Modus setzen (0=AUS, 1=MANUELL, 2=AUTO) ────────────
-  - id: script_pumpe_set_modus
+  # ── Pumpe: Modus setzen (0=AUS, 1=MANUELL, 2=AUTO, 3=TURBO) ────────────
+  - id: script_beckenpumpe_set_modus
     mode: restart
     parameters:
       modus: int
     then:
       - lambda: |-
-          id(pumpe_a_modus) = modus;
           // Farbe + Label aktualisieren
           uint32_t color;
           const char* lbl;
@@ -662,15 +661,20 @@ script:
           } else if (modus == 1) {
             color = 0x1a5a8a;  // blau = MANUELL
             lbl   = "M";
+          } else if (modus == 3) {
+            color = 0xCC7700;  // orange = TURBO
+            lbl   = "T";
           } else {
             color = 0x555555;  // grau = AUS
             lbl   = "";
           }
           lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(color), 0);
           lv_label_set_text(id(lbl_pumpe_modus), lbl);
-          // Labelfarbe: hellblau wenn A oder M, hellgrau wenn AUS
+          // Labelfarbe: hellblau wenn aktiv, hellgrau wenn AUS
           lv_obj_set_style_text_color(id(lbl_pumpe_modus),
             lv_color_hex(modus > 0 ? 0xAADDFF : 0xAAAAAA), 0);
+          if (modus == 3) return;  // TURBO: nur visuell, Pumpenlogik liegt in script_pumpe_a_lang
+          id(pumpe_a_modus) = modus;
           // Aktion je Modus
           if (modus == 0) {
             // AUS: Pumpe stoppen
@@ -747,8 +751,7 @@ script:
           id(pumpe_a_modus_vor_turbo) = id(pumpe_a_modus);
           id(pumpe_a_aktiv) = true;
           id(output_pumpe_dacA).set_level(0.25f);  // 25% Anlauf
-          lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(0xCC7700), 0);  // orange = TURBO
-          lv_label_set_text(id(lbl_pumpe_modus), "T");
+          id(script_beckenpumpe_set_modus)->execute(3);  // orange = TURBO
           ESP_LOGI("pumpe", "Beckenfüllung TURBO start (Modus vorher=%d)", id(pumpe_a_modus_vor_turbo));
       #- delay: 300ms
       #- lambda: |-
@@ -761,7 +764,7 @@ script:
           id(output_pumpe_dacA).set_level(0.05f);  // 5% Dauer
           lv_slider_set_value(id(slider_turmpumpe), 5, LV_ANIM_OFF);
           // Nach Turbo: zurück zum gespeicherten Modus
-          id(script_pumpe_set_modus)->execute(id(pumpe_a_modus_vor_turbo));
+          id(script_beckenpumpe_set_modus)->execute(id(pumpe_a_modus_vor_turbo));
           ESP_LOGI("pumpe", "TURBO ende, zurück zu Modus %d", id(pumpe_a_modus_vor_turbo));
 
   # ── Beckenfüllung AUS ────────────────────────────────────
@@ -772,9 +775,7 @@ script:
           id(pumpe_a_aktiv) = false;
           id(pumpe_a_auto_war_an) = false;
           id(output_pumpe_dacA).set_level(0.0f);
-          // Farbe + Label nach aktuellem Modus setzen (AUS erzwingt grau)
-          lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(0x555555), 0);
-          lv_label_set_text(id(lbl_pumpe_modus), "");
+          id(script_beckenpumpe_set_modus)->execute(0);
           ESP_LOGI("pumpe", "Beckenfüllung AUS");
 
   # ── System EIN ───────────────────────────────────────────
@@ -787,6 +788,8 @@ script:
           auto call = id(climate_thermostat).make_call();
           call.set_mode("cool");
           call.perform();
+          // Pumpe auf AUTO setzen
+          id(script_beckenpumpe_set_modus)->execute(2);
           ESP_LOGI("system", "EIN");
 
   # ── System AUS ───────────────────────────────────────────
@@ -803,8 +806,7 @@ script:
           id(output_pumpe_dacA).turn_off();
           id(pumpe_a_aktiv) = false;
           id(pumpe_a_auto_war_an) = false;
-          lv_obj_set_style_bg_color(id(btn_beckenfuellung), lv_color_hex(0x555555), 0);
-          lv_label_set_text(id(lbl_pumpe_modus), "");
+          id(script_beckenpumpe_set_modus)->execute(0);
           if (id(dr_aktiv)) id(script_drehen_stop).execute();
           id(output_pumpe_dacB).turn_off();
           ESP_LOGI("system", "AUS");

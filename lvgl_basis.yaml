@@ -555,7 +555,7 @@ lvgl:
                     - lambda: |-
                         // Cycle: 0→1→2→0
                         int naechster = (id(pumpe_a_modus) + 1) % 3;
-                        id(script_pumpe_set_modus)->execute(naechster);
+                        id(script_beckenpumpe_set_modus)->execute(naechster);
                   on_long_press:
                     - lambda: |-
                         // TURBO: immer, script_pumpe_a_lang merkt Modus selbst
