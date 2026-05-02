@@ -69,7 +69,7 @@ esphome:
               lv_label_set_text(id(lbl_temp_wert), buf);
             }
             // Eisbank-Schalter und Dauer-Slider aus NVS synchronisieren
-            if (id(eisbank_aktiv)) lv_obj_add_state(id(sw_eisbank_aktiv), LV_STATE_CHECKED);
+            if (id(icebank_enabled)) lv_obj_add_state(id(sw_eisbank_aktiv), LV_STATE_CHECKED);
             else lv_obj_clear_state(id(sw_eisbank_aktiv), LV_STATE_CHECKED);
             int edm = id(eisbank_dauer_min);
             if (edm < 0) edm = 0; if (edm > 30) edm = 30;
@@ -405,6 +405,10 @@ binary_sensor:
     id: bin_motor_laeuft
     name: "Motor läuft"
     lambda: "return id(sw_aktiv) || id(dr_aktiv);"
+    on_press:
+      - lambda: |-
+          id(ice_run_allowed) = true;
+          ESP_LOGI("eisbank", "Motor gestartet – ice_run_allowed gesetzt");
 
 script:
   # Verzögerter Kompressor-Start: wartet bis 120s ab Boot verstrichen, dann startet nur
@@ -435,13 +439,15 @@ interval:
           const uint32_t RESTORE_DELAY  = (uint32_t)(${c_thermostat_restore_time}) * 1000u;
 
           // ── Eisbank: Start/Stop ──────────────────────────────────────────────
-          bool ice_feature = id(eisbank_aktiv) && (id(eisbank_dauer_min) > 0);
+          bool ice_feature = id(icebank_enabled) && (id(eisbank_dauer_min) > 0);
           if (id(eisbank_laeuft)) {
             bool stop = !ice_feature;
+            bool timer_stop = false;
             if (!stop) {
               if (millis() - id(eisbank_start_ms) >= (uint32_t)id(eisbank_dauer_min) * 60000u) {
                 ESP_LOGI("eisbank", "Timer %d min abgelaufen", id(eisbank_dauer_min));
                 stop = true;
+                timer_stop = true;
               } else {
                 float temp_eb = id(sensor_temp_becken).state;
                 if (!isnan(temp_eb)) {
@@ -458,9 +464,14 @@ interval:
               id(eisbank_start_ms) = 0;
               lv_label_set_text(id(lbl_eisbank_status), "");
               lv_obj_set_style_bg_color(id(obj_eisbank_badge), lv_color_hex(0x888888), 0);
-              ESP_LOGI("eisbank", "Gestoppt");
+              if (timer_stop) {
+                id(ice_run_allowed) = false;  // Neustart sperren bis Bedingung erfüllt
+                ESP_LOGI("eisbank", "Gestoppt (Timer) – ice_run_allowed=false");
+              } else {
+                ESP_LOGI("eisbank", "Gestoppt (Temp)");
+              }
             }
-          } else if (ice_feature && !id(sw_aktiv) && !id(dr_aktiv)) {
+          } else if (ice_feature && id(ice_run_allowed) && !id(bin_motor_laeuft).state) {
             float temp = id(sensor_temp_becken).state;
             float target = id(thermostat_ziel_x10) / 10.0f;
             if (!isnan(temp) && temp <= target) {
@@ -471,6 +482,14 @@ interval:
               lv_obj_set_style_bg_color(id(obj_eisbank_badge), lv_color_hex(0x0055FF), 0);
               ESP_LOGI("eisbank", "Gestartet – %d min, %.2f\xc2\xb0C <= %.2f\xc2\xb0C",
                        id(eisbank_dauer_min), temp, target);
+            }
+          } else if (!id(ice_run_allowed)) {
+            // Freigabe prüfen: Temp über Soll → ice_run_allowed wieder setzen
+            float temp = id(sensor_temp_becken).state;
+            float target = id(thermostat_ziel_x10) / 10.0f;
+            if (!isnan(temp) && temp > target) {
+              id(ice_run_allowed) = true;
+              ESP_LOGI("eisbank", "Freigabe: %.2f\xc2\xb0C > %.2f\xc2\xb0C", temp, target);
             }
           }
 

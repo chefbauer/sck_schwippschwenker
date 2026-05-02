@@ -1,6 +1,6 @@
 # ── Komponenten ──────────────────────────────────────────────────────────────────
 #  globals:  cooler_system_status_set,
-#            eisbank_aktiv, eisbank_laeuft, eisbank_dauer_min,
+#            icebank_enabled, eisbank_laeuft, eisbank_dauer_min,
 #            eisbank_start_ms, thermostat_ziel_x10
 #  Steuerung: vollständig in thermostat_steuerung + umwaelzpumpe_steuerung (hardware.yaml, 500ms)
 # ─────────────────────────────────────────────────────────────────────────────────
@@ -17,7 +17,7 @@ globals:
     # 3 = aktiv
 
   # ── Eisbank ──────────────────────────────────────────────────────────────────
-  - id: eisbank_aktiv
+  - id: icebank_enabled
     type: bool
     restore_value: yes
     initial_value: 'false'
@@ -46,4 +46,10 @@ globals:
     restore_value: yes
     initial_value: '8'
     # Zieltemperatur × 10 (z. B. 8 = 0.8 °C), restore_value: yes
+
+  - id: ice_run_allowed
+    type: bool
+    restore_value: no
+    initial_value: 'true'
+    # ICE-Neustart erlaubt? false nach Timer-Ablauf, true nach: temp>soll / Motor-Start / Schalter-Ein
 

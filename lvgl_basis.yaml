@@ -2913,7 +2913,17 @@ lvgl:
                                   align: LEFT_MID
                                   x: 240
                                   on_value:
-                                    - lambda: "id(eisbank_aktiv) = x;"
+                                    - lambda: |-
+                                        id(icebank_enabled) = x;
+                                        if (!x && id(eisbank_laeuft)) {
+                                          id(eisbank_laeuft) = false;
+                                          id(eisbank_start_ms) = 0;
+                                          lv_label_set_text(id(lbl_eisbank_status), "");
+                                          lv_obj_set_style_bg_color(id(obj_eisbank_badge), lv_color_hex(0x888888), 0);
+                                          ESP_LOGI("eisbank", "Manuell gestoppt");
+                                        } else if (x) {
+                                          id(ice_run_allowed) = true;  // Schalter-Ein = Freigabe
+                                        }
                               - label:
                                   id: lbl_eisbank_status
                                   text: ""
