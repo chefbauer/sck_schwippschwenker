@@ -261,7 +261,7 @@ script:
           if (count < 2) return;
           int ridx = ((id(chart_write_idx) - count) % 720 + 720) % 720;
           // ── Temperatur-Trace ──────────────────────────────────────────────
-          static lv_point_t temp_pts[720];
+          static lv_point_precise_t temp_pts[720];
           int tvalid = 0;
           for (int i = 0; i < count; i++) {
             int buf_idx = (ridx + i) % 720;
@@ -270,18 +270,18 @@ script:
             int clamped = std::max(-100, std::min(300, (int)val));
             int py = 65 + (300 - clamped);
             int px = 70 + (int)((int64_t)i * 840 / (count - 1));
-            temp_pts[tvalid++] = {(lv_coord_t)px, (lv_coord_t)py};
+            temp_pts[tvalid++] = {(lv_value_precise_t)px, (lv_value_precise_t)py};
           }
-          if (tvalid >= 2) lv_line_set_points(id(line_temp_trace), temp_pts, tvalid);
+          if (tvalid >= 2) lv_line_set_points(id(line_temp_trace)->obj, temp_pts, tvalid);
           // ── Kompressor-Trace (ON=y500, OFF=y-20) ─────────────────────────
-          static lv_point_t komp_pts[720];
+          static lv_point_precise_t komp_pts[720];
           for (int i = 0; i < count; i++) {
             int buf_idx = (ridx + i) % 720;
             int px = 70 + (int)((int64_t)i * 840 / (count - 1));
             int py = id(chart_komp_buf)[buf_idx] ? 500 : -20;
-            komp_pts[i] = {(lv_coord_t)px, (lv_coord_t)py};
+            komp_pts[i] = {(lv_value_precise_t)px, (lv_value_precise_t)py};
           }
-          lv_line_set_points(id(line_komp_trace), komp_pts, count);
+          lv_line_set_points(id(line_komp_trace)->obj, komp_pts, count);
 
 interval:
   # Chart-Ringpuffer befüllen + Linien aktualisieren wenn Overlay sichtbar
@@ -294,6 +294,6 @@ interval:
           id(chart_komp_buf)[widx] = id(kompressor_soll_ein) ? 1 : 0;
           id(chart_write_idx) = (widx + 1) % 720;
           if (id(chart_fill_count) < 720) id(chart_fill_count)++;
-          if (lv_obj_has_flag(id(overlay_cooling), LV_OBJ_FLAG_HIDDEN)) return;
+          if (lv_obj_has_flag(id(overlay_cooling)->obj, LV_OBJ_FLAG_HIDDEN)) return;
           id(script_kuehl_chart_draw)->execute();
 
