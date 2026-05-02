@@ -208,6 +208,7 @@ sensor:
       return raw / 16.0f;
     on_value:
       - lvgl.widget.refresh: lbl_temp_becken
+      - script.execute: script_kuehl_update
 
   # AMG8833 Infrarot-Temperatursensor (8x8 Matrix)
   - platform: template

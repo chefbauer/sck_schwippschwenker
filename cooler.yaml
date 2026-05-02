@@ -1,7 +1,12 @@
 # ── Komponenten ──────────────────────────────────────────────────────────────────
 #  globals:  cooler_system_status_set,
 #            icebank_enabled, eisbank_laeuft, eisbank_dauer_min,
-#            eisbank_start_ms, thermostat_ziel_x10
+#            eisbank_start_ms, thermostat_ziel_x10,
+#            kuehl_last_temp, kuehl_last_change_ms,
+#            kuehl_p_buf, kuehl_p_buf_idx,
+#            kuehl_p_watts, kuehl_kompressor_start_ms,
+#            kuehl_komp_war_ein, kuehl_dreher_war_aktiv
+#  script:   script_kuehl_update  (von sensor_temp_becken.on_value aufgerufen)
 #  Steuerung: vollständig in thermostat_steuerung + umwaelzpumpe_steuerung (hardware.yaml, 500ms)
 # ─────────────────────────────────────────────────────────────────────────────────
 
@@ -52,4 +57,170 @@ globals:
     restore_value: no
     initial_value: 'true'
     # ICE-Neustart erlaubt? false nach Timer-Ablauf, true nach: temp>soll / Motor-Start / Schalter-Ein
+
+  # ── Kühl-Saldo Leistungsberechnung ──────────────────────────────────────────
+  - id: kuehl_last_temp
+    type: float
+    restore_value: no
+    initial_value: 'NAN'
+    # Letzter gespeicherter Temperaturwert für Δ-Erkennung
+
+  - id: kuehl_last_change_ms
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+    # millis()-Zeitstempel des letzten Temperatursprungs
+
+  - id: kuehl_p_buf
+    type: std::array<float, 3>
+    restore_value: no
+    initial_value: '{NAN, NAN, NAN}'
+    # Ringpuffer: letzte 3 Leistungswerte (W, vorzeichenbehaftet)
+
+  - id: kuehl_p_buf_idx
+    type: int
+    restore_value: no
+    initial_value: '0'
+    # Schreibzeiger in kuehl_p_buf
+
+  - id: kuehl_p_watts
+    type: float
+    restore_value: no
+    initial_value: '0.0'
+    # Aktuell angezeigter Leistungssaldo in W
+
+  - id: kuehl_kompressor_start_ms
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+    # millis() beim letzten Kompressor-Einschalten
+
+  - id: kuehl_komp_war_ein
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+    # Kompressorstatus beim letzten Durchlauf (Flanken-Erkennung)
+
+  - id: kuehl_dreher_war_aktiv
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+    # Dreh-/Schwenkstatus beim letzten Durchlauf (Flanken-Erkennung)
+
+script:
+  # Leistungssaldo berechnen + Display aktualisieren.
+  # Wird aus sensor_temp_becken.on_value aufgerufen (hardware.yaml + ble.yaml).
+  # P = m·c·ΔT/Δt = 12 kg · 4186 J/kg/K · 0,1 K / Δt(s) ≈ 502 / Δt(s)
+  - id: script_kuehl_update
+    mode: single
+    then:
+      - lambda: |-
+          float new_temp = id(sensor_temp_becken).state;
+          if (isnan(new_temp)) return;
+
+          uint32_t now = millis();
+          bool dreher_aktiv = id(sw_aktiv) || id(dr_aktiv);
+
+          // ── Kompressor-Startzeit tracken (Flankenerkennung) ──────────────────
+          bool komp_jetzt = id(kompressor_soll_ein);
+          if (komp_jetzt && !id(kuehl_komp_war_ein)) {
+            id(kuehl_kompressor_start_ms) = now;
+          }
+          id(kuehl_komp_war_ein) = komp_jetzt;
+
+          // ── Initialisierung beim ersten validen Wert ──────────────────────────
+          if (isnan(id(kuehl_last_temp))) {
+            id(kuehl_last_temp) = new_temp;
+            id(kuehl_last_change_ms) = now;
+            id(kuehl_dreher_war_aktiv) = dreher_aktiv;
+            return;
+          }
+
+          // ── Dreher-Start: Display auf 0 zurücksetzen ─────────────────────────
+          if (dreher_aktiv && !id(kuehl_dreher_war_aktiv)) {
+            id(kuehl_p_watts) = 0.0f;
+            id(kuehl_p_buf_idx) = 0;
+            id(kuehl_p_buf)[0] = NAN;
+            id(kuehl_p_buf)[1] = NAN;
+            id(kuehl_p_buf)[2] = NAN;
+            id(kuehl_last_temp) = new_temp;
+            id(kuehl_last_change_ms) = now;
+            id(kuehl_dreher_war_aktiv) = dreher_aktiv;
+            lv_label_set_text(id(lbl_kuehlsaldo), "0W");
+            lv_obj_set_style_bg_color(id(obj_kuehlsaldo_bg), lv_color_hex(0x70C9E0), 0);
+            lv_obj_set_style_text_color(id(lbl_kuehlsaldo), lv_color_hex(0x003366), 0);
+            lv_obj_clear_flag(id(lbl_kuehlsaldo_getraenk), LV_OBJ_FLAG_HIDDEN);
+            return;
+          }
+          id(kuehl_dreher_war_aktiv) = dreher_aktiv;
+
+          // ── Temperaturdelta detektieren (~0,1 °C Schritt) ────────────────────
+          float delta = new_temp - id(kuehl_last_temp);
+          if (fabsf(delta) < 0.09f) return;   // kein Sprung → nichts zu tun
+
+          uint32_t dt_ms = now - id(kuehl_last_change_ms);
+          id(kuehl_last_temp) = new_temp;
+          id(kuehl_last_change_ms) = now;
+
+          // Sanity-Check: dt zwischen 0,5 s und 3 min
+          if (dt_ms < 500 || dt_ms > 180000) return;
+
+          // ── Rohleistung berechnen + in Ringpuffer schreiben ──────────────────
+          //  P = 12 kg · 4186 J/kg/K · |ΔT| / dt
+          float dt_s = dt_ms / 1000.0f;
+          float p_raw = (12.0f * 4186.0f * fabsf(delta)) / dt_s;
+          float p_signed = (delta > 0.0f) ? p_raw : -p_raw;
+
+          int idx = id(kuehl_p_buf_idx);
+          id(kuehl_p_buf)[idx] = p_signed;
+          id(kuehl_p_buf_idx) = (idx + 1) % 3;
+
+          // Gleitender Mittelwert über bis zu 3 Werte
+          float sum = 0.0f; int cnt = 0;
+          for (int i = 0; i < 3; i++) {
+            float v = id(kuehl_p_buf)[i];
+            if (!isnan(v)) { sum += v; cnt++; }
+          }
+          float p_avg = (cnt > 0) ? sum / cnt : p_signed;
+
+          // ── Kompressor-Offset (nur wenn Dreher läuft und Komp ≥ 30 s ein) ───
+          float p_display = p_avg;
+          if (dreher_aktiv) {
+            uint32_t ks = id(kuehl_kompressor_start_ms);
+            if (komp_jetzt && ks > 0 && (now - ks) >= 30000U) {
+              p_display = p_avg + 300.0f;
+            }
+            if (p_display < 0.0f) p_display = 0.0f;  // auf 0 clampen
+          }
+          id(kuehl_p_watts) = p_display;
+
+          // ── Farbe bestimmen ───────────────────────────────────────────────────
+          uint32_t bg_col, txt_col;
+          if (dreher_aktiv) {
+            // Dreher läuft: immer blau (Getränkekühlung)
+            bg_col  = 0x70C9E0;
+            txt_col = 0x003366;
+          } else if (delta > 0.0f) {
+            // Motor aus + Erwärmung = Systemverluste → rot
+            bg_col  = 0xCC2222;
+            txt_col = 0xFFFFFF;
+          } else {
+            // Motor aus + Abkühlung = Kompressor kühlt leer → blau
+            bg_col  = 0x70C9E0;
+            txt_col = 0x003366;
+          }
+
+          // ── Display aktualisieren ─────────────────────────────────────────────
+          char tbuf[10];
+          snprintf(tbuf, sizeof(tbuf), "%dW", (int)roundf(fabsf(p_display)));
+          lv_label_set_text(id(lbl_kuehlsaldo), tbuf);
+          lv_obj_set_style_bg_color(id(obj_kuehlsaldo_bg),  lv_color_hex(bg_col),  0);
+          lv_obj_set_style_text_color(id(lbl_kuehlsaldo), lv_color_hex(txt_col), 0);
+
+          // Getränkesymbol: sichtbar wenn Dreher läuft
+          if (dreher_aktiv) {
+            lv_obj_clear_flag(id(lbl_kuehlsaldo_getraenk), LV_OBJ_FLAG_HIDDEN);
+          } else {
+            lv_obj_add_flag(id(lbl_kuehlsaldo_getraenk), LV_OBJ_FLAG_HIDDEN);
+          }
 

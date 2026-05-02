@@ -89,6 +89,7 @@ font:
       - "\uF021"  # arrows-rotate (Schwenker Start/Stop)
       - "\uF186"  # Moon (Standby)
       - "\uF00D"  # xmark (X-Button)
+      - "\uF72F"  # wine-bottle (Kühl-Saldo Getränkesymbol)
 
   # Dot-Matrix Font für Timer-Anzeige
   - file: "fonts/5x7-dot-matrix.ttf"
@@ -1804,6 +1805,35 @@ lvgl:
                               text_font: font_temp
                               align: CENTER
                               x: 20
+                              text_color: 0x003366
+                    # Kühl-Saldo: Leistung dem Getränk entzogen (W)
+                    - obj:
+                        id: obj_kuehlsaldo_bg
+                        width: 145
+                        height: 56
+                        align: CENTER
+                        x: 304
+                        bg_color: 0x70C9E0
+                        bg_opa: COVER
+                        radius: 8
+                        border_width: 0
+                        pad_all: 0
+                        scrollable: false
+                        widgets:
+                          - label:
+                              id: lbl_kuehlsaldo_getraenk
+                              text: "\uF72F"
+                              text_font: font_icons
+                              align: LEFT_MID
+                              x: 4
+                              text_color: 0xFFFFFF
+                              hidden: true
+                          - label:
+                              id: lbl_kuehlsaldo
+                              text: "---W"
+                              text_font: font_temp
+                              align: RIGHT_MID
+                              x: -6
                               text_color: 0x003366
                     # Standby-Indikator (Mond-Icon, nur sichtbar wenn Standby aktiv)
                     - label:

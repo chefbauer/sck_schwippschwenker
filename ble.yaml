@@ -41,3 +41,4 @@ sensor:
         - throttle: 3s
       on_value:
         - lvgl.widget.refresh: lbl_temp_becken
+        - script.execute: script_kuehl_update
