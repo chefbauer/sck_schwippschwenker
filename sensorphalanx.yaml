@@ -412,9 +412,9 @@ binary_sensor:
       float d = id(distance_sensor).state;
       if (isnan(d)) return false;  // Initialisierung: sicher AUS
       // EIN: Objekt erkannt
-      if (d > 1.0f && d < 100.0f) return true;
+      if (d > 1.0f && d < 70.0f) return true;
       // AUS: Objekt weg (Hysterese)
-      if (id(bin_objekt_vor_sensor).state && d > 150.0f) return false;
+      if (id(bin_objekt_vor_sensor).state && d > 200.0f) return false;
       return {};
     filters:
       - delayed_off: 3s
