@@ -430,10 +430,51 @@ interval:
     then:
       - lambda: |-
           static int    ts_state        = 0;   // 0=Boot 1=Normal 2=Turbo 4=Restore-Countdown
-          static uint32_t ts_restore_ms = 0;   // millis() bei Start des Countdowns
-          static int    ts_applied_x10  = -1;  // zuletzt gesetzter Wert × 10
+          static uint32_t ts_restore_ms = 0;
+          static int    ts_applied_x10  = -1;
           const uint32_t RESTORE_DELAY  = (uint32_t)(${c_thermostat_restore_time}) * 1000u;
 
+          // ── Eisbank: Start/Stop ──────────────────────────────────────────────
+          bool ice_feature = id(eisbank_aktiv) && (id(eisbank_dauer_min) > 0);
+          if (id(eisbank_laeuft)) {
+            bool stop = !ice_feature;
+            if (!stop) {
+              if (millis() - id(eisbank_start_ms) >= (uint32_t)id(eisbank_dauer_min) * 60000u) {
+                ESP_LOGI("eisbank", "Timer %d min abgelaufen", id(eisbank_dauer_min));
+                stop = true;
+              } else {
+                float temp_eb = id(sensor_temp_becken).state;
+                if (!isnan(temp_eb)) {
+                  float wiederanlauf = id(thermostat_ziel_x10) / 10.0f + ${c_thermostat_deadband}f;
+                  if (temp_eb > wiederanlauf) {
+                    ESP_LOGI("eisbank", "Abbruch: %.2f\xc2\xb0C > %.2f\xc2\xb0C", temp_eb, wiederanlauf);
+                    stop = true;
+                  }
+                }
+              }
+            }
+            if (stop) {
+              id(eisbank_laeuft) = false;
+              id(eisbank_start_ms) = 0;
+              lv_label_set_text(id(lbl_eisbank_status), "");
+              lv_obj_set_style_bg_color(id(obj_eisbank_badge), lv_color_hex(0x888888), 0);
+              ESP_LOGI("eisbank", "Gestoppt");
+            }
+          } else if (ice_feature && !id(sw_aktiv) && !id(dr_aktiv)) {
+            float temp = id(sensor_temp_becken).state;
+            float target = id(thermostat_ziel_x10) / 10.0f;
+            if (!isnan(temp) && temp <= target) {
+              id(eisbank_laeuft) = true;
+              id(eisbank_start_ms) = millis();
+              lv_label_set_text(id(lbl_eisbank_status), "AKTIV");
+              lv_obj_set_style_text_color(id(lbl_eisbank_status), lv_color_hex(0x0055FF), 0);
+              lv_obj_set_style_bg_color(id(obj_eisbank_badge), lv_color_hex(0x0055FF), 0);
+              ESP_LOGI("eisbank", "Gestartet – %d min, %.2f\xc2\xb0C <= %.2f\xc2\xb0C",
+                       id(eisbank_dauer_min), temp, target);
+            }
+          }
+
+          // ── Thermostat-Zustandsmaschine ──────────────────────────────────────
           bool motor_an = id(bin_motor_laeuft).state;
           bool ice_an   = id(eisbank_laeuft);
           bool turbo    = motor_an || ice_an;
@@ -441,13 +482,11 @@ interval:
           int neuer_state = ts_state;
 
           if (ts_state == 0) {
-            // Erster Lauf nach Boot: Zustand aus echten Signalen ableiten
             neuer_state = turbo ? 2 : 1;
           } else if (turbo) {
-            if (ts_state == 4) ts_restore_ms = 0;  // laufenden Countdown abbrechen
+            if (ts_state == 4) ts_restore_ms = 0;
             neuer_state = 2;
           } else if (ts_state == 2) {
-            // Motor/ICE gerade gestoppt → Restore-Countdown starten
             neuer_state = 4;
             ts_restore_ms = millis();
           } else if (ts_state == 4) {
@@ -455,7 +494,6 @@ interval:
               neuer_state = 1;
           }
 
-          // Im Normal-Zustand: Authority-Global auf Änderungen prüfen (Slider/Preset)
           int ziel_x10 = id(thermostat_ziel_x10);
           if (ziel_x10 < 1 || ziel_x10 > 50) ziel_x10 = 8;
 
@@ -472,7 +510,7 @@ interval:
             call.set_target_temperature(-1.0f);
             call.perform();
             ts_applied_x10 = -10;
-            ESP_LOGI("ts", "TURBO: -1.0°C (motor=%d ice=%d)", (int)motor_an, (int)ice_an);
+            ESP_LOGI("ts", "TURBO: -1.0\xc2\xb0C (motor=%d ice=%d)", (int)motor_an, (int)ice_an);
           } else if (neuer_state == 1) {
             float t = ziel_x10 / 10.0f;
             auto call = id(climate_thermostat).make_call();
@@ -483,9 +521,9 @@ interval:
             char buf[8];
             snprintf(buf, sizeof(buf), "%.1f\xc2\xb0", t);
             lv_label_set_text(id(lbl_temp_wert), buf);
-            ESP_LOGI("ts", "NORMAL: %.1f°C", t);
+            ESP_LOGI("ts", "NORMAL: %.1f\xc2\xb0C", t);
           }
-          // State 4: kein Thermostat-Aufruf – Countdown läuft, Thermostat bleibt auf -1°C
+          // State 4: Countdown läuft, Thermostat bleibt auf -1°C
 
   # ── umwaelzpumpe_steuerung: alle 500 ms ──────────────────────────────────────
   # Zustände: -1=unbekannt, 0=Aus, 1=Kühlung, 2=ICE-Puls

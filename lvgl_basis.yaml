@@ -2782,6 +2782,11 @@ lvgl:
                                   min_value: 0
                                   max_value: 50
                                   value: 15
+                                  on_value:
+                                    - lambda: |-
+                                        char buf[8];
+                                        snprintf(buf, sizeof(buf), "%.1f°", x / 10.0f);
+                                        lv_label_set_text(id(lbl_temp_wert), buf);
                                   on_release:
                                     - lambda: |-
                                         id(thermostat_ziel_x10) = x;  // Authority: thermostat_steuerung liest diesen Wert
