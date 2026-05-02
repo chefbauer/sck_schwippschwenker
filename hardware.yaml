@@ -316,7 +316,7 @@ climate:
     min_idle_time: 30s
     startup_delay: true
     cool_deadband: ${c_thermostat_deadband} °C
-    cool_overrun: 0.2 °C
+    cool_overrun: ${c_thermostat_overrun} °C
     cool_action:
       - lambda: |-
           id(kompressor_soll_ein) = true;

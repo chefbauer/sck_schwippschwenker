@@ -35,7 +35,8 @@ substitutions:
   fan_kompressor_min_perc:        "25"
   fan_kompressor_max_perc:        "92"
   c_pumpe_umwaelzung_ein_perc:    "30"
-  c_thermostat_deadband:          "0.9"   # °C – Thermostat schaltet EIN bei Zieltemp + Deadband; ICE-Abbruch bei Zieltemp + Deadband
+  c_thermostat_deadband:          "0.7"   # °C – Thermostat schaltet EIN bei Zieltemp + Deadband; ICE-Abbruch bei Zieltemp + Deadband
+  c_thermostat_overrun:           "0.2"   # °C – Thermostat Overrun (Nachlauf über Solltemp)
   c_icebank_pump_interval_length: "10"   # s  – Gesamt-Intervall des Pumpenpulses
   c_icebank_pump_ed:              "15"   # %  – Einschaltdauer (15% von 10s = 1.5s EIN)
   c_icebank_pump_power:           "20"   # %  – Pumpenleistung während Eisbank-Puls
