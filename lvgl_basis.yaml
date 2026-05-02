@@ -2908,11 +2908,7 @@ lvgl:
                                   align: LEFT_MID
                                   x: 240
                                   on_value:
-                                    - lambda: |-
-                                        id(eisbank_aktiv) = x;
-                                        if (!x && id(eisbank_laeuft)) {
-                                          id(script_eisbank_stop).execute();
-                                        }
+                                    - lambda: "id(eisbank_aktiv) = x;"
                               - label:
                                   id: lbl_eisbank_status
                                   text: ""

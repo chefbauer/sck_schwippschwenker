@@ -2,8 +2,7 @@
 #  globals:  cooler_system_status_set,
 #            eisbank_aktiv, eisbank_laeuft, eisbank_dauer_min,
 #            eisbank_start_ms, thermostat_ziel_x10
-#  script:   script_eisbank_start, script_eisbank_stop
-#  interval: Eisbank-Wächter (5 s)
+#  Steuerung: vollständig in thermostat_steuerung + umwaelzpumpe_steuerung (hardware.yaml, 500ms)
 # ─────────────────────────────────────────────────────────────────────────────────
 
 globals:
@@ -46,117 +45,5 @@ globals:
     type: int
     restore_value: yes
     initial_value: '8'
-    # Gesicherte Normaltemp × 10 (z. B. 8 = 0.8 °C) für Rücksetzung nach Eisbank
+    # Zieltemperatur × 10 (z. B. 8 = 0.8 °C), restore_value: yes
 
-script:
-  # ── Eisbank starten ──────────────────────────────────────────────────────────
-  # Voraussetzungen: eisbank_aktiv=true, eisbank_dauer_min>0, idle (sw+dr=false)
-  # Aktion: Normaltemp sichern, dacB aus, Thermostat auf -1 °C (Turbo)
-  - id: script_eisbank_start
-    mode: single
-    then:
-      - lambda: |-
-          if (!id(eisbank_aktiv) || id(eisbank_dauer_min) <= 0) return;
-          if (id(sw_aktiv) || id(dr_aktiv)) return;
-          if (id(eisbank_laeuft)) return;
-          // Eisbank aktiv markieren
-          id(eisbank_laeuft) = true;
-          id(eisbank_start_ms) = millis();
-          // Tankkühlung: Pumpenpuls-Modus starten (verhindert Düsenzufrieren)
-          id(output_pumpe_dacB).turn_off();
-          lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
-          id(script_eisbank_pump_tick).execute();  // ersten Puls sofort
-          // UI-Status
-          lv_label_set_text(id(lbl_eisbank_status), "AKTIV");
-          lv_obj_set_style_text_color(id(lbl_eisbank_status), lv_color_hex(0x0055FF), 0);
-          // ICE-Badge in Statusleiste: eisblau
-          lv_obj_set_style_bg_color(id(obj_eisbank_badge), lv_color_hex(0x0055FF), 0);
-          ESP_LOGI("eisbank", "Gestartet – Dauer %d min, Normaltemp %.1f °C",
-                   id(eisbank_dauer_min), id(thermostat_ziel_x10) / 10.0f);
-
-  # ── Eisbank-Pumpenpuls ────────────────────────────────────────────────────────
-  # Verhindert Düsenzufrieren: kurzer Pumpenimpuls alle c_icebank_pump_interval_length s
-  # ED% bestimmt ON-Zeit: z.B. 10s × 10% = 1s EIN bei c_icebank_pump_power%
-  - id: script_eisbank_pump_tick
-    mode: single
-    then:
-      - if:
-          condition:
-            lambda: "return id(eisbank_laeuft);"
-          then:
-            - output.set_level:
-                id: output_pumpe_dacB
-                level: !lambda "return ${c_icebank_pump_power} / 100.0f;"
-            - delay: !lambda "return (uint32_t)(${c_icebank_pump_interval_length} * 1000.0f * ${c_icebank_pump_ed} / 100.0f);"
-            - lambda: |-
-                if (id(eisbank_laeuft)) id(output_pumpe_dacB).turn_off();
-
-  # ── Eisbank stoppen ──────────────────────────────────────────────────────────
-  # Stellt Normaltemp wieder her; Thermostat übernimmt dacB via cool_action
-  - id: script_eisbank_stop
-    mode: single
-    then:
-      - lambda: |-
-          if (!id(eisbank_laeuft)) return;
-          id(eisbank_laeuft) = false;
-          id(eisbank_start_ms) = 0;
-          // Pumpenpuls stoppen (falls gerade ON-Phase läuft) – pump_steuerung übernimmt dacB
-          id(script_eisbank_pump_tick).stop();
-          // UI-Status zurücksetzen
-          lv_label_set_text(id(lbl_eisbank_status), "");
-          // ICE-Badge: grau
-          lv_obj_set_style_bg_color(id(obj_eisbank_badge), lv_color_hex(0x888888), 0);
-          ESP_LOGI("eisbank", "Gestoppt – thermostat_steuerung übernimmt Zieltemp %.1f °C",
-                   id(thermostat_ziel_x10) / 10.0f);
-
-interval:
-  # ── Eisbank-Wächter: alle 5 s ────────────────────────────────────────────────
-  # Start:  eisbank_aktiv && dauer>0 && idle && temp ≤ Thermostat-Zieltemp
-  # Abbruch: sw/dr aktiv ODER Timer abgelaufen ODER Feature deaktiviert
-  - interval: 5s
-    then:
-      - lambda: |-
-          // Feature aus oder Dauer 0 → sicher stoppen
-          if (!id(eisbank_aktiv) || id(eisbank_dauer_min) <= 0) {
-            if (id(eisbank_laeuft)) id(script_eisbank_stop).execute();
-            return;
-          }
-          if (id(eisbank_laeuft)) {
-            // Abbruch-Checks
-            uint32_t elapsed = millis() - id(eisbank_start_ms);
-            if (elapsed >= (uint32_t)id(eisbank_dauer_min) * 60000u) {
-              ESP_LOGI("eisbank", "Abbruch: Timer %d min abgelaufen", id(eisbank_dauer_min));
-              id(script_eisbank_stop).execute();
-              return;
-            }
-            // Abbruch wenn Beckentemp über Wiederanlauftemp gestiegen (Normaltemp + Deadband)
-            // → Thermostat übernimmt; Eisbank kann später neu starten wenn temp wieder ≤ Ziel
-            float temp_eb = id(sensor_temp_becken).state;
-            if (!isnan(temp_eb)) {
-              float wiederanlauf = id(thermostat_ziel_x10) / 10.0f + ${c_thermostat_deadband}f;
-              if (temp_eb > wiederanlauf) {
-                ESP_LOGI("eisbank", "Abbruch: Temp %.2f°C > Wiederanlauf %.2f°C – Thermostat übernimmt",
-                         temp_eb, wiederanlauf);
-                id(script_eisbank_stop).execute();
-              }
-            }
-          } else {
-            // Start-Check: idle + temp ≤ Authority-Global (nicht Thermostat – könnte Cooling-Preset sein!)
-            if (id(sw_aktiv) || id(dr_aktiv)) return;
-            float temp = id(sensor_temp_becken).state;
-            if (isnan(temp)) return;
-            float target = id(thermostat_ziel_x10) / 10.0f;
-            if (temp <= target) {
-              id(script_eisbank_start).execute();
-            }
-          }
-
-  # ── Eisbank-Pumpenpuls-Intervall ─────────────────────────────────────────────
-  # Trigger alle c_icebank_pump_interval_length Sekunden; Script übernimmt ON/OFF-Timing
-  - interval: ${c_icebank_pump_interval_length}s
-    then:
-      - if:
-          condition:
-            lambda: "return id(eisbank_laeuft);"
-          then:
-            - script.execute: script_eisbank_pump_tick

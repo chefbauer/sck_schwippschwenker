@@ -488,41 +488,55 @@ interval:
           // State 4: kein Thermostat-Aufruf – Countdown läuft, Thermostat bleibt auf -1°C
 
   # ── umwaelzpumpe_steuerung: alle 500 ms ──────────────────────────────────────
-  # Zentrale, verriegelte Pumpen-Steuerung.
-  # Zustand: -1=unbekannt, 0=Aus, 1=Kühlung-EIN, 2=ICE-Puls-Modus
-  # Im ICE-Modus übernimmt script_eisbank_pump_tick das eigentliche Ein/Aus.
+  # Zustände: -1=unbekannt, 0=Aus, 1=Kühlung, 2=ICE-Puls
+  # ICE-Puls: ON für c_icebank_pump_ed% eines c_icebank_pump_interval_length-s-Zyklus
   - interval: 500ms
     then:
       - lambda: |-
-          static int pumpe_state = -1;  // -1=unbekannt, 0=Aus, 1=Kühlung, 2=ICE
+          static int      pumpe_state   = -1;
+          static uint32_t pump_phase_ms = 0;
+          static bool     pump_ice_on   = false;
 
           bool ice_an   = id(eisbank_laeuft);
           bool kuehlend = (id(climate_thermostat).action == CLIMATE_ACTION_COOLING);
 
           int neuer_state;
-          if (ice_an) {
-            neuer_state = 2;  // ICE: pump_tick verwaltet das Ein/Aus-Timing
-          } else if (kuehlend) {
-            neuer_state = 1;  // Kühlung aktiv: Umwälzpumpe EIN
-          } else {
-            neuer_state = 0;  // Alles aus
+          if (ice_an)        neuer_state = 2;
+          else if (kuehlend) neuer_state = 1;
+          else               neuer_state = 0;
+
+          if (neuer_state != pumpe_state) {
+            pumpe_state   = neuer_state;
+            pump_phase_ms = 0;
+            pump_ice_on   = false;
+            if (neuer_state == 0) {
+              id(output_pumpe_dacB).turn_off();
+              lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
+              ESP_LOGI("pumpe", "AUS");
+            } else if (neuer_state == 1) {
+              id(output_pumpe_dacB).set_level(${c_pumpe_umwaelzung_ein_perc} / 100.0f);
+              lv_slider_set_value(id(slider_umwaelzpumpe), ${c_pumpe_umwaelzung_ein_perc}, LV_ANIM_OFF);
+              ESP_LOGI("pumpe", "EIN (%d%%)", ${c_pumpe_umwaelzung_ein_perc});
+            } else {
+              ESP_LOGI("pumpe", "ICE-Puls-Modus");
+            }
           }
 
-          if (neuer_state == pumpe_state) return;  // Verriegelung: keine Änderung
-
-          pumpe_state = neuer_state;
-
-          if (neuer_state == 0) {
-            id(output_pumpe_dacB).turn_off();
-            lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
-            ESP_LOGI("pumpe", "AUS");
-          } else if (neuer_state == 1) {
-            id(output_pumpe_dacB).set_level(${c_pumpe_umwaelzung_ein_perc} / 100.0f);
-            lv_slider_set_value(id(slider_umwaelzpumpe), ${c_pumpe_umwaelzung_ein_perc}, LV_ANIM_OFF);
-            ESP_LOGI("pumpe", "EIN (%d%%)", ${c_pumpe_umwaelzung_ein_perc});
-          } else if (neuer_state == 2) {
-            // ICE-Modus: pump_tick übernimmt – Pumpe zu Beginn AUS
-            id(output_pumpe_dacB).turn_off();
-            lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
-            ESP_LOGI("pumpe", "ICE-Modus (pump_tick aktiv)");
+          // ICE-Puls-Timing
+          if (pumpe_state == 2) {
+            const uint32_t ON_ms    = (uint32_t)(${c_icebank_pump_interval_length} * 1000.0f * ${c_icebank_pump_ed} / 100.0f);
+            const uint32_t CYCLE_ms = (uint32_t)(${c_icebank_pump_interval_length} * 1000.0f);
+            uint32_t elapsed = (pump_phase_ms == 0) ? CYCLE_ms : (millis() - pump_phase_ms);
+            if (elapsed >= CYCLE_ms) {
+              pump_phase_ms = millis();
+              if (!pump_ice_on) {
+                pump_ice_on = true;
+                id(output_pumpe_dacB).set_level(${c_icebank_pump_power} / 100.0f);
+                lv_slider_set_value(id(slider_umwaelzpumpe), ${c_icebank_pump_power}, LV_ANIM_OFF);
+              }
+            } else if (elapsed >= ON_ms && pump_ice_on) {
+              pump_ice_on = false;
+              id(output_pumpe_dacB).turn_off();
+              lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
+            }
           }
