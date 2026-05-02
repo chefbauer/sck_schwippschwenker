@@ -316,7 +316,7 @@ climate:
     min_idle_time: 30s
     startup_delay: true
     cool_deadband: ${c_thermostat_deadband} °C
-    cool_overrun: 0.1 °C
+    cool_overrun: 0.2 °C
     cool_action:
       - lambda: |-
           id(kompressor_soll_ein) = true;
@@ -480,14 +480,15 @@ interval:
           } else if (ice_feature && id(ice_run_allowed) && !id(bin_motor_laeuft).state) {
             float temp = id(sensor_temp_becken).state;
             float target = id(thermostat_ziel_x10) / 10.0f;
-            if (!isnan(temp) && temp <= target) {
+            float ice_start_thresh = target - 0.1f;  // frühestens 0.1°C unter Ziel
+            if (!isnan(temp) && temp <= ice_start_thresh) {
               id(eisbank_laeuft) = true;
               id(eisbank_start_ms) = millis();
               lv_label_set_text(id(lbl_eisbank_status), "AKTIV");
               lv_obj_set_style_text_color(id(lbl_eisbank_status), lv_color_hex(0x0055FF), 0);
               lv_obj_set_style_bg_color(id(obj_eisbank_badge), lv_color_hex(0x0055FF), 0);
-              ESP_LOGI("eisbank", "Gestartet – %d min, %.2f\xc2\xb0C <= %.2f\xc2\xb0C",
-                       id(eisbank_dauer_min), temp, target);
+              ESP_LOGI("eisbank", "Gestartet – %d min, %.2f\xc2\xb0C <= %.2f\xc2\xb0C (thresh)",
+                       id(eisbank_dauer_min), temp, ice_start_thresh);
             }
           } else if (!id(ice_run_allowed)) {
             // Freigabe prüfen: Temp über Soll → ice_run_allowed wieder setzen
