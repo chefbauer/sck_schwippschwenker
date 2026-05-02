@@ -1791,6 +1791,7 @@ lvgl:
                         clickable: true
                         on_click:
                           - lvgl.widget.show: overlay_cooling
+                          - lambda: id(kuehl_chart_visible) = true;
                           - script.execute: script_kuehl_chart_draw
                         widgets:
                           - label:

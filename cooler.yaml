@@ -132,6 +132,12 @@ globals:
     initial_value: '0'
     # Ringpuffer-Schreibzeiger (nächster Schreibplatz)
 
+  - id: kuehl_chart_visible
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+    # true wenn overlay_cooling sichtbar (vermeidet lv_obj_has_flag in Lambda)
+
 script:
   # Leistungssaldo berechnen + Display aktualisieren.
   # Wird aus sensor_temp_becken.on_value aufgerufen (hardware.yaml + ble.yaml).
@@ -294,6 +300,6 @@ interval:
           id(chart_komp_buf)[widx] = id(kompressor_soll_ein) ? 1 : 0;
           id(chart_write_idx) = (widx + 1) % 720;
           if (id(chart_fill_count) < 720) id(chart_fill_count)++;
-          if (lv_obj_has_flag(id(overlay_cooling)->obj, LV_OBJ_FLAG_HIDDEN)) return;
+          if (!id(kuehl_chart_visible)) return;
           id(script_kuehl_chart_draw)->execute();
 

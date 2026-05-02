@@ -34,6 +34,7 @@ obj:
               text_color: 0xFFFFFF
         on_click:
           - lvgl.widget.hide: overlay_cooling
+          - lambda: id(kuehl_chart_visible) = false;
 
     # ── Legende ───────────────────────────────────────────────────────────────
     - obj:
