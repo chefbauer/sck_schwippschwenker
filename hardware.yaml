@@ -75,11 +75,6 @@ esphome:
             lv_slider_set_value(id(slider_eisbank_dauer), edm, LV_ANIM_OFF);
             if (edm == 0) lv_label_set_text(id(lbl_eisbank_dauer_val), "AUS");
             else { char eb[12]; snprintf(eb, sizeof(eb), "%d min", edm); lv_label_set_text(id(lbl_eisbank_dauer_val), eb); }
-            // Chart Cooling: Y-Bereich + Raster initialisieren (Range: -100=-10°C bis 300=30°C)
-            lv_chart_set_range(id(chart_cooling), LV_CHART_AXIS_PRIMARY_Y, -100, 300);
-            lv_chart_set_div_line_count(id(chart_cooling), 4, 4);
-            lv_chart_set_all_value(id(chart_cooling), id(series_temp_val), LV_CHART_POINT_NONE);
-            lv_chart_set_all_value(id(chart_cooling), id(series_komp_val), LV_CHART_POINT_NONE);
     - priority: -150        # System in sicheren Aus-Zustand (Not-Aus beim Booten)
       then:
         - script.execute: script_system_aus

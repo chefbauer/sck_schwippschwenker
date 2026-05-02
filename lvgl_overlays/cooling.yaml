@@ -9,9 +9,9 @@ obj:
   scrollable: false
   pad_all: 0
   widgets:
-    # Titel
+    # ── Titel ─────────────────────────────────────────────────────────────────
     - label:
-        text: "Becken – 2h"
+        text: "Becken – 2h Verlauf"
         text_font: font_normal
         text_color: 0xFFFFFF
         align: TOP_MID
@@ -35,14 +35,14 @@ obj:
         on_click:
           - lvgl.widget.hide: overlay_cooling
 
-    # Legende – Temperatur (Farbpunkt + Text)
+    # ── Legende ───────────────────────────────────────────────────────────────
     - obj:
-        width: 14
-        height: 14
-        radius: 7
+        width: 12
+        height: 12
+        radius: 6
         align: TOP_LEFT
-        x: 64
-        y: 52
+        x: 70
+        y: 18
         bg_color: 0x44BBFF
         bg_opa: COVER
         border_width: 0
@@ -52,17 +52,15 @@ obj:
         text_font: font_small
         text_color: 0x44BBFF
         align: TOP_LEFT
-        x: 84
-        y: 48
-
-    # Legende – Kompressor (Farbpunkt + Text)
+        x: 88
+        y: 14
     - obj:
-        width: 14
-        height: 14
-        radius: 7
+        width: 12
+        height: 12
+        radius: 6
         align: TOP_LEFT
-        x: 216
-        y: 52
+        x: 200
+        y: 18
         bg_color: 0x00CC44
         bg_opa: COVER
         border_width: 0
@@ -72,94 +70,403 @@ obj:
         text_font: font_small
         text_color: 0x00CC44
         align: TOP_LEFT
-        x: 236
-        y: 48
+        x: 218
+        y: 14
 
-    # Y-Achsen-Beschriftung (links, im 62px-Streifen neben Chart)
-    # Chart-Range: -100 (=-10°C) bis 300 (=30°C), 400 Einheiten, 410px hoch
-    # 20°C = (300-200)/400 * 410 = 102px von oben → overlay y=78+102=180
+    # ── Chart-Hintergrund (x=70..910, y=65..465, 840x400px) ──────────────────
+    # Y: y = 65 + (300 - val),  val = temp*10, range -100..300 (-10..30°C)
+    # X: px = 70 + i*840/(count-1), 720 Punkte = 2h bei 10s-Intervall
+    - obj:
+        id: chart_bg
+        width: 840
+        height: 400
+        align: TOP_LEFT
+        x: 70
+        y: 65
+        bg_color: 0x1A1A1A
+        bg_opa: COVER
+        radius: 4
+        border_color: 0x555555
+        border_width: 1
+        pad_all: 0
+        scrollable: false
+
+    # ── Y-Achsen-Labels (x=4, y = grid_y - 8) ────────────────────────────────
     - label:
-        text: "20°C"
+        text: "30\xb0C"
         text_font: font_small
         text_color: 0x888888
         align: TOP_LEFT
         x: 4
-        y: 176
-    # 10°C = (300-100)/400 * 410 = 205px von oben → overlay y=78+205=283
+        y: 57
     - label:
-        text: "10°C"
+        text: "25\xb0C"
         text_font: font_small
         text_color: 0x888888
         align: TOP_LEFT
         x: 4
-        y: 279
-    # 0°C = (300-0)/400 * 410 = 307px von oben → overlay y=78+307=385
+        y: 107
     - label:
-        text: "0°C"
+        text: "20\xb0C"
+        text_font: font_small
+        text_color: 0x888888
+        align: TOP_LEFT
+        x: 4
+        y: 157
+    - label:
+        text: "15\xb0C"
+        text_font: font_small
+        text_color: 0x888888
+        align: TOP_LEFT
+        x: 4
+        y: 207
+    - label:
+        text: "10\xb0C"
+        text_font: font_small
+        text_color: 0x888888
+        align: TOP_LEFT
+        x: 4
+        y: 257
+    - label:
+        text: "5\xb0C"
+        text_font: font_small
+        text_color: 0x888888
+        align: TOP_LEFT
+        x: 4
+        y: 307
+    - label:
+        text: "0\xb0C"
         text_font: font_small
         text_color: 0xAAAAAA
         align: TOP_LEFT
         x: 4
-        y: 381
+        y: 357
+    - label:
+        text: "-5\xb0C"
+        text_font: font_small
+        text_color: 0x888888
+        align: TOP_LEFT
+        x: 4
+        y: 407
+    - label:
+        text: "-10\xb0C"
+        text_font: font_small
+        text_color: 0x888888
+        align: TOP_LEFT
+        x: 4
+        y: 457
 
-    # Diagramm (900×410 px, mittig, y=78 vom oberen Rand)
-    # Linke Kante bei (1024-900)/2 = 62px
-    - chart:
-        id: chart_cooling
-        width: 900
-        height: 410
-        align: TOP_MID
-        y: 78
-        bg_color: 0x1A1A1A
-        bg_opa: COVER
-        border_color: 0x555555
-        border_width: 1
-        radius: 4
-        pad_all: 4
-        chart_type: line
-        update_mode: shift
-        point_count: 720
-        series:
-          - id: series_temp_val
-            color: 0x44BBFF
-          - id: series_komp_val
-            color: 0x00CC44
-
-    # X-Achsen-Beschriftung (Zeit, unterhalb des Charts, y=492)
-    # Chart-Breite 900px, links bei x=62, rechts bei x=962
-    # Punkte: 720 total = 2h, Abstände:  720/4 = 180 Punkte = 30min
+    # ── X-Achsen-Labels (y=472, alle 30min: x=70,280,490,700,910) ────────────
     - label:
-        text: "–2h"
+        text: "-2h"
         text_font: font_small
         text_color: 0x777777
         align: TOP_LEFT
-        x: 64
-        y: 492
+        x: 63
+        y: 472
     - label:
-        text: "–1.5h"
+        text: "-1.5h"
         text_font: font_small
         text_color: 0x777777
         align: TOP_LEFT
-        x: 284
-        y: 492
+        x: 255
+        y: 472
     - label:
-        text: "–1h"
+        text: "-1h"
         text_font: font_small
         text_color: 0x777777
         align: TOP_LEFT
-        x: 508
-        y: 492
+        x: 478
+        y: 472
     - label:
-        text: "–30min"
+        text: "-30min"
         text_font: font_small
         text_color: 0x777777
         align: TOP_LEFT
-        x: 730
-        y: 492
+        x: 668
+        y: 472
     - label:
         text: "jetzt"
         text_font: font_small
         text_color: 0x777777
-        align: TOP_RIGHT
-        x: -62
+        align: TOP_LEFT
+        x: 875
+        y: 472
+    - label:
+        text: "Komp"
+        text_font: font_small
+        text_color: 0x00CC44
+        align: TOP_LEFT
+        x: 23
         y: 492
+
+    # ── Horizontale Gitterlinien (5°C = 50px, hellgrau 1px) ──────────────────
+    - line:
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 70, y: 65}, {x: 910, y: 65}]
+        line_color: 0x404040
+        line_width: 1
+    - line:
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 70, y: 115}, {x: 910, y: 115}]
+        line_color: 0x404040
+        line_width: 1
+    - line:
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 70, y: 165}, {x: 910, y: 165}]
+        line_color: 0x404040
+        line_width: 1
+    - line:
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 70, y: 215}, {x: 910, y: 215}]
+        line_color: 0x404040
+        line_width: 1
+    - line:
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 70, y: 265}, {x: 910, y: 265}]
+        line_color: 0x404040
+        line_width: 1
+    - line:
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 70, y: 315}, {x: 910, y: 315}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # 0°C – etwas heller als Nulllinie
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 70, y: 365}, {x: 910, y: 365}]
+        line_color: 0x606060
+        line_width: 1
+    - line:
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 70, y: 415}, {x: 910, y: 415}]
+        line_color: 0x404040
+        line_width: 1
+    - line:
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 70, y: 465}, {x: 910, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+
+    # ── Vertikale Gitterlinien (5min = 35px, x=70+i*35) ──────────────────────
+    # 30min-Linien (i=0,6,12,18,24): 0x505050 (leicht heller)
+    - line:   # i=0  x=70   (–2h)
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 70, y: 65}, {x: 70, y: 465}]
+        line_color: 0x505050
+        line_width: 1
+    - line:   # i=1  x=105
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 105, y: 65}, {x: 105, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=2  x=140
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 140, y: 65}, {x: 140, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=3  x=175
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 175, y: 65}, {x: 175, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=4  x=210
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 210, y: 65}, {x: 210, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=5  x=245
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 245, y: 65}, {x: 245, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=6  x=280  (–1.5h)
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 280, y: 65}, {x: 280, y: 465}]
+        line_color: 0x505050
+        line_width: 1
+    - line:   # i=7  x=315
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 315, y: 65}, {x: 315, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=8  x=350
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 350, y: 65}, {x: 350, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=9  x=385
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 385, y: 65}, {x: 385, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=10 x=420
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 420, y: 65}, {x: 420, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=11 x=455
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 455, y: 65}, {x: 455, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=12 x=490  (–1h)
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 490, y: 65}, {x: 490, y: 465}]
+        line_color: 0x505050
+        line_width: 1
+    - line:   # i=13 x=525
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 525, y: 65}, {x: 525, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=14 x=560
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 560, y: 65}, {x: 560, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=15 x=595
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 595, y: 65}, {x: 595, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=16 x=630
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 630, y: 65}, {x: 630, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=17 x=665
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 665, y: 65}, {x: 665, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=18 x=700  (–30min)
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 700, y: 65}, {x: 700, y: 465}]
+        line_color: 0x505050
+        line_width: 1
+    - line:   # i=19 x=735
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 735, y: 65}, {x: 735, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=20 x=770
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 770, y: 65}, {x: 770, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=21 x=805
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 805, y: 65}, {x: 805, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=22 x=840
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 840, y: 65}, {x: 840, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=23 x=875
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 875, y: 65}, {x: 875, y: 465}]
+        line_color: 0x404040
+        line_width: 1
+    - line:   # i=24 x=910  (jetzt)
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points: [{x: 910, y: 65}, {x: 910, y: 465}]
+        line_color: 0x505050
+        line_width: 1
+
+    # ── Dynamische Temperatur-Linie (blau 3px) ────────────────────────────────
+    # Punkte via lv_line_set_points() in script_kuehl_chart_draw (cooler.yaml)
+    - line:
+        id: line_temp_trace
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points:
+          - x: 70
+            y: 365
+        line_color: 0x44BBFF
+        line_width: 3
+        line_rounded: true
+
+    # ── Dynamische Kompressor-Linie (grün 6px) ────────────────────────────────
+    # ON  → y=500 (unterhalb Chart, Komp-Streifen bei y~490-506)
+    # OFF → y=-20 (oberhalb Overlay, außerhalb Sichtbereich)
+    - line:
+        id: line_komp_trace
+        align: TOP_LEFT
+        x: 0
+        y: 0
+        points:
+          - x: 70
+            y: -20
+        line_color: 0x00CC44
+        line_width: 6

@@ -1791,6 +1791,7 @@ lvgl:
                         clickable: true
                         on_click:
                           - lvgl.widget.show: overlay_cooling
+                          - script.execute: script_kuehl_chart_draw
                         widgets:
                           - label:
                               text: "\uF773"
