@@ -1,0 +1,165 @@
+obj:
+  id: overlay_cooling
+  width: 100%
+  height: 100%
+  bg_color: 0x111111
+  bg_opa: 92%
+  hidden: true
+  clickable: true
+  scrollable: false
+  pad_all: 0
+  widgets:
+    # Titel
+    - label:
+        text: "Becken – 2h"
+        text_font: font_normal
+        text_color: 0xFFFFFF
+        align: TOP_MID
+        y: 14
+
+    # Exit-Button rechts oben
+    - button:
+        id: btn_cooling_exit
+        width: 80
+        height: 60
+        align: TOP_RIGHT
+        x: -10
+        y: 10
+        bg_color: 0xCC3333
+        widgets:
+          - label:
+              text: "X"
+              align: CENTER
+              text_font: font_normal
+              text_color: 0xFFFFFF
+        on_click:
+          - lvgl.widget.hide: overlay_cooling
+
+    # Legende – Temperatur (Farbpunkt + Text)
+    - obj:
+        width: 14
+        height: 14
+        radius: 7
+        align: TOP_LEFT
+        x: 64
+        y: 52
+        bg_color: 0x44BBFF
+        bg_opa: COVER
+        border_width: 0
+        scrollable: false
+    - label:
+        text: "Temperatur"
+        text_font: font_small
+        text_color: 0x44BBFF
+        align: TOP_LEFT
+        x: 84
+        y: 48
+
+    # Legende – Kompressor (Farbpunkt + Text)
+    - obj:
+        width: 14
+        height: 14
+        radius: 7
+        align: TOP_LEFT
+        x: 216
+        y: 52
+        bg_color: 0x00CC44
+        bg_opa: COVER
+        border_width: 0
+        scrollable: false
+    - label:
+        text: "Kompressor"
+        text_font: font_small
+        text_color: 0x00CC44
+        align: TOP_LEFT
+        x: 236
+        y: 48
+
+    # Y-Achsen-Beschriftung (links, im 62px-Streifen neben Chart)
+    # Chart-Range: -100 (=-10°C) bis 300 (=30°C), 400 Einheiten, 410px hoch
+    # 20°C = (300-200)/400 * 410 = 102px von oben → overlay y=78+102=180
+    - label:
+        text: "20°C"
+        text_font: font_small
+        text_color: 0x888888
+        align: TOP_LEFT
+        x: 4
+        y: 176
+    # 10°C = (300-100)/400 * 410 = 205px von oben → overlay y=78+205=283
+    - label:
+        text: "10°C"
+        text_font: font_small
+        text_color: 0x888888
+        align: TOP_LEFT
+        x: 4
+        y: 279
+    # 0°C = (300-0)/400 * 410 = 307px von oben → overlay y=78+307=385
+    - label:
+        text: "0°C"
+        text_font: font_small
+        text_color: 0xAAAAAA
+        align: TOP_LEFT
+        x: 4
+        y: 381
+
+    # Diagramm (900×410 px, mittig, y=78 vom oberen Rand)
+    # Linke Kante bei (1024-900)/2 = 62px
+    - chart:
+        id: chart_cooling
+        width: 900
+        height: 410
+        align: TOP_MID
+        y: 78
+        bg_color: 0x1A1A1A
+        bg_opa: COVER
+        border_color: 0x555555
+        border_width: 1
+        radius: 4
+        pad_all: 4
+        chart_type: line
+        update_mode: shift
+        point_count: 720
+        series:
+          - id: series_temp_val
+            color: 0x44BBFF
+          - id: series_komp_val
+            color: 0x00CC44
+
+    # X-Achsen-Beschriftung (Zeit, unterhalb des Charts, y=492)
+    # Chart-Breite 900px, links bei x=62, rechts bei x=962
+    # Punkte: 720 total = 2h, Abstände:  720/4 = 180 Punkte = 30min
+    - label:
+        text: "–2h"
+        text_font: font_small
+        text_color: 0x777777
+        align: TOP_LEFT
+        x: 64
+        y: 492
+    - label:
+        text: "–1.5h"
+        text_font: font_small
+        text_color: 0x777777
+        align: TOP_LEFT
+        x: 284
+        y: 492
+    - label:
+        text: "–1h"
+        text_font: font_small
+        text_color: 0x777777
+        align: TOP_LEFT
+        x: 508
+        y: 492
+    - label:
+        text: "–30min"
+        text_font: font_small
+        text_color: 0x777777
+        align: TOP_LEFT
+        x: 730
+        y: 492
+    - label:
+        text: "jetzt"
+        text_font: font_small
+        text_color: 0x777777
+        align: TOP_RIGHT
+        x: -62
+        y: 492

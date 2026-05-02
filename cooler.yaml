@@ -224,3 +224,15 @@ script:
             lv_obj_add_flag(id(lbl_kuehlsaldo_getraenk), LV_OBJ_FLAG_HIDDEN);
           }
 
+interval:
+  # Chart-Datenpunkte alle 10 Sekunden aufzeichnen (720 Punkte = 2h Verlauf)
+  - interval: 10s
+    then:
+      - lambda: |-
+          float t = id(sensor_temp_becken).state;
+          lv_chart_set_next_value(id(chart_cooling), id(series_temp_val),
+            isnan(t) ? LV_CHART_POINT_NONE : (int)(t * 10.0f));
+          lv_chart_set_next_value(id(chart_cooling), id(series_komp_val),
+            id(kompressor_soll_ein) ? -50 : LV_CHART_POINT_NONE);
+          lv_chart_refresh(id(chart_cooling));
+

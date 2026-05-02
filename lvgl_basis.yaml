@@ -1788,6 +1788,9 @@ lvgl:
                         border_width: 0
                         pad_all: 0
                         scrollable: false
+                        clickable: true
+                        on_click:
+                          - lvgl.widget.show: overlay_cooling
                         widgets:
                           - label:
                               text: "\uF773"

@@ -28,6 +28,9 @@
 #      obj_tc_cd_content → slider_tc_minutes, lbl_tc_minutes_val,
 #                           btn_tc_dose, btn_tc_flasche
 #      btn_tc_ok
+#    overlay_cooling:
+#      btn_cooling_exit, chart_cooling,
+#      series_temp_val, series_komp_val
 # ─────────────────────────────────────────────────────────────────────────────────
 
 lvgl:
@@ -38,3 +41,4 @@ lvgl:
       - !include lvgl_overlays/sensorphalanx.yaml
       - !include lvgl_overlays/temp_messung.yaml
       - !include lvgl_overlays/timer.yaml
+      - !include lvgl_overlays/cooling.yaml
