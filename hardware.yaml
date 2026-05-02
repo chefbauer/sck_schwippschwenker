@@ -369,7 +369,7 @@ climate:
       - name: Cooling
         default_target_temperature_high: -1 °C
     visual:
-      min_temperature: 0
+      min_temperature: -1
       max_temperature: 5
       temperature_step: 0.1
     on_state:

@@ -116,7 +116,7 @@ font:
   # Auto-Motor-Button: Drehsymbol ~30% größer als font_icons (40→53px)
   - file: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.ttf"
     id: font_icons_md
-    size: 53
+    size: 64
     bpp: 4
     glyphs:
       - "\uF021"  # arrows-rotate
@@ -517,7 +517,7 @@ lvgl:
                         } else {
                           lv_obj_set_style_bg_color(id(btn_auto_rotation), lv_color_hex(0x444444), 0);
                           lv_obj_set_style_text_color(id(lbl_auto_rotation_icon), lv_color_hex(0xAAAAAA), 0);
-                          lv_obj_set_style_text_color(id(lbl_auto_rotation_a), lv_color_hex(0x555555), 0);
+                          lv_obj_set_style_text_color(id(lbl_auto_rotation_a), lv_color_hex(0xAAAAAA), 0);
                         }
                   widgets:
                     - label:  # Dreh-Icon: ~30% größer als Standard (52px), weiß (AN) / hellgrau (AUS)
@@ -2782,7 +2782,7 @@ lvgl:
                                   min_value: 0
                                   max_value: 50
                                   value: 15
-                                  on_value:
+                                  on_release:
                                     - lambda: |-
                                         id(thermostat_ziel_x10) = x;  // Authority: thermostat_steuerung liest diesen Wert
                                         char buf[8];
