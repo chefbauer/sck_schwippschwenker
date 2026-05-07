@@ -54,9 +54,7 @@ obj:
                 id(slot_elapsed_ms)[i] = 0;
                 id(slot_start_ms)[i] = millis();
                 id(slot_status)[i] = 1;
-                char rb[8]; snprintf(rb, sizeof(rb), "%02u:00", n);
                 if (i == 0) {
-                  lv_label_set_text(id(lbl_slot1_time), rb);
                   lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
@@ -95,9 +93,7 @@ obj:
                 id(slot_elapsed_ms)[i] = 0;
                 id(slot_start_ms)[i] = millis();
                 id(slot_status)[i] = 1;
-                char rb[8]; snprintf(rb, sizeof(rb), "%02u:00", n);
                 if (i == 0) {
-                  lv_label_set_text(id(lbl_slot1_time), rb);
                   lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
@@ -136,9 +132,7 @@ obj:
                 id(slot_elapsed_ms)[i] = 0;
                 id(slot_start_ms)[i] = millis();
                 id(slot_status)[i] = 1;
-                char rb[8]; snprintf(rb, sizeof(rb), "%02u:00", n);
                 if (i == 0) {
-                  lv_label_set_text(id(lbl_slot1_time), rb);
                   lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
@@ -177,9 +171,7 @@ obj:
                 id(slot_elapsed_ms)[i] = 0;
                 id(slot_start_ms)[i] = millis();
                 id(slot_status)[i] = 1;
-                char rb[8]; snprintf(rb, sizeof(rb), "%02u:00", n);
                 if (i == 0) {
-                  lv_label_set_text(id(lbl_slot1_time), rb);
                   lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
@@ -218,9 +210,7 @@ obj:
                 id(slot_elapsed_ms)[i] = 0;
                 id(slot_start_ms)[i] = millis();
                 id(slot_status)[i] = 1;
-                char rb[8]; snprintf(rb, sizeof(rb), "%02u:00", n);
                 if (i == 0) {
-                  lv_label_set_text(id(lbl_slot1_time), rb);
                   lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
@@ -261,9 +251,7 @@ obj:
                 id(slot_elapsed_ms)[i] = 0;
                 id(slot_start_ms)[i] = millis();
                 id(slot_status)[i] = 1;
-                char rb[8]; snprintf(rb, sizeof(rb), "%02u:00", n);
                 if (i == 0) {
-                  lv_label_set_text(id(lbl_slot1_time), rb);
                   lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
@@ -302,9 +290,7 @@ obj:
                 id(slot_elapsed_ms)[i] = 0;
                 id(slot_start_ms)[i] = millis();
                 id(slot_status)[i] = 1;
-                char rb[8]; snprintf(rb, sizeof(rb), "%02u:00", n);
                 if (i == 0) {
-                  lv_label_set_text(id(lbl_slot1_time), rb);
                   lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
@@ -343,9 +329,7 @@ obj:
                 id(slot_elapsed_ms)[i] = 0;
                 id(slot_start_ms)[i] = millis();
                 id(slot_status)[i] = 1;
-                char rb[8]; snprintf(rb, sizeof(rb), "%02u:00", n);
                 if (i == 0) {
-                  lv_label_set_text(id(lbl_slot1_time), rb);
                   lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
@@ -384,9 +368,7 @@ obj:
                 id(slot_elapsed_ms)[i] = 0;
                 id(slot_start_ms)[i] = millis();
                 id(slot_status)[i] = 1;
-                char rb[8]; snprintf(rb, sizeof(rb), "%02u:00", n);
                 if (i == 0) {
-                  lv_label_set_text(id(lbl_slot1_time), rb);
                   lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
