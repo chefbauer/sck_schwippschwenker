@@ -717,12 +717,13 @@ script:
               id(pumpe_a_auto_war_an) = true;
             } else if (!motor_laeuft) {
               if (id(global_rv_aktiv)) {
-                // RV: Interval-Zyklus starten (beginnt mit EIN-Phase)
+                // RV: Interval-Zyklus starten: Pause-Phase zuerst
                 id(rv_auto_phase_ms) = millis();
-                id(rv_auto_pump_on)  = true;
-                id(pumpe_a_aktiv)    = true;
-                id(output_pumpe_dacA).set_level(1.0f);
-                ESP_LOGI("rv", "Auto-Intervall per Modus-2 gestartet");
+                id(rv_auto_pump_on)  = false;
+                id(script_rv_pumpe_start).stop();
+                id(pumpe_a_aktiv) = false;
+                id(output_pumpe_dacA).set_level(0.0f);
+                ESP_LOGI("rv", "Auto-Intervall per Modus-2 gestartet: Pause zuerst");
               } else if (id(pumpe_a_aktiv)) {
                 id(script_pumpe_a_kurz).stop();
                 id(script_pumpe_a_lang).stop();
@@ -794,12 +795,33 @@ script:
           ESP_LOGI("pumpe", "TURBO ende, zurück zu Modus %d", id(pumpe_a_modus_vor_turbo));
 
   # ── Beckenfüllung AUS ────────────────────────────────────
+  # ── RV: Beckenpumpe starten (Slider-Wert, mit 300ms Anlauf-Boost auf ≥20%) ──
+  - id: script_rv_pumpe_start
+    mode: restart
+    then:
+      - lambda: |-
+          id(pumpe_a_aktiv) = true;
+          int sv = lv_slider_get_value(id(slider_turmpumpe));
+          if (sv < 1) sv = 1;
+          id(output_pumpe_dacA).set_level(0.25f);  // 25% Anlauf-Boost
+          ESP_LOGI("rv", "Pumpe start: Boost 25%% fuer 300ms (Ziel: %d%%)", sv);
+      - delay: 300ms
+      - lambda: |-
+          if (!id(pumpe_a_aktiv)) return;
+          int sv = lv_slider_get_value(id(slider_turmpumpe));
+          if (sv < 1) sv = 1;
+          id(output_pumpe_dacA).set_level(sv / 100.0f);
+          ESP_LOGI("rv", "Pumpe: Zielwert %d%%", sv);
+
   - id: script_pumpe_a_aus
     mode: restart
     then:
       - lambda: |-
           id(pumpe_a_aktiv) = false;
           id(pumpe_a_auto_war_an) = false;
+          id(pumpe_a_aktiv) = false;
+          id(rv_auto_phase_ms) = 0;
+          id(rv_auto_pump_on)  = false;
           id(output_pumpe_dacA).set_level(0.0f);
           id(script_beckenpumpe_set_modus)->execute(0);
           ESP_LOGI("pumpe", "Beckenfüllung AUS");
@@ -934,11 +956,8 @@ script:
             id(pumpe_vor_drehen_level) = -1.0f;  // kein Restore beim Stop nötig
             // Falls Pumpe via Interval gerade aus war: wieder einschalten
             if (id(pumpe_a_modus) == 2) {
-              int sv = lv_slider_get_value(id(slider_turmpumpe));
-              if (sv < 5) sv = 5;
-              id(output_pumpe_dacA).set_level(sv / 100.0f);
-              id(pumpe_a_aktiv) = true;
-              ESP_LOGI("drehen", "RV: Pumpe normal ein (%.0f%%)", sv / 100.0f * 100.0f);
+              id(script_rv_pumpe_start)->execute();
+              ESP_LOGI("drehen", "RV: Pumpe normal ein (Boost+Slider)");
             }
           } else if (id(dr_pumpe_auto) && id(pumpe_a_aktiv)) {
             id(pumpe_vor_drehen_level) = lv_slider_get_value(id(slider_turmpumpe)) / 100.0f;
@@ -997,10 +1016,12 @@ script:
           // RV-Auto-Modus: Interval-Zyklus starten wenn Modus=AUTO
           if (id(global_rv_aktiv) && id(pumpe_a_modus) == 2) {
             id(rv_auto_phase_ms) = millis();
-            id(rv_auto_pump_on)  = true;
-            id(pumpe_a_aktiv)    = true;
-            id(output_pumpe_dacA).set_level(1.0f);
-            ESP_LOGI("rv", "Auto-Intervall gestartet (Drehen gestoppt)");
+            id(rv_auto_pump_on)  = false;
+            // Pause-Phase zuerst: Pumpe jetzt aus
+            id(script_rv_pumpe_start).stop();
+            id(pumpe_a_aktiv) = false;
+            id(output_pumpe_dacA).set_level(0.0f);
+            ESP_LOGI("rv", "Auto-Intervall gestartet: Pause zuerst (Drehen gestoppt)");
           }
           // Prüfe blinkende Slots -> Slot anfahren wie beim Schwenken
           esphome::binary_sensor::BinarySensor* blink_s[6] = {
@@ -1157,21 +1178,26 @@ interval:
 
           const uint32_t CYCLE_ms = (uint32_t)(${c_rv_auto_interval_s}) * 1000U;
           const uint32_t ON_ms    = CYCLE_ms * (uint32_t)(${c_rv_auto_duty_pct}) / 100U;
+          const uint32_t OFF_ms   = CYCLE_ms - ON_ms;  // Pause zuerst
 
           uint32_t elapsed = millis() - id(rv_auto_phase_ms);
           if (elapsed >= CYCLE_ms) {
-            // Neuer Zyklus: EIN-Phase beginnt
+            // Neuer Zyklus: Pause-Phase beginnt, Pumpe aus
             id(rv_auto_phase_ms) = millis();
-            id(rv_auto_pump_on)  = true;
-            id(pumpe_a_aktiv)    = true;
-            id(output_pumpe_dacA).set_level(1.0f);
-            ESP_LOGI("rv", "Zyklus neu: Pumpe EIN (%ums/%ums)", ON_ms, CYCLE_ms);
-          } else if (elapsed >= ON_ms && id(rv_auto_pump_on)) {
-            // EIN-Phase vorbei: AUS
-            id(rv_auto_pump_on) = false;
-            id(pumpe_a_aktiv)   = false;
-            id(output_pumpe_dacA).set_level(0.0f);
-            ESP_LOGI("rv", "Zyklus: Pumpe AUS (%ums nach Zyklusstart)", elapsed);
+            if (id(rv_auto_pump_on)) {
+              id(rv_auto_pump_on) = false;
+              id(pumpe_a_aktiv)   = false;
+              id(script_rv_pumpe_start).stop();
+              id(output_pumpe_dacA).set_level(0.0f);
+              ESP_LOGI("rv", "Zyklus neu: Pumpe AUS (Pause %ums)", OFF_ms);
+            }
+            return;
+          }
+          if (!id(rv_auto_pump_on) && elapsed >= OFF_ms) {
+            // Pause vorbei: EIN-Phase startet
+            id(rv_auto_pump_on) = true;
+            id(script_rv_pumpe_start)->execute();
+            ESP_LOGI("rv", "Zyklus: Pumpe EIN (%ums)", ON_ms);
           }
 
 # ============================================================

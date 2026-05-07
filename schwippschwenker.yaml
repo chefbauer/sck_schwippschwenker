@@ -41,8 +41,8 @@ substitutions:
   c_icebank_pump_ed:              "15"   # %  – Einschaltdauer (15% von 10s = 1.5s EIN)
   c_icebank_pump_power:           "20"   # %  – Pumpenleistung während Eisbank-Puls
   c_thermostat_restore_time:      "15"   # s  – Wartezeit nach Motor/ICE-Stop vor Normaltemp-Wiederherstellung
-  c_rv_auto_interval_s:           "15"   # s  – RV-Automodus: Zyklus-Länge (Drehen AUS)
-  c_rv_auto_duty_pct:             "15"   # %  – RV-Automodus: Einschaltdauer (15% von 15s = 2.25s EIN)
+  c_rv_auto_interval_s:           "30"   # s  – RV-Automodus: Zyklus-Länge (Drehen AUS)
+  c_rv_auto_duty_pct:             "10"   # %  – RV-Automodus: Einschaltdauer (10% von 30s = 3s EIN)
 
   # ── Sensor-Phalanx Update-Intervalle ─────────────────────
   c_tof_update_interval:       500ms
