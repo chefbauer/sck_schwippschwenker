@@ -90,6 +90,8 @@ font:
       - "\uF186"  # Moon (Standby)
       - "\uF00D"  # xmark (X-Button)
       - "\uF72F"  # wine-bottle (Kühl-Saldo Getränkesymbol)
+      - "\uF2F2"  # stopwatch (Stoppuhr)
+      - "\uF252"  # hourglass-half (Countdown/Sanduhr)
 
   # Dot-Matrix Font für Timer-Anzeige
   - file: "fonts/5x7-dot-matrix.ttf"
@@ -201,6 +203,19 @@ globals:
     type: int
     restore_value: false
     initial_value: '1'
+  # ── Countdown Mini-Overlay ─────────────────────────────────────
+  - id: overlay_cd_slot
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: overlay_cd_mode
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: overlay_cd_selected_min
+    type: std::array<int, 6>
+    restore_value: true
+    initial_value: '{0, 0, 0, 0, 0, 0}'
 sensor:
   - platform: template
     id: sensor_leds_per_slot
@@ -332,6 +347,8 @@ interval:
                 blink_s[ii]->publish_state(true);
                 lv_label_set_text(slot_time_lbl[ii], "00:00");
                 lv_label_set_text(slot_sym_lbl[ii], "\xef\x81\x8b");
+                // Dreher-Automode: bei CD-Ablauf stoppen
+                if (id(auto_rotation)) id(script_schwenker_stop)->execute();
               } else {
                 uint32_t rem = max_ms - total_ms;
                 uint32_t s = rem / 1000;
@@ -911,7 +928,7 @@ lvgl:
                               align: CENTER
                               text_font: font_normal
                               text_color: 0xFFFFFF
-                    - button:
+                    - obj:
                         id: slot1_timer_area
                         width: 230
                         height: 100%
@@ -921,89 +938,208 @@ lvgl:
                         bg_color: 0xFF0000
                         bg_opa: 40%
                         border_width: 0
-                        shadow_width: 0
-                        outline_width: 0
                         radius: 0
-                        pad_left: 12
-                        pad_top: 0
-                        pad_right: 0
-                        pad_bottom: 0
-                        on_short_click:
-                          - lambda: |-
-                              int i = 0;
-                              static uint32_t last_ms_s1 = 0;
-                              uint32_t now = millis();
-                              if (now - last_ms_s1 < 400 && last_ms_s1 != 0) {
-                                last_ms_s1 = 0;
-                                if (id(slot_status)[i] == 1) id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
-                                id(slot_elapsed_ms)[i] = 0; id(slot_start_ms)[i] = 0; id(slot_status)[i] = 0;
-                                id(bin_slot1_blink)->publish_state(false);
-                                lv_obj_set_style_bg_color(id(slot1_tab), lv_color_hex(0xFF0000), 0);
-                                if (id(slot_is_countdown)[i]) {
-                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
-                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
-                                  lv_label_set_text(id(lbl_slot1_time), rb);
-                                } else { lv_label_set_text(id(lbl_slot1_time), "00:00"); }
-                                lv_label_set_text(id(lbl_slot1_symbol), "\xef\x81\x8b");
-                                ESP_LOGI("timer", "Slot 1: Reset (DblClick)"); return;
-                              }
-                              last_ms_s1 = now;
-                              if (id(bin_slot1_blink)->state) {
-                                id(bin_slot1_blink)->publish_state(false);
-                                lv_obj_set_style_bg_color(id(slot1_tab), lv_color_hex(0xFF0000), 0);
-                                id(slot_elapsed_ms)[i] = 0;
-                                id(slot_start_ms)[i] = 0;
-                                id(slot_status)[i] = 2;
-                                if (id(slot_is_countdown)[i]) {
-                                  uint32_t s = id(slot_countdown_max_ms)[i] / 1000;
-                                  char rb[8]; snprintf(rb, sizeof(rb), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
-                                  lv_label_set_text(id(lbl_slot1_time), rb);
-                                } else { lv_label_set_text(id(lbl_slot1_time), "00:00"); }
-                                lv_label_set_text(id(lbl_slot1_symbol), "\xef\x81\x8b"); return;
-                              }
-                              if (id(slot_status)[i] == 0 || id(slot_status)[i] == 2) {
-                                id(slot_start_ms)[i] = millis();
-                                id(slot_status)[i] = 1;
-                                lv_label_set_text(id(lbl_slot1_symbol), "\xef\x81\x8c");
-                                ESP_LOGI("timer", "Slot 1: Start");
-                              } else {
-                                id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
-                                id(slot_status)[i] = 2;
-                                lv_label_set_text(id(lbl_slot1_symbol), "\xef\x81\x8b");
-                                ESP_LOGI("timer", "Slot 1: Pause");
-                              }
-                        on_long_press:
-                          - lambda: |-
-                              int i = 0;
-                              if (id(bin_slot1_blink)->state) {
-                                id(bin_slot1_blink)->publish_state(false);
-                                lv_obj_set_style_bg_color(id(slot1_tab), lv_color_hex(0xFF0000), 0);
-                              }
-                              id(script_open_timer_overlay)->execute(i);
+                        pad_all: 0
+                        scrollable: false
+                        clickable: false
                         widgets:
-                          - label:
-                              id: lbl_slot1_timer_title
-                              text: "Timer"
-                              align: TOP_LEFT
-                              x: 0
-                              y: 10
-                              text_font: font_small
-                              text_color: 0x000000
-                          - label:
-                              id: lbl_slot1_time
-                              text: "00:00"
-                              align: TOP_LEFT
-                              x: 0
-                              y: 38
-                              text_font: font_timer
-                              text_color: 0x000000
+                          # ── Default-Ansicht: Stoppuhr + Countdown-Symbole ──────────────────
+                          - obj:
+                              id: slot1_default_view
+                              width: 100%
+                              height: 100%
+                              bg_opa: 0%
+                              border_width: 0
+                              pad_all: 0
+                              scrollable: false
+                              clickable: false
+                              widgets:
+                                - button:
+                                    id: slot1_btn_stopwatch
+                                    width: 105
+                                    height: 100%
+                                    align: LEFT_MID
+                                    x: 0
+                                    bg_opa: 0%
+                                    border_width: 0
+                                    shadow_width: 0
+                                    outline_width: 0
+                                    radius: 0
+                                    pad_all: 0
+                                    on_short_click:
+                                      - lambda: |-
+                                          int i = 0;
+                                          id(slot_is_countdown)[i] = false;
+                                          id(slot_elapsed_ms)[i] = 0;
+                                          id(slot_start_ms)[i] = millis();
+                                          id(slot_status)[i] = 1;
+                                          lv_label_set_text(id(lbl_slot1_time), "00:00");
+                                          lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
+                                          lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
+                                          ESP_LOGI("timer", "Slot 1: Stoppuhr Start");
+                                          if (id(auto_rotation)) id(script_schwenker_start)->execute();
+                                    widgets:
+                                      - label:
+                                          align: CENTER
+                                          text: "\uF2F2"
+                                          text_font: font_icons
+                                          text_color: 0x000000
+                                - button:
+                                    id: slot1_btn_countdown
+                                    width: 105
+                                    height: 100%
+                                    align: RIGHT_MID
+                                    x: 0
+                                    bg_opa: 0%
+                                    border_width: 0
+                                    shadow_width: 0
+                                    outline_width: 0
+                                    radius: 0
+                                    pad_all: 0
+                                    on_short_click:
+                                      - lambda: |-
+                                          int i = 0;
+                                          id(overlay_cd_slot) = i;
+                                          id(overlay_cd_mode) = 0;
+                                          lv_obj_set_pos(id(overlay_cd_mini), 15, 110);
+                                          int sel = id(overlay_cd_selected_min)[i];
+                                          lv_obj_t* btns[9] = {
+                                            id(btn_cdm_1), id(btn_cdm_2), id(btn_cdm_3),
+                                            id(btn_cdm_4), id(btn_cdm_5), id(btn_cdm_6),
+                                            id(btn_cdm_7), id(btn_cdm_8), id(btn_cdm_9)
+                                          };
+                                          for (int k = 0; k < 9; k++) {
+                                            lv_obj_set_style_bg_color(btns[k],
+                                              lv_color_hex((sel == k+1) ? 0xCC0000 : 0x444444), 0);
+                                          }
+                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                    widgets:
+                                      - label:
+                                          align: CENTER
+                                          text: "\uF252"
+                                          text_font: font_icons
+                                          text_color: 0x000000
+                          # ── Laufend-Ansicht: Zeit + X ─────────────────────────────────────
+                          - obj:
+                              id: slot1_running_view
+                              width: 100%
+                              height: 100%
+                              bg_opa: 0%
+                              border_width: 0
+                              pad_all: 0
+                              scrollable: false
+                              clickable: false
+                              hidden: true
+                              widgets:
+                                - button:
+                                    id: slot1_running_touch
+                                    width: 178
+                                    height: 100%
+                                    align: LEFT_MID
+                                    x: 0
+                                    bg_opa: 0%
+                                    border_width: 0
+                                    shadow_width: 0
+                                    outline_width: 0
+                                    radius: 0
+                                    pad_left: 8
+                                    pad_top: 0
+                                    pad_right: 0
+                                    pad_bottom: 0
+                                    on_short_click:
+                                      - lambda: |-
+                                          int i = 0;
+                                          if (id(slot_status)[i] == 0) return;
+                                          if (id(slot_status)[i] == 1) {
+                                            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
+                                            id(slot_status)[i] = 2;
+                                            ESP_LOGI("timer", "Slot 1: Pause");
+                                            if (id(auto_rotation)) id(script_schwenker_stop)->execute();
+                                          } else {
+                                            id(slot_start_ms)[i] = millis();
+                                            id(slot_status)[i] = 1;
+                                            ESP_LOGI("timer", "Slot 1: Weiter");
+                                            if (id(auto_rotation)) id(script_schwenker_start)->execute();
+                                          }
+                                    on_long_press:
+                                      - lambda: |-
+                                          int i = 0;
+                                          if (!id(slot_is_countdown)[i]) return;
+                                          id(overlay_cd_slot) = i;
+                                          id(overlay_cd_mode) = 1;
+                                          lv_obj_set_pos(id(overlay_cd_mini), 15, 110);
+                                          int sel = id(overlay_cd_selected_min)[i];
+                                          lv_obj_t* btns[9] = {
+                                            id(btn_cdm_1), id(btn_cdm_2), id(btn_cdm_3),
+                                            id(btn_cdm_4), id(btn_cdm_5), id(btn_cdm_6),
+                                            id(btn_cdm_7), id(btn_cdm_8), id(btn_cdm_9)
+                                          };
+                                          for (int k = 0; k < 9; k++) {
+                                            lv_obj_set_style_bg_color(btns[k],
+                                              lv_color_hex((sel == k+1) ? 0xCC0000 : 0x444444), 0);
+                                          }
+                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                    widgets:
+                                      - label:
+                                          id: lbl_slot1_timer_title
+                                          text: "Timer"
+                                          hidden: true
+                                          text_font: font_small
+                                          text_color: 0x000000
+                                          align: TOP_LEFT
+                                          x: 0
+                                          y: 0
+                                      - label:
+                                          id: lbl_slot1_time
+                                          text: "00:00"
+                                          align: TOP_LEFT
+                                          x: 0
+                                          y: 30
+                                          text_font: font_timer
+                                          text_color: 0x000000
+                                - button:
+                                    id: btn_slot1_stop
+                                    width: 50
+                                    height: 50
+                                    align: RIGHT_MID
+                                    x: -2
+                                    bg_color: 0x440000
+                                    bg_opa: COVER
+                                    border_width: 0
+                                    shadow_width: 0
+                                    outline_width: 0
+                                    radius: 6
+                                    pad_all: 0
+                                    on_click:
+                                      - lambda: |-
+                                          int i = 0;
+                                          if (id(slot_status)[i] == 1)
+                                            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
+                                          id(slot_elapsed_ms)[i] = 0;
+                                          id(slot_start_ms)[i] = 0;
+                                          id(slot_status)[i] = 0;
+                                          id(bin_slot1_blink)->publish_state(false);
+                                          lv_obj_set_style_bg_color(id(slot1_tab), lv_color_hex(0xFF0000), 0);
+                                          lv_label_set_text(id(lbl_slot1_time), "00:00");
+                                          lv_obj_add_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
+                                          lv_obj_clear_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
+                                          ESP_LOGI("timer", "Slot 1: Stop (X)");
+                                          if (id(auto_rotation)) id(script_schwenker_stop)->execute();
+                                    widgets:
+                                      - label:
+                                          align: CENTER
+                                          text: "\uF00D"
+                                          text_font: font_icons
+                                          text_color: 0xFFFFFF
+                          # Hidden label für Interval-Loop-Kompatibilität
                           - label:
                               id: lbl_slot1_symbol
+                              hidden: true
                               text: "\uF04B"
                               text_font: font_icons
+                              text_color: 0x000000
                               align: RIGHT_MID
                               x: -17
-                              text_color: 0x000000
               - obj:
                   id: slot2_yellow
                   width: 290
