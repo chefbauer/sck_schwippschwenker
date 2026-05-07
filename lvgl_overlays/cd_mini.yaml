@@ -59,7 +59,7 @@ obj:
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
                 if (id(auto_rotation)) id(script_schwenker_start)->execute();
-                ESP_LOGI("cd_mini", "Slot %d: CD %d min Start", i+1, n);
+
               }
               lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
         widgets:
@@ -98,7 +98,7 @@ obj:
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
                 if (id(auto_rotation)) id(script_schwenker_start)->execute();
-                ESP_LOGI("cd_mini", "Slot %d: CD %d min Start", i+1, n);
+
               }
               lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
         widgets:
@@ -137,7 +137,7 @@ obj:
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
                 if (id(auto_rotation)) id(script_schwenker_start)->execute();
-                ESP_LOGI("cd_mini", "Slot %d: CD %d min Start", i+1, n);
+
               }
               lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
         widgets:
@@ -176,7 +176,7 @@ obj:
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
                 if (id(auto_rotation)) id(script_schwenker_start)->execute();
-                ESP_LOGI("cd_mini", "Slot %d: CD %d min Start", i+1, n);
+
               }
               lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
         widgets:
@@ -215,7 +215,7 @@ obj:
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
                 if (id(auto_rotation)) id(script_schwenker_start)->execute();
-                ESP_LOGI("cd_mini", "Slot %d: CD %d min Start", i+1, n);
+
               }
               lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
         widgets:
@@ -256,7 +256,7 @@ obj:
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
                 if (id(auto_rotation)) id(script_schwenker_start)->execute();
-                ESP_LOGI("cd_mini", "Slot %d: CD %d min Start", i+1, n);
+
               }
               lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
         widgets:
@@ -295,7 +295,7 @@ obj:
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
                 if (id(auto_rotation)) id(script_schwenker_start)->execute();
-                ESP_LOGI("cd_mini", "Slot %d: CD %d min Start", i+1, n);
+
               }
               lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
         widgets:
@@ -334,7 +334,7 @@ obj:
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
                 if (id(auto_rotation)) id(script_schwenker_start)->execute();
-                ESP_LOGI("cd_mini", "Slot %d: CD %d min Start", i+1, n);
+
               }
               lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
         widgets:
@@ -373,7 +373,7 @@ obj:
                   lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                 }
                 if (id(auto_rotation)) id(script_schwenker_start)->execute();
-                ESP_LOGI("cd_mini", "Slot %d: CD %d min Start", i+1, n);
+
               }
               lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
         widgets:

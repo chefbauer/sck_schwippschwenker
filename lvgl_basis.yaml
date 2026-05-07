@@ -976,7 +976,6 @@ lvgl:
                                           lv_label_set_text(id(lbl_slot1_time), "00:00");
                                           lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
                                           lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
-                                          ESP_LOGI("timer", "Slot 1: Stoppuhr Start");
                                           if (id(auto_rotation)) id(script_schwenker_start)->execute();
                                     widgets:
                                       - label:
@@ -1053,12 +1052,10 @@ lvgl:
                                           if (id(slot_status)[i] == 1) {
                                             id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
                                             id(slot_status)[i] = 2;
-                                            ESP_LOGI("timer", "Slot 1: Pause");
                                             if (id(auto_rotation)) id(script_schwenker_stop)->execute();
                                           } else {
                                             id(slot_start_ms)[i] = millis();
                                             id(slot_status)[i] = 1;
-                                            ESP_LOGI("timer", "Slot 1: Weiter");
                                             if (id(auto_rotation)) id(script_schwenker_start)->execute();
                                           }
                                     on_long_press:
@@ -1123,7 +1120,6 @@ lvgl:
                                           lv_label_set_text(id(lbl_slot1_time), "00:00");
                                           lv_obj_add_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
                                           lv_obj_clear_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
-                                          ESP_LOGI("timer", "Slot 1: Stop (X)");
                                           if (id(auto_rotation)) id(script_schwenker_stop)->execute();
                                     widgets:
                                       - label:
