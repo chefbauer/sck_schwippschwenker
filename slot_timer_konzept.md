@@ -197,3 +197,67 @@ Für Slots 2–6 identisch mit entsprechendem Index.
 
 - [x] Mode 1: Nur die neue Zielzeit wird gesetzt (8→9 = +60 s), kein Neustart
 - [x] Symbole: Font Awesome `\uF2F2` (Stoppuhr) und `\uF252` (Sanduhr), beide neu in `font_icons` eintragen
+
+---
+
+## Implementierungsstand & offene Punkte
+
+### ✅ Umgesetzt und aktiv
+
+#### `lvgl_basis.yaml`
+- `font_icons`: `\uF2F2` (fa-stopwatch) + `\uF252` (fa-hourglass-half) hinzugefügt
+- Neue Globals: `overlay_cd_slot` (int), `overlay_cd_mode` (int), `overlay_cd_selected_min` (int[6], restore=true)
+- `slot1_red` → rechte Hälfte komplett neu strukturiert:
+  - **Default-Ansicht** (`slot1_default_view`): Container mit zwei Buttons:
+    - `slot1_btn_stopwatch` (⏱ `\uF2F2`): Short → Stoppuhr starten + Laufend-Ansicht zeigen + auto_rotation-Start
+    - `slot1_btn_countdown` (⏳ `\uF252`): Short → **aktuell deaktiviert (Crash-Test)**
+  - **Laufend-Ansicht** (`slot1_running_view`, hidden=true):
+    - `slot1_running_touch` (178px breit): Short → Pause/Weiter + auto_rotation
+    - Long-Press → **aktuell deaktiviert (Crash-Test)**
+    - `btn_slot1_stop` (X `\uF00D`): Stop + Default-Ansicht + auto_rotation-Stop
+    - `lbl_slot1_time`: Zeitanzeige (wird vom 500ms-Interval-Loop befüllt)
+    - `lbl_slot1_timer_title`: hidden (Kompatibilität Interval-Loop)
+    - `lbl_slot1_symbol`: hidden (Kompatibilität Interval-Loop)
+- Interval-Loop: bei Countdown-Ablauf → `script_schwenker_stop()` wenn `auto_rotation`
+- Alle `ESP_LOGI`-Aufrufe aus LVGL-Event-Handlern (Core 1) entfernt → Stack-Overflow-Fix
+
+#### `lvgl_overlay.yaml`
+- `cd_mini.yaml`-Include **auskommentiert** (Crash-Test)
+
+#### `lvgl_overlays/cd_mini.yaml` *(Datei existiert, aber nicht eingebunden)*
+- Mini-Overlay `overlay_cd_mini`: 290×120px, Buttons 1–9 + X, 2 Zeilen
+- Positionierung via `lv_obj_set_pos()` vor dem Einblenden
+- Rot-Highlight für zuvor gewählte Minute (`overlay_cd_selected_min[slot]`)
+- Alle `ESP_LOGI` und `snprintf`/`lv_label_set_text` bereits entfernt (Stack-Reduktion)
+
+---
+
+### ⚠️ Crash-Diagnose (Stand 07.05.2026)
+
+**Symptom:** `__ssprint_r` auf Core 1 (LVGL-Task), reproduzierbar bei jedem Boot.  
+**Bisherige Maßnahmen:**
+1. `snprintf` + `lv_label_set_text` aus cd_mini-Buttons entfernt → Crash blieb
+2. Alle `ESP_LOGI` aus LVGL-Event-Handlern entfernt → Crash blieb
+3. cd_mini komplett deaktiviert (include + beide Lambdas) → **noch zu testen**
+
+**Nächster Schritt nach positivem Test (kein Crash):**
+- `btns[9]`-Array-Initialisierung in Lambdas als Ursache bestätigt
+- Lösung: btns-Array durch direkten Aufruf eines `script_cd_mini_open`-Scripts ersetzen (Script läuft auf App-Core 0, nicht auf LVGL-Core 1)
+
+**Nächster Schritt bei weiterhin positivem Crash:**
+- Ursache liegt **nicht** im cd_mini-Code
+- Dann: Stoppuhr-Start-Lambda isolieren (auto_rotation-Calls auf Core 1?)
+- `script_schwenker_start/stop` auf Core 1 aufrufen = potenziell unsafe
+
+---
+
+### 🔜 Noch zu implementieren
+
+1. **cd_mini Crash-sichere Variante:**
+   - `btns[9]`-Loop aus Lambda herausziehen → eigenes Script `script_cd_mini_open(int slot, int mode)`
+   - Script läuft auf App-Core → kein LVGL-Stack-Problem
+   - Nach positivem Crash-Test wieder einbinden
+
+2. **Slots 2–6:** Identische Struktur wie Slot 1 (Default/Laufend-Ansicht + cd_mini-Anbindung)
+
+3. **Interval-Loop Slot1:** `lbl_slot1_timer_title` zeigt im Originalcode "Timer"/"Countdown" — aktuell hidden, evtl. wieder sichtbar machen wenn Layout passt

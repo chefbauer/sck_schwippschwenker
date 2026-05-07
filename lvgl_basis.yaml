@@ -997,21 +997,7 @@ lvgl:
                                     pad_all: 0
                                     on_short_click:
                                       - lambda: |-
-                                          int i = 0;
-                                          id(overlay_cd_slot) = i;
-                                          id(overlay_cd_mode) = 0;
-                                          lv_obj_set_pos(id(overlay_cd_mini), 15, 110);
-                                          int sel = id(overlay_cd_selected_min)[i];
-                                          lv_obj_t* btns[9] = {
-                                            id(btn_cdm_1), id(btn_cdm_2), id(btn_cdm_3),
-                                            id(btn_cdm_4), id(btn_cdm_5), id(btn_cdm_6),
-                                            id(btn_cdm_7), id(btn_cdm_8), id(btn_cdm_9)
-                                          };
-                                          for (int k = 0; k < 9; k++) {
-                                            lv_obj_set_style_bg_color(btns[k],
-                                              lv_color_hex((sel == k+1) ? 0xCC0000 : 0x444444), 0);
-                                          }
-                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                          // cd_mini deaktiviert (Crash-Test)
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1060,22 +1046,7 @@ lvgl:
                                           }
                                     on_long_press:
                                       - lambda: |-
-                                          int i = 0;
-                                          if (!id(slot_is_countdown)[i]) return;
-                                          id(overlay_cd_slot) = i;
-                                          id(overlay_cd_mode) = 1;
-                                          lv_obj_set_pos(id(overlay_cd_mini), 15, 110);
-                                          int sel = id(overlay_cd_selected_min)[i];
-                                          lv_obj_t* btns[9] = {
-                                            id(btn_cdm_1), id(btn_cdm_2), id(btn_cdm_3),
-                                            id(btn_cdm_4), id(btn_cdm_5), id(btn_cdm_6),
-                                            id(btn_cdm_7), id(btn_cdm_8), id(btn_cdm_9)
-                                          };
-                                          for (int k = 0; k < 9; k++) {
-                                            lv_obj_set_style_bg_color(btns[k],
-                                              lv_color_hex((sel == k+1) ? 0xCC0000 : 0x444444), 0);
-                                          }
-                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                          // cd_mini deaktiviert (Crash-Test)
                                     widgets:
                                       - label:
                                           id: lbl_slot1_timer_title
