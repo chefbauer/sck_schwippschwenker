@@ -75,6 +75,9 @@ esphome:
             lv_slider_set_value(id(slider_eisbank_dauer), edm, LV_ANIM_OFF);
             if (edm == 0) lv_label_set_text(id(lbl_eisbank_dauer_val), "AUS");
             else { char eb[12]; snprintf(eb, sizeof(eb), "%d min", edm); lv_label_set_text(id(lbl_eisbank_dauer_val), eb); }
+            // RV-Schalter aus NVS synchronisieren
+            if (id(global_rv_aktiv)) lv_obj_add_state(id(sw_rv_aktiv), LV_STATE_CHECKED);
+            else lv_obj_clear_state(id(sw_rv_aktiv), LV_STATE_CHECKED);
     - priority: -150        # System in sicheren Aus-Zustand (Not-Aus beim Booten)
       then:
         - script.execute: script_system_aus

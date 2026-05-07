@@ -3013,6 +3013,38 @@ lvgl:
                                   text_font: font_normal
                                   text_color: 0x003366
 
+                        # Zeile: Rückschlagventil (RV) Ein/Aus
+                        - obj:
+                            id: row_rv
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 550
+                            bg_opa: TRANSP
+                            border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
+                            widgets:
+                              - label:
+                                  text: "Rückschlagventil"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - switch:
+                                  id: sw_rv_aktiv
+                                  align: LEFT_MID
+                                  x: 240
+                                  on_value:
+                                    - lambda: |-
+                                        id(global_rv_aktiv) = x;
+                                        if (!x) {
+                                          // RV deaktiviert: laufenden Interval stoppen
+                                          id(rv_auto_phase_ms) = 0;
+                                          id(rv_auto_pump_on)  = false;
+                                        }
+                                        ESP_LOGI("rv", "RV %s", x ? "aktiv" : "inaktiv");
+
                     # Tab 4: Test
                     - name: "Test"
                       id: tab_test

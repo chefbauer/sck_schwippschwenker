@@ -30,6 +30,7 @@
 #            dr_aktiv, dr_modus, dr_speed_rpm, dr_acc, dr_richtung, dr_motor_mode
 #            dr_pumpe_auto
 #            drp[1..5]_rpm / _acc / _richtung / _mode / _pumpe
+#            global_rv_aktiv, rv_auto_phase_ms, rv_auto_pump_on
 #  script:   script_schwenker_settings_open, script_schwenker_start,
 #            script_schwenker_stop, script_schwenker_goto_slot,
 #            script_motor_reboot, script_pumpe_a_kurz, script_pumpe_a_lang,
@@ -289,6 +290,22 @@ globals:
     initial_value: '1'
 
   - id: pumpe_a_auto_war_an     # AUTO-Intern: war Pumpe durch AUTO eingeschaltet?
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  # ── Rückschlagventil (RV) ─────────────────────────────────
+  - id: global_rv_aktiv          # RV eingebaut: true = kein Turbo beim Drehen, stattdessen Interval-Modus
+    type: bool
+    restore_value: yes
+    initial_value: 'false'
+
+  - id: rv_auto_phase_ms         # millis() beim Start des aktuellen Intervall-Zyklus (0 = inaktiv)
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+
+  - id: rv_auto_pump_on          # true = Pumpe gerade im EIN-Abschnitt des Intervalls
     type: bool
     restore_value: no
     initial_value: 'false'
@@ -692,19 +709,28 @@ script:
             }
             ESP_LOGI("pumpe", "Modus: MANUELL");
           } else {
-            // AUTO: nur einschalten wenn Motor läuft
+            // AUTO: Motor läuft → einschalten; Motor aus → RV-Interval oder aus
             id(pumpe_a_auto_war_an) = false;
             bool motor_laeuft = id(sw_aktiv) || id(dr_aktiv);
             if (motor_laeuft && !id(pumpe_a_aktiv)) {
               id(script_pumpe_auto_spuelstoss).execute();
               id(pumpe_a_auto_war_an) = true;
-            } else if (!motor_laeuft && id(pumpe_a_aktiv)) {
-              id(script_pumpe_a_kurz).stop();
-              id(script_pumpe_a_lang).stop();
-              id(pumpe_a_aktiv) = false;
-              id(output_pumpe_dacA).set_level(0.0f);
+            } else if (!motor_laeuft) {
+              if (id(global_rv_aktiv)) {
+                // RV: Interval-Zyklus starten (beginnt mit EIN-Phase)
+                id(rv_auto_phase_ms) = millis();
+                id(rv_auto_pump_on)  = true;
+                id(pumpe_a_aktiv)    = true;
+                id(output_pumpe_dacA).set_level(1.0f);
+                ESP_LOGI("rv", "Auto-Intervall per Modus-2 gestartet");
+              } else if (id(pumpe_a_aktiv)) {
+                id(script_pumpe_a_kurz).stop();
+                id(script_pumpe_a_lang).stop();
+                id(pumpe_a_aktiv) = false;
+                id(output_pumpe_dacA).set_level(0.0f);
+              }
             }
-            ESP_LOGI("pumpe", "Modus: AUTO (motor=%d)", (int)motor_laeuft);
+            ESP_LOGI("pumpe", "Modus: AUTO (motor=%d, rv=%d)", (int)motor_laeuft, (int)id(global_rv_aktiv));
           }
 
   # ── AUTO: Spülstoß 100% für 10s, dann Slider-Wert ─────────
@@ -901,8 +927,20 @@ script:
           id(dr_aktiv)  = true;
           id(dr_modus)  = true;   // Modus auf Drehen speichern (NVS)
           lv_label_set_text(id(lbl_schwenker_icon), "\xef\x8b\xb9");  // U+F2F9 rotate-right (Drehen)
-          // Pumpe auf 100% wenn AUTO-Modus aktiv und sie gerade läuft
-          if (id(dr_pumpe_auto) && id(pumpe_a_aktiv)) {
+          // Pumpe: RV=true → kein Turbo, normal dauerhaft ein; RV=false → 100% wenn dr_pumpe_auto + aktiv
+          if (id(global_rv_aktiv)) {
+            id(rv_auto_phase_ms) = 0;    // Interval-Zyklus stoppen
+            id(rv_auto_pump_on)  = false;
+            id(pumpe_vor_drehen_level) = -1.0f;  // kein Restore beim Stop nötig
+            // Falls Pumpe via Interval gerade aus war: wieder einschalten
+            if (id(pumpe_a_modus) == 2) {
+              int sv = lv_slider_get_value(id(slider_turmpumpe));
+              if (sv < 5) sv = 5;
+              id(output_pumpe_dacA).set_level(sv / 100.0f);
+              id(pumpe_a_aktiv) = true;
+              ESP_LOGI("drehen", "RV: Pumpe normal ein (%.0f%%)", sv / 100.0f * 100.0f);
+            }
+          } else if (id(dr_pumpe_auto) && id(pumpe_a_aktiv)) {
             id(pumpe_vor_drehen_level) = lv_slider_get_value(id(slider_turmpumpe)) / 100.0f;
             id(output_pumpe_dacA).set_level(1.0f);
             ESP_LOGI("drehen", "Pumpe → 100%% (war %.2f)", id(pumpe_vor_drehen_level));
@@ -956,6 +994,14 @@ script:
           id(sw_motor_busy) = false;
           id(sw_motor_last_move_ms) = millis();
           ESP_LOGI("drehen", "STOP: Bremsbefehl gesendet");
+          // RV-Auto-Modus: Interval-Zyklus starten wenn Modus=AUTO
+          if (id(global_rv_aktiv) && id(pumpe_a_modus) == 2) {
+            id(rv_auto_phase_ms) = millis();
+            id(rv_auto_pump_on)  = true;
+            id(pumpe_a_aktiv)    = true;
+            id(output_pumpe_dacA).set_level(1.0f);
+            ESP_LOGI("rv", "Auto-Intervall gestartet (Drehen gestoppt)");
+          }
           // Prüfe blinkende Slots -> Slot anfahren wie beim Schwenken
           esphome::binary_sensor::BinarySensor* blink_s[6] = {
             id(bin_slot1_blink), id(bin_slot2_blink), id(bin_slot3_blink),
@@ -1093,6 +1139,40 @@ interval:
           uint8_t  p_l   = (uint8_t)( val         & 0xFF);
           id(can_bus)->send_data(${motor_can_id}, false,
               add_crc(${motor_can_id}, { 0xF5, spd_h, spd_l, acc, p_hh, p_h, p_l }));
+
+  # ── RV-Automodus: Beckenpumpe Intervall-Zyklus (nur wenn RV=true, Modus=AUTO, Motor aus) ────
+  - interval: 500ms
+    then:
+      - lambda: |-
+          // Nur aktiv wenn: RV eingebaut, Pumpe-Modus=AUTO, kein Motor läuft
+          if (!id(global_rv_aktiv) || id(pumpe_a_modus) != 2 || id(dr_aktiv) || id(sw_aktiv)) {
+            // Motor läuft jetzt: Interval-Flag zurücksetzen (Pumpe läuft normal weiter)
+            if (id(rv_auto_phase_ms) != 0 && (id(dr_aktiv) || id(sw_aktiv))) {
+              id(rv_auto_phase_ms) = 0;
+              id(rv_auto_pump_on)  = false;
+            }
+            return;
+          }
+          if (id(rv_auto_phase_ms) == 0) return;  // Zyklus wurde noch nicht gestartet
+
+          const uint32_t CYCLE_ms = (uint32_t)(${c_rv_auto_interval_s}) * 1000U;
+          const uint32_t ON_ms    = CYCLE_ms * (uint32_t)(${c_rv_auto_duty_pct}) / 100U;
+
+          uint32_t elapsed = millis() - id(rv_auto_phase_ms);
+          if (elapsed >= CYCLE_ms) {
+            // Neuer Zyklus: EIN-Phase beginnt
+            id(rv_auto_phase_ms) = millis();
+            id(rv_auto_pump_on)  = true;
+            id(pumpe_a_aktiv)    = true;
+            id(output_pumpe_dacA).set_level(1.0f);
+            ESP_LOGI("rv", "Zyklus neu: Pumpe EIN (%ums/%ums)", ON_ms, CYCLE_ms);
+          } else if (elapsed >= ON_ms && id(rv_auto_pump_on)) {
+            // EIN-Phase vorbei: AUS
+            id(rv_auto_pump_on) = false;
+            id(pumpe_a_aktiv)   = false;
+            id(output_pumpe_dacA).set_level(0.0f);
+            ESP_LOGI("rv", "Zyklus: Pumpe AUS (%ums nach Zyklusstart)", elapsed);
+          }
 
 # ============================================================
 # Button – Start / Stop Toggle

@@ -27,6 +27,10 @@
         "/^cd /workspaces/display_drehwurm && for f in cooler\\.yaml hardware\\.yaml ble\\.yaml lvgl_basis\\.yaml; do python3 -c \"\nimport yaml, sys\nclass L\\(yaml\\.SafeLoader\\): pass\nyaml\\.add_multi_constructor\\('', lambda l,t,n: None, Loader=L\\)\nyaml\\.load\\(open\\('\\$f'\\), L\\)\n\" 2>&1 && echo \"✓ \\$f\" \\|\\| echo \"✗ FEHLER: \\$f\"; done$/": {
             "approve": true,
             "matchCommandLine": true
+        },
+        "/^cd /workspaces/display_drehwurm && python3 -c \"\nimport yaml, sys\nclass L\\(yaml\\.SafeLoader\\): pass\nyaml\\.add_multi_constructor\\('', lambda l,t,n: None, Loader=L\\)\nfor f in \\['schwenker\\.yaml', 'lvgl_basis\\.yaml', 'schwippschwenker\\.yaml', 'hardware\\.yaml'\\]:\n    try:\n        yaml\\.load\\(open\\(f\\), L\\)\n        print\\(f'OK  \\{f\\}'\\)\n    except Exception as e:\n        print\\(f'ERR \\{f\\}: \\{e\\}'\\)\n\"$/": {
+            "approve": true,
+            "matchCommandLine": true
         }
     }
 }

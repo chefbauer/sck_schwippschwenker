@@ -198,6 +198,9 @@ Für 6 Timer-Slots (Index 0–5):
 | `global_emissivity` | float (0.9) | IR-Emissivität — Laufzeitwert, kein NVS-Save |
 | `global_mat_type` | int (0) | Materialtyp: 0=Glas, 1=Dose matt, 2=Dose glänzend |
 | `global_mat_color` | int (3) | Farbindex 0–5 (Farb-Swatch im Emissivitäts-Selector) |
+| `global_rv_aktiv` | bool (false) | Rückschlagventil vorhanden — persistiert NVS; steuert Pumpen-Turbo + Auto-Interval |
+| `rv_auto_phase_ms` | uint32_t | millis() beim letzten Zyklus-Start (0 = Interval inaktiv) |
+| `rv_auto_pump_on` | bool | true = Pumpe gerade im EIN-Abschnitt des RV-Intervals |
 
 **Binary Sensors (internal) für Blink-Zustand:**
 
@@ -223,6 +226,8 @@ Aktualisiert auch das AMG8833-Overlay wenn es sichtbar ist.
 | `c_standby_lvgl_idle` | 120s | LVGL-Idle-Timeout für Standby-Flag |
 | `c_standby_tof_min_mm` | "800" | Mindestdistanz für Standby (kein Objekt vor Sensor) |
 | `c_motor_direction` | "1" | Motorrichtung: 0=links/1=rechts auf Welle |
+| `c_rv_auto_interval_s` | "15" | RV-Automodus: Zyklus-Länge in Sekunden (Drehen AUS) |
+| `c_rv_auto_duty_pct` | "15" | RV-Automodus: Einschaltdauer in % (15%×15s = 2,25s EIN) |
 
 > **⚠️ Montage-Besonderheit (Motor-/Systemrichtung):**
 > Der Motor ist **senkrecht mit Welle nach oben** montiert.
@@ -382,6 +387,12 @@ Tab-Reihenfolge: **System · Schwenker · Licht · Bildschirm · Kühler · Test
 - Zeile: Label "Temperatur" + Slider `slider_temp` (0–50, entspricht 0.0–5.0 °C) + Wert-Label
   - `on_value` → `call.set_target_temperature(x / 10.0f)` + Label update
 - Preset-Buttons: **1°C** / **1.5°C** / **5°C** (setzt Slider + Label + Climate)
+- Zeile: Eisbank-Switch `sw_eisbank_aktiv` + Status-Label `lbl_eisbank_status`
+- Zeile: Eisbank-Dauer-Slider `slider_eisbank_dauer` (0–30 min) + Label `lbl_eisbank_dauer_val`
+- Zeile: Switch `sw_rv_aktiv` + Label „Rückschlagventil"
+  - Speichert `global_rv_aktiv` (NVS-persistent)
+  - EIN → kein Turbo beim Drehen-Start; Beckenpumpe Auto-Interval wenn Drehen AUS
+  - AUS → bisheriges Verhalten (Turbo beim Drehen-Start)
 
 ---
 
