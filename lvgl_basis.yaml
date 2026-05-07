@@ -997,7 +997,9 @@ lvgl:
                                     pad_all: 0
                                     on_short_click:
                                       - lambda: |-
-                                          // cd_mini deaktiviert (Crash-Test)
+                                          id(overlay_cd_slot) = 0;
+                                          id(overlay_cd_mode) = 0;
+                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1046,7 +1048,9 @@ lvgl:
                                           }
                                     on_long_press:
                                       - lambda: |-
-                                          // cd_mini deaktiviert (Crash-Test)
+                                          id(overlay_cd_slot) = 0;
+                                          id(overlay_cd_mode) = 1;
+                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
                                     widgets:
                                       - label:
                                           id: lbl_slot1_timer_title

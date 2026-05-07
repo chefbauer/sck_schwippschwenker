@@ -42,4 +42,4 @@ lvgl:
       - !include lvgl_overlays/temp_messung.yaml
       - !include lvgl_overlays/timer.yaml
       - !include lvgl_overlays/cooling.yaml
-      # - !include lvgl_overlays/cd_mini.yaml  # DEAKTIVIERT (Crash-Test)
+      - !include lvgl_overlays/cd_mini.yaml
