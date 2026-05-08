@@ -57,8 +57,7 @@ obj:
               align: LEFT_MID
               x: 6
               bg_color: 0x2255CC
-              radius: 8
-              border_width: 0
+              styles: style_sensor_badge
               scrollable: false
               widgets:
                 - label:
@@ -110,8 +109,7 @@ obj:
               align: LEFT_MID
               x: 6
               bg_color: 0xCC5500
-              radius: 8
-              border_width: 0
+              styles: style_sensor_badge
               scrollable: false
               widgets:
                 - label:
@@ -163,8 +161,7 @@ obj:
               align: LEFT_MID
               x: 6
               bg_color: 0x008899
-              radius: 8
-              border_width: 0
+              styles: style_sensor_badge
               scrollable: false
               widgets:
                 - label:
@@ -216,8 +213,7 @@ obj:
               align: LEFT_MID
               x: 6
               bg_color: 0x7744BB
-              radius: 8
-              border_width: 0
+              styles: style_sensor_badge
               scrollable: false
               widgets:
                 - label:
@@ -269,8 +265,7 @@ obj:
               align: LEFT_MID
               x: 6
               bg_color: 0x227733
-              radius: 8
-              border_width: 0
+              styles: style_sensor_badge
               scrollable: false
               widgets:
                 - label:
@@ -322,8 +317,7 @@ obj:
               align: LEFT_MID
               x: 6
               bg_color: 0xBB8800
-              radius: 8
-              border_width: 0
+              styles: style_sensor_badge
               scrollable: false
               widgets:
                 - label:
@@ -375,8 +369,7 @@ obj:
               align: LEFT_MID
               x: 6
               bg_color: 0xCC2200
-              radius: 8
-              border_width: 0
+              styles: style_sensor_badge
               scrollable: false
               widgets:
                 - label:

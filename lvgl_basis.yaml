@@ -442,7 +442,58 @@ interval:
 lvgl:
   log_level: WARN
   color_depth: 16
-  
+
+  style_definitions:
+    # Aktions-Button: volle BG-Deckkraft, keine Border/Shadow/Outline/Padding
+    - id: style_action_btn
+      bg_opa: COVER
+      border_width: 0
+      shadow_width: 0
+      outline_width: 0
+      pad_all: 0
+    # Slot-Tab-Button: wie style_action_btn, aber zusätzlich radius: 0
+    - id: style_slot_tab
+      bg_opa: COVER
+      border_width: 0
+      shadow_width: 0
+      outline_width: 0
+      radius: 0
+      pad_all: 0
+    # Unsichtbarer Touch-Button: transparente Fläche ohne jede Dekoration
+    - id: style_invis_btn
+      bg_opa: 0%
+      border_width: 0
+      shadow_width: 0
+      outline_width: 0
+      radius: 0
+      pad_all: 0
+    # Transparenter Layout-Container: kein BG, keine Border, kein Padding
+    - id: style_transp_container
+      bg_opa: TRANSP
+      border_width: 0
+      pad_all: 0
+    # Sensor-Badge: runde Ecken, keine Border
+    - id: style_sensor_badge
+      radius: 8
+      border_width: 0
+    # Preset-Button: dunkelblau mit blauem Rand
+    - id: style_preset_btn
+      bg_color: 0x223355
+      border_width: 2
+      border_color: 0x4477AA
+      radius: 12
+    # Timer-Bereichs-Button (Slots 2–6): 40% Deckkraft, keine Dekoration, linkes Padding
+    - id: style_timer_area_btn
+      bg_opa: 40%
+      border_width: 0
+      shadow_width: 0
+      outline_width: 0
+      radius: 0
+      pad_left: 12
+      pad_top: 0
+      pad_right: 0
+      pad_bottom: 0
+
   # Farbdefinitionen (Helles Design)
   theme:
     obj:
@@ -487,11 +538,7 @@ lvgl:
                   y: 10
                   radius: 8
                   bg_color: 0xCC0000
-                  bg_opa: COVER
-                  border_width: 0
-                  shadow_width: 0
-                  outline_width: 0
-                  pad_all: 0
+                  styles: style_action_btn
                   on_click:
                     - lambda: |-
                         id(script_system_aus).execute();
@@ -514,11 +561,7 @@ lvgl:
                   y: 10
                   radius: 40
                   bg_color: 0xAA2200
-                  bg_opa: COVER
-                  border_width: 0
-                  shadow_width: 0
-                  outline_width: 0
-                  pad_all: 0
+                  styles: style_action_btn
                   on_long_press:
                     - lambda: |-
                         if (id(system_ein)) {
@@ -547,11 +590,7 @@ lvgl:
                   y: -136
                   radius: 40
                   bg_color: 0x00FF00
-                  bg_opa: COVER
-                  border_width: 0
-                  shadow_width: 0
-                  outline_width: 0
-                  pad_all: 0
+                  styles: style_action_btn
                   on_short_click:
                     - lambda: |-
                         id(auto_rotation) = !id(auto_rotation);
@@ -591,11 +630,7 @@ lvgl:
                   y: 176
                   radius: 40
                   bg_color: 0x1a7a3a
-                  bg_opa: COVER
-                  border_width: 0
-                  shadow_width: 0
-                  outline_width: 0
-                  pad_all: 0
+                  styles: style_action_btn
                   on_short_click:
                     - lambda: |-
                         // Cycle: 0→1→2→0
@@ -654,11 +689,7 @@ lvgl:
                         align: CENTER
                         radius: 98
                         bg_color: 0x666666
-                        bg_opa: COVER
-                        border_width: 0
-                        shadow_width: 0
-                        outline_width: 0
-                        pad_all: 0
+                        styles: style_action_btn
                         on_short_click:
                           - lambda: |-
                               if (id(dr_aktiv)) {
@@ -925,9 +956,7 @@ lvgl:
                   y: 110
                   radius: 16
                   clip_corner: true
-                  bg_opa: TRANSP
-                  border_width: 0
-                  pad_all: 0
+                  styles: style_transp_container
                   scrollable: false
                   clickable: false
                   widgets:
@@ -939,12 +968,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0xFF0000
-                        bg_opa: COVER
-                        border_width: 0
-                        shadow_width: 0
-                        outline_width: 0
-                        radius: 0
-                        pad_all: 0
+                        styles: style_slot_tab
                         on_press:
                           - lambda: |-
                               ESP_LOGI("slot", "Goto Slot 1 (0 Grad)");
@@ -975,9 +999,7 @@ lvgl:
                               id: slot1_default_view
                               width: 100%
                               height: 100%
-                              bg_opa: 0%
-                              border_width: 0
-                              pad_all: 0
+                              styles: style_transp_container
                               scrollable: false
                               clickable: false
                               widgets:
@@ -987,12 +1009,7 @@ lvgl:
                                     height: 100%
                                     align: LEFT_MID
                                     x: 0
-                                    bg_opa: 0%
-                                    border_width: 0
-                                    shadow_width: 0
-                                    outline_width: 0
-                                    radius: 0
-                                    pad_all: 0
+                                    styles: style_invis_btn
                                     on_short_click:
                                       - lambda: |-
                                           int i = 0;
@@ -1016,12 +1033,7 @@ lvgl:
                                     height: 100%
                                     align: RIGHT_MID
                                     x: 0
-                                    bg_opa: 0%
-                                    border_width: 0
-                                    shadow_width: 0
-                                    outline_width: 0
-                                    radius: 0
-                                    pad_all: 0
+                                    styles: style_invis_btn
                                     on_short_click:
                                       - lambda: |-
                                           id(overlay_cd_slot) = 0;
@@ -1038,9 +1050,7 @@ lvgl:
                               id: slot1_running_view
                               width: 100%
                               height: 100%
-                              bg_opa: 0%
-                              border_width: 0
-                              pad_all: 0
+                              styles: style_transp_container
                               scrollable: false
                               clickable: false
                               hidden: true
@@ -1051,15 +1061,8 @@ lvgl:
                                     height: 100%
                                     align: LEFT_MID
                                     x: 0
-                                    bg_opa: 0%
-                                    border_width: 0
-                                    shadow_width: 0
-                                    outline_width: 0
-                                    radius: 0
+                                    styles: style_invis_btn
                                     pad_left: 8
-                                    pad_top: 0
-                                    pad_right: 0
-                                    pad_bottom: 0
                                     on_short_click:
                                       - lambda: |-
                                           int i = 0;
@@ -1103,12 +1106,8 @@ lvgl:
                                     align: RIGHT_MID
                                     x: -2
                                     bg_color: 0x440000
-                                    bg_opa: COVER
-                                    border_width: 0
-                                    shadow_width: 0
-                                    outline_width: 0
                                     radius: 6
-                                    pad_all: 0
+                                    styles: style_action_btn
                                     on_click:
                                       - lambda: |-
                                           int i = 0;
@@ -1147,9 +1146,7 @@ lvgl:
                   y: 250
                   radius: 16
                   clip_corner: true
-                  bg_opa: TRANSP
-                  border_width: 0
-                  pad_all: 0
+                  styles: style_transp_container
                   scrollable: false
                   clickable: false
                   widgets:
@@ -1161,12 +1158,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0xFFFF00
-                        bg_opa: COVER
-                        border_width: 0
-                        shadow_width: 0
-                        outline_width: 0
-                        radius: 0
-                        pad_all: 0
+                        styles: style_slot_tab
                         on_press:
                           - lambda: |-
                               ESP_LOGI("slot", "Goto Slot 2 (60 Grad)");
@@ -1185,15 +1177,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0xFFFF00
-                        bg_opa: 40%
-                        border_width: 0
-                        shadow_width: 0
-                        outline_width: 0
-                        radius: 0
-                        pad_left: 12
-                        pad_top: 0
-                        pad_right: 0
-                        pad_bottom: 0
+                        styles: style_timer_area_btn
                         on_short_click:
                           - lambda: |-
                               int i = 1;
@@ -1279,9 +1263,7 @@ lvgl:
                   y: 390
                   radius: 16
                   clip_corner: true
-                  bg_opa: TRANSP
-                  border_width: 0
-                  pad_all: 0
+                  styles: style_transp_container
                   scrollable: false
                   clickable: false
                   widgets:
@@ -1293,12 +1275,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0x00FF00
-                        bg_opa: COVER
-                        border_width: 0
-                        shadow_width: 0
-                        outline_width: 0
-                        radius: 0
-                        pad_all: 0
+                        styles: style_slot_tab
                         on_press:
                           - lambda: |-
                               ESP_LOGI("slot", "Goto Slot 3 (120 Grad)");
@@ -1317,15 +1294,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0x00FF00
-                        bg_opa: 40%
-                        border_width: 0
-                        shadow_width: 0
-                        outline_width: 0
-                        radius: 0
-                        pad_left: 12
-                        pad_top: 0
-                        pad_right: 0
-                        pad_bottom: 0
+                        styles: style_timer_area_btn
                         on_short_click:
                           - lambda: |-
                               int i = 2;
@@ -1413,9 +1382,7 @@ lvgl:
                   y: 110
                   radius: 16
                   clip_corner: true
-                  bg_opa: TRANSP
-                  border_width: 0
-                  pad_all: 0
+                  styles: style_transp_container
                   scrollable: false
                   clickable: false
                   widgets:
@@ -1427,12 +1394,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0x00FFFF
-                        bg_opa: COVER
-                        border_width: 0
-                        shadow_width: 0
-                        outline_width: 0
-                        radius: 0
-                        pad_all: 0
+                        styles: style_slot_tab
                         on_press:
                           - lambda: |-
                               ESP_LOGI("slot", "Goto Slot 4 (180 Grad)");
@@ -1451,15 +1413,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0x00FFFF
-                        bg_opa: 40%
-                        border_width: 0
-                        shadow_width: 0
-                        outline_width: 0
-                        radius: 0
-                        pad_left: 12
-                        pad_top: 0
-                        pad_right: 0
-                        pad_bottom: 0
+                        styles: style_timer_area_btn
                         on_short_click:
                           - lambda: |-
                               int i = 3;
@@ -1545,9 +1499,7 @@ lvgl:
                   y: 250
                   radius: 16
                   clip_corner: true
-                  bg_opa: TRANSP
-                  border_width: 0
-                  pad_all: 0
+                  styles: style_transp_container
                   scrollable: false
                   clickable: false
                   widgets:
@@ -1559,12 +1511,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0x0000FF
-                        bg_opa: COVER
-                        border_width: 0
-                        shadow_width: 0
-                        outline_width: 0
-                        radius: 0
-                        pad_all: 0
+                        styles: style_slot_tab
                         on_press:
                           - lambda: |-
                               ESP_LOGI("slot", "Goto Slot 5 (240 Grad)");
@@ -1583,15 +1530,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0x0000FF
-                        bg_opa: 40%
-                        border_width: 0
-                        shadow_width: 0
-                        outline_width: 0
-                        radius: 0
-                        pad_left: 12
-                        pad_top: 0
-                        pad_right: 0
-                        pad_bottom: 0
+                        styles: style_timer_area_btn
                         on_short_click:
                           - lambda: |-
                               int i = 4;
@@ -1677,9 +1616,7 @@ lvgl:
                   y: 390
                   radius: 16
                   clip_corner: true
-                  bg_opa: TRANSP
-                  border_width: 0
-                  pad_all: 0
+                  styles: style_transp_container
                   scrollable: false
                   clickable: false
                   widgets:
@@ -1691,12 +1628,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0xFF00FF
-                        bg_opa: COVER
-                        border_width: 0
-                        shadow_width: 0
-                        outline_width: 0
-                        radius: 0
-                        pad_all: 0
+                        styles: style_slot_tab
                         on_press:
                           - lambda: |-
                               ESP_LOGI("slot", "Goto Slot 6 (300 Grad)");
@@ -1715,15 +1647,7 @@ lvgl:
                         x: 0
                         y: 0
                         bg_color: 0xFF00FF
-                        bg_opa: 40%
-                        border_width: 0
-                        shadow_width: 0
-                        outline_width: 0
-                        radius: 0
-                        pad_left: 12
-                        pad_top: 0
-                        pad_right: 0
-                        pad_bottom: 0
+                        styles: style_timer_area_btn
                         on_short_click:
                           - lambda: |-
                               int i = 5;
