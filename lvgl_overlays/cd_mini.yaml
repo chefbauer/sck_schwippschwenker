@@ -54,13 +54,13 @@ obj:
               - text: "X"
         on_press:
           - lambda: |-
-              uint16_t btn = lv_btnmatrix_get_selected_btn(obj);
+              uint16_t btn = lv_btnmatrix_get_selected_btn(lv_event_get_target(event));
               const int mins[] = {1, 2, 3, 7, 8, 9};
               if (btn < 6) {
                 id(set_countdown_minutes).execute(mins[btn]);
               } else {
                 lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
                 // X-Button nach dem Toggle sofort wieder rot setzen
-                lv_btnmatrix_set_btn_ctrl(id(btnmatrix_cd_mini), 6,
+                lv_btnmatrix_set_btn_ctrl(id(btnmatrix_cd_mini)->obj, 6,
                   LV_BTNMATRIX_CTRL_CHECKABLE | LV_BTNMATRIX_CTRL_CHECKED);
               }
