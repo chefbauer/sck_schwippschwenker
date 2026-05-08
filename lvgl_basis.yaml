@@ -243,6 +243,29 @@ binary_sensor:
     internal: true
 
 script:
+  - id: set_countdown_minutes
+    parameters:
+      minutes: int
+    then:
+      - lambda: |-
+          int i = id(overlay_cd_slot);
+          id(overlay_cd_selected_min)[i] = minutes;
+          id(slot_countdown_max_ms)[i] = (uint32_t)minutes * 60000U;
+          id(slot_is_countdown)[i] = true;
+
+          if (id(overlay_cd_mode) == 0) {
+            id(slot_elapsed_ms)[i] = 0;
+            id(slot_start_ms)[i] = millis();
+            id(slot_status)[i] = 1;
+
+            if (i == 0) {
+              lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
+              lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
+            }
+            if (id(auto_rotation)) id(script_schwenker_start)->execute();
+          }
+          lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+
   - id: script_open_timer_overlay
     parameters:
       slot_idx: int
