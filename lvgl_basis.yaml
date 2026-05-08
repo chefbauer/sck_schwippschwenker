@@ -284,6 +284,46 @@ script:
           }
           lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
 
+  - id: script_slot_stop
+    parameters:
+      slot_idx: int
+    then:
+      - lambda: |-
+          int i = slot_idx;
+          if (i < 0 || i > 5) return;
+          if (id(slot_status)[i] == 1)
+            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
+          id(slot_elapsed_ms)[i] = 0;
+          id(slot_start_ms)[i] = 0;
+          id(slot_status)[i] = 0;
+          esphome::binary_sensor::BinarySensor* blink_s[6] = {
+            id(bin_slot1_blink), id(bin_slot2_blink), id(bin_slot3_blink),
+            id(bin_slot4_blink), id(bin_slot5_blink), id(bin_slot6_blink)
+          };
+          blink_s[i]->publish_state(false);
+          const uint32_t slot_fc[6] = {0xFF0000,0xFFFF00,0x00FF00,0x00FFFF,0x0000FF,0xFF00FF};
+          lv_obj_t* slot_tab_btn[6] = {
+            id(slot1_tab), id(slot2_tab), id(slot3_tab),
+            id(slot4_tab), id(slot5_tab), id(slot6_tab)
+          };
+          lv_obj_set_style_bg_color(slot_tab_btn[i], lv_color_hex(slot_fc[i]), 0);
+          lv_obj_t* slot_time_lbl[6] = {
+            id(lbl_slot1_time), id(lbl_slot2_time), id(lbl_slot3_time),
+            id(lbl_slot4_time), id(lbl_slot5_time), id(lbl_slot6_time)
+          };
+          lv_label_set_text(slot_time_lbl[i], "00:00");
+          lv_obj_t* running_v[6] = {
+            id(slot1_running_view), id(slot2_running_view), id(slot3_running_view),
+            id(slot4_running_view), id(slot5_running_view), id(slot6_running_view)
+          };
+          lv_obj_t* default_v[6] = {
+            id(slot1_default_view), id(slot2_default_view), id(slot3_default_view),
+            id(slot4_default_view), id(slot5_default_view), id(slot6_default_view)
+          };
+          lv_obj_add_flag(running_v[i], LV_OBJ_FLAG_HIDDEN);
+          lv_obj_clear_flag(default_v[i], LV_OBJ_FLAG_HIDDEN);
+          if (id(auto_rotation)) id(script_schwenker_stop)->execute();
+
   - id: script_open_timer_overlay
     parameters:
       slot_idx: int
@@ -1129,19 +1169,9 @@ lvgl:
                                     radius: 6
                                     styles: style_action_btn
                                     on_click:
-                                      - lambda: |-
-                                          int i = 0;
-                                          if (id(slot_status)[i] == 1)
-                                            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
-                                          id(slot_elapsed_ms)[i] = 0;
-                                          id(slot_start_ms)[i] = 0;
-                                          id(slot_status)[i] = 0;
-                                          id(bin_slot1_blink)->publish_state(false);
-                                          lv_obj_set_style_bg_color(id(slot1_tab), lv_color_hex(0xFF0000), 0);
-                                          lv_label_set_text(id(lbl_slot1_time), "00:00");
-                                          lv_obj_add_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
-                                          lv_obj_clear_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
-                                          if (id(auto_rotation)) id(script_schwenker_stop)->execute();
+                                      - script.execute:
+                                          id: script_slot_stop
+                                          slot_idx: 0
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1325,19 +1355,9 @@ lvgl:
                                     radius: 6
                                     styles: style_action_btn
                                     on_click:
-                                      - lambda: |-
-                                          int i = 1;
-                                          if (id(slot_status)[i] == 1)
-                                            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
-                                          id(slot_elapsed_ms)[i] = 0;
-                                          id(slot_start_ms)[i] = 0;
-                                          id(slot_status)[i] = 0;
-                                          id(bin_slot2_blink)->publish_state(false);
-                                          lv_obj_set_style_bg_color(id(slot2_tab), lv_color_hex(0xFFFF00), 0);
-                                          lv_label_set_text(id(lbl_slot2_time), "00:00");
-                                          lv_obj_add_flag(id(slot2_running_view), LV_OBJ_FLAG_HIDDEN);
-                                          lv_obj_clear_flag(id(slot2_default_view), LV_OBJ_FLAG_HIDDEN);
-                                          if (id(auto_rotation)) id(script_schwenker_stop)->execute();
+                                      - script.execute:
+                                          id: script_slot_stop
+                                          slot_idx: 1
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1521,19 +1541,9 @@ lvgl:
                                     radius: 6
                                     styles: style_action_btn
                                     on_click:
-                                      - lambda: |-
-                                          int i = 2;
-                                          if (id(slot_status)[i] == 1)
-                                            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
-                                          id(slot_elapsed_ms)[i] = 0;
-                                          id(slot_start_ms)[i] = 0;
-                                          id(slot_status)[i] = 0;
-                                          id(bin_slot3_blink)->publish_state(false);
-                                          lv_obj_set_style_bg_color(id(slot3_tab), lv_color_hex(0x00FF00), 0);
-                                          lv_label_set_text(id(lbl_slot3_time), "00:00");
-                                          lv_obj_add_flag(id(slot3_running_view), LV_OBJ_FLAG_HIDDEN);
-                                          lv_obj_clear_flag(id(slot3_default_view), LV_OBJ_FLAG_HIDDEN);
-                                          if (id(auto_rotation)) id(script_schwenker_stop)->execute();
+                                      - script.execute:
+                                          id: script_slot_stop
+                                          slot_idx: 2
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1719,19 +1729,9 @@ lvgl:
                                     radius: 6
                                     styles: style_action_btn
                                     on_click:
-                                      - lambda: |-
-                                          int i = 3;
-                                          if (id(slot_status)[i] == 1)
-                                            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
-                                          id(slot_elapsed_ms)[i] = 0;
-                                          id(slot_start_ms)[i] = 0;
-                                          id(slot_status)[i] = 0;
-                                          id(bin_slot4_blink)->publish_state(false);
-                                          lv_obj_set_style_bg_color(id(slot4_tab), lv_color_hex(0x00FFFF), 0);
-                                          lv_label_set_text(id(lbl_slot4_time), "00:00");
-                                          lv_obj_add_flag(id(slot4_running_view), LV_OBJ_FLAG_HIDDEN);
-                                          lv_obj_clear_flag(id(slot4_default_view), LV_OBJ_FLAG_HIDDEN);
-                                          if (id(auto_rotation)) id(script_schwenker_stop)->execute();
+                                      - script.execute:
+                                          id: script_slot_stop
+                                          slot_idx: 3
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1915,19 +1915,9 @@ lvgl:
                                     radius: 6
                                     styles: style_action_btn
                                     on_click:
-                                      - lambda: |-
-                                          int i = 4;
-                                          if (id(slot_status)[i] == 1)
-                                            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
-                                          id(slot_elapsed_ms)[i] = 0;
-                                          id(slot_start_ms)[i] = 0;
-                                          id(slot_status)[i] = 0;
-                                          id(bin_slot5_blink)->publish_state(false);
-                                          lv_obj_set_style_bg_color(id(slot5_tab), lv_color_hex(0x0000FF), 0);
-                                          lv_label_set_text(id(lbl_slot5_time), "00:00");
-                                          lv_obj_add_flag(id(slot5_running_view), LV_OBJ_FLAG_HIDDEN);
-                                          lv_obj_clear_flag(id(slot5_default_view), LV_OBJ_FLAG_HIDDEN);
-                                          if (id(auto_rotation)) id(script_schwenker_stop)->execute();
+                                      - script.execute:
+                                          id: script_slot_stop
+                                          slot_idx: 4
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -2111,19 +2101,9 @@ lvgl:
                                     radius: 6
                                     styles: style_action_btn
                                     on_click:
-                                      - lambda: |-
-                                          int i = 5;
-                                          if (id(slot_status)[i] == 1)
-                                            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
-                                          id(slot_elapsed_ms)[i] = 0;
-                                          id(slot_start_ms)[i] = 0;
-                                          id(slot_status)[i] = 0;
-                                          id(bin_slot6_blink)->publish_state(false);
-                                          lv_obj_set_style_bg_color(id(slot6_tab), lv_color_hex(0xFF00FF), 0);
-                                          lv_label_set_text(id(lbl_slot6_time), "00:00");
-                                          lv_obj_add_flag(id(slot6_running_view), LV_OBJ_FLAG_HIDDEN);
-                                          lv_obj_clear_flag(id(slot6_default_view), LV_OBJ_FLAG_HIDDEN);
-                                          if (id(auto_rotation)) id(script_schwenker_stop)->execute();
+                                      - script.execute:
+                                          id: script_slot_stop
+                                          slot_idx: 5
                                     widgets:
                                       - label:
                                           align: CENTER
