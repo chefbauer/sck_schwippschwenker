@@ -12,6 +12,11 @@
 # ─────────────────────────────────────────────────────────────────────────────────
 
 esphome:
+  platformio_options:
+    build_flags:
+      # LVGL-Task-Stack auf 32 KB erhöhen (Standard: 8 KB → Stack-Overflow bei komplexen Lambdas)
+      - -DESPHOME_LVGL_TASK_STACK_SIZE=32768
+
   on_boot:
     - priority: -100        # nach LVGL- und Light-Init
       then:
