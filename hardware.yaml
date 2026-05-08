@@ -85,9 +85,7 @@ esphome:
             // RV-Schalter aus NVS synchronisieren
             if (id(global_rv_aktiv)) lv_obj_add_state(id(sw_rv_aktiv), LV_STATE_CHECKED);
             else lv_obj_clear_state(id(sw_rv_aktiv), LV_STATE_CHECKED);
-            // cd_mini buttonmatrix: X-Button (Index 6) dauerhaft rot markieren
-            lv_buttonmatrix_set_button_ctrl(id(btnmatrix_cd_mini)->obj, 6,
-              (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKABLE | LV_BUTTONMATRIX_CTRL_CHECKED));
+
     - priority: -150        # System in sicheren Aus-Zustand (Not-Aus beim Booten)
       then:
         - script.execute: script_system_aus
