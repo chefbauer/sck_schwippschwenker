@@ -16,11 +16,11 @@
 obj:
   id: overlay_cd_mini
   width: 400
-  height: 140
+  height: 154
   align: TOP_LEFT
   x: 15
   y: 110
-  bg_color: 0x222222
+  bg_color: 0xEEEEEE
   bg_opa: 97%
   border_width: 2
   border_color: 0x888888
@@ -34,7 +34,7 @@ obj:
     # ── Kopfzeile: "Minuten:" + X ──────────────────────────────────────────────
     - obj:
         width: 100%
-        height: 28
+        height: 42
         align: TOP_MID
         y: 0
         bg_opa: TRANSP
@@ -46,13 +46,13 @@ obj:
           - label:
               text: "Minuten:"
               text_font: font_normal
-              text_color: 0xFFFFFF
+              text_color: 0x222222
               align: LEFT_MID
           - button:
-              width: 52
-              height: 26
+              width: 42
+              height: 42
               align: RIGHT_MID
-              bg_color: 0x882222
+              bg_color: 0xCC0000
               bg_opa: COVER
               radius: 6
               border_width: 0
@@ -71,7 +71,7 @@ obj:
         width: 100%
         height: 48
         align: TOP_MID
-        y: 32
+        y: 46
         bg_opa: TRANSP
         border_width: 0
         pad_all: 0
@@ -81,7 +81,7 @@ obj:
           - label:
               text: "\ue516"
               text_font: font_icons
-              text_color: 0xFFFFFF
+              text_color: 0x333333
               align: LEFT_MID
               x: 2
           - buttonmatrix:
@@ -98,6 +98,7 @@ obj:
                 bg_opa: COVER
                 border_width: 0
                 radius: 6
+                pad_all: 2
                 text_font: font_cd_btn
                 text_color: 0xFFFFFF
               rows:
@@ -118,7 +119,7 @@ obj:
         width: 100%
         height: 48
         align: TOP_MID
-        y: 84
+        y: 98
         bg_opa: TRANSP
         border_width: 0
         pad_all: 0
@@ -128,7 +129,7 @@ obj:
           - label:
               text: "\uF72F"
               text_font: font_icons
-              text_color: 0xFFFFFF
+              text_color: 0x333333
               align: LEFT_MID
               x: 2
           - buttonmatrix:
@@ -145,6 +146,7 @@ obj:
                 bg_opa: COVER
                 border_width: 0
                 radius: 6
+                pad_all: 2
                 text_font: font_cd_btn
                 text_color: 0xFFFFFF
               rows:
