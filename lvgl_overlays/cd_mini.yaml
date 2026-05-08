@@ -79,7 +79,7 @@ obj:
         clickable: false
         widgets:
           - label:
-              text: "\uF4A6"
+              text: "\ue516"
               text_font: font_icons
               text_color: 0xFFFFFF
               align: LEFT_MID
