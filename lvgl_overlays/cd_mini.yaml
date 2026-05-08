@@ -15,8 +15,8 @@
 
 obj:
   id: overlay_cd_mini
-  width: 400
-  height: 178
+  width: 510
+  height: 198
   align: TOP_LEFT
   x: 15
   y: 110
@@ -26,7 +26,7 @@ obj:
   border_color: 0x888888
   radius: 12
   hidden: true
-  pad_all: 4
+  pad_all: 6
   scrollable: false
   clickable: false
   widgets:
@@ -69,9 +69,9 @@ obj:
     # ── Dosen-Reihe: jar-Icon | 1 | 1.5 | 2 | 2.5 | 3 ────────────────────────
     - obj:
         width: 100%
-        height: 48
+        height: 54
         align: TOP_MID
-        y: 70
+        y: 72
         bg_opa: TRANSP
         border_width: 0
         pad_all: 0
@@ -86,10 +86,10 @@ obj:
               x: 2
           - buttonmatrix:
               id: btnmatrix_cd_can
-              width: 285
+              width: 370
               height: 100%
-              align: RIGHT_MID
-              x: -2
+              align: LEFT_MID
+              x: 50
               bg_opa: TRANSP
               border_width: 0
               pad_all: 0
@@ -98,7 +98,7 @@ obj:
                 bg_opa: COVER
                 border_width: 0
                 radius: 6
-                pad_all: 2
+                pad_all: 5
                 text_font: font_cd_btn
                 text_color: 0xFFFFFF
               rows:
@@ -117,9 +117,9 @@ obj:
     # ── Flaschen-Reihe: bottle-Icon | 4 | 5 | 6 | 7 | 8 | 9 ──────────────────
     - obj:
         width: 100%
-        height: 48
+        height: 54
         align: TOP_MID
-        y: 122
+        y: 132
         bg_opa: TRANSP
         border_width: 0
         pad_all: 0
@@ -134,10 +134,10 @@ obj:
               x: 2
           - buttonmatrix:
               id: btnmatrix_cd_bottle
-              width: 342
+              width: 444
               height: 100%
-              align: RIGHT_MID
-              x: -2
+              align: LEFT_MID
+              x: 50
               bg_opa: TRANSP
               border_width: 0
               pad_all: 0
@@ -146,7 +146,7 @@ obj:
                 bg_opa: COVER
                 border_width: 0
                 radius: 6
-                pad_all: 2
+                pad_all: 5
                 text_font: font_cd_btn
                 text_color: 0xFFFFFF
               rows:

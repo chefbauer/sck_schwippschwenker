@@ -369,7 +369,7 @@ script:
           id(overlay_cd_mode) = mode;
           // Position: Links (0-2) x=15, Rechts (3-5) x=609; y folgt Slot-Position
           const int slot_ys[6] = {110, 250, 390, 110, 250, 390};
-          int ox = (slot_idx < 3) ? 15 : (1024 - 400 - 15);
+          int ox = (slot_idx < 3) ? 15 : (1024 - 510 - 15);
           int oy = slot_ys[slot_idx];
           lv_obj_set_pos(id(overlay_cd_mini), ox, oy);
           lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
