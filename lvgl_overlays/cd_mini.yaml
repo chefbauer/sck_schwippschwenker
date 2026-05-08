@@ -3,17 +3,14 @@
 # Vor dem Einblenden per Lambda setzen:
 #   overlay_cd_slot = <Slot-Index 0-5>
 #   overlay_cd_mode = 0 (neuer Countdown) | 1 (Zeit-Update ohne Neustart)
-#   lv_obj_set_pos(id(overlay_cd_mini), x, y)
-#   Rot-Highlight: overlay_cd_selected_min[slot] vorab prüfen + Buttons einfärben
-# Layout: 290×120px, 2 Zeilen à 5 Buttons
-#   Zeile 1: 1  2  3  4  5
-#   Zeile 2: 6  7  8  9  X
-# Jeder Button: 52×54px, Abstand x=4px, Abstand y=4px, Rand links/rechts=6px
+# Layout: 400×62px, 1 Reihe btnmatrix mit 7 Zellen
+#   1 | 2 | 3 | 7 | 8 | 9 | X
+# 2 Widgets (1× btnmatrix + container)
 # ─────────────────────────────────────────────────────────────────────────────────
 
 obj:
   id: overlay_cd_mini
-  width: 180
+  width: 400
   height: 62
   align: TOP_LEFT
   x: 15
@@ -24,80 +21,46 @@ obj:
   border_color: 0x888888
   radius: 12
   hidden: true
-  pad_all: 0
+  pad_all: 4
   scrollable: false
   clickable: false
   widgets:
-
-    # ── TEST: 2, 4, X ─────────────────────────────────────────────────────────
-
-    - button:
-        id: btn_cdm_2
-        width: 52
-        height: 54
-        align: TOP_LEFT
-        x: 6
-        y: 4
-        bg_color: 0x444444
+    - btnmatrix:
+        id: btnmatrix_cd_mini
+        width: 100%
+        height: 100%
+        align: CENTER
+        bg_opa: TRANSP
         border_width: 0
-        shadow_width: 0
-        outline_width: 0
-        radius: 6
         pad_all: 0
-        on_click:
-          - script.execute:
-              id: set_countdown_minutes
-              minutes: 2
-        widgets:
-          - label:
-              align: CENTER
-              text: "2"
-              text_font: font_normal
-              text_color: 0xFFFFFF
-
-    - button:
-        id: btn_cdm_4
-        width: 52
-        height: 54
-        align: TOP_LEFT
-        x: 62
-        y: 4
-        bg_color: 0x444444
-        border_width: 0
-        shadow_width: 0
-        outline_width: 0
-        radius: 6
-        pad_all: 0
-        on_click:
-          - script.execute:
-              id: set_countdown_minutes
-              minutes: 4
-        widgets:
-          - label:
-              align: CENTER
-              text: "4"
-              text_font: font_normal
-              text_color: 0xFFFFFF
-
-    - button:
-        id: btn_cdm_x
-        width: 52
-        height: 54
-        align: TOP_LEFT
-        x: 118
-        y: 4
-        bg_color: 0x882222
-        border_width: 0
-        shadow_width: 0
-        outline_width: 0
-        radius: 6
-        pad_all: 0
-        on_click:
+        items:
+          bg_color: 0x444444
+          bg_opa: COVER
+          border_width: 0
+          radius: 6
+          text_font: font_normal
+          text_color: 0xFFFFFF
+          checked:
+            bg_color: 0x882222
+            bg_opa: COVER
+        rows:
+          - buttons:
+              - text: "1"
+              - text: "2"
+              - text: "3"
+              - text: "7"
+              - text: "8"
+              - text: "9"
+              - text: "X"
+        on_press:
           - lambda: |-
-              lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
-        widgets:
-          - label:
-              align: CENTER
-              text: "\uF00D"
-              text_font: font_icons
-              text_color: 0xFFFFFF
+              uint16_t btn = lv_btnmatrix_get_selected_btn(obj);
+              const int mins[] = {1, 2, 3, 7, 8, 9};
+              if (btn < 6) {
+                id(set_countdown_minutes).execute(mins[btn]);
+              } else {
+                lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                // X-Button nach dem Toggle sofort wieder rot setzen
+                lv_btnmatrix_set_btn_ctrl(id(btnmatrix_cd_mini), 6,
+                  LV_BTNMATRIX_CTRL_CHECKABLE | LV_BTNMATRIX_CTRL_CHECKED);
+              }
