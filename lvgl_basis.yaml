@@ -154,6 +154,9 @@ font:
     bpp: 4
     glyphs: "0123456789.,-\xc2\xb0C "
 
+# http_request wird von online_image benötigt
+http_request:
+
 # Twemoji: Farbige Emoji-Icons für Slot-Timer-Buttons (Apache 2.0, via jsDelivr CDN)
 online_image:
   - url: "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/23f1.png"
