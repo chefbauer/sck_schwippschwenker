@@ -263,7 +263,10 @@ script:
               lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
               lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
             }
-            if (id(auto_rotation)) id(script_schwenker_start)->execute();
+            if (id(auto_rotation)) {
+              if (id(dr_modus)) id(script_drehen_start)->execute();
+              else              id(script_schwenker_start)->execute();
+            }
           }
           lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
 
