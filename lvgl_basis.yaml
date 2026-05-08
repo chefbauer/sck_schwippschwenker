@@ -266,17 +266,16 @@ script:
             id(slot_start_ms)[i] = millis();
             id(slot_status)[i] = 1;
 
-            lv_obj_t* _dv = nullptr; lv_obj_t* _rv = nullptr;
-            switch (i) {
-              case 0: _dv=id(slot1_default_view); _rv=id(slot1_running_view); break;
-              case 1: _dv=id(slot2_default_view); _rv=id(slot2_running_view); break;
-              case 2: _dv=id(slot3_default_view); _rv=id(slot3_running_view); break;
-              case 3: _dv=id(slot4_default_view); _rv=id(slot4_running_view); break;
-              case 4: _dv=id(slot5_default_view); _rv=id(slot5_running_view); break;
-              case 5: _dv=id(slot6_default_view); _rv=id(slot6_running_view); break;
-            }
-            if (_dv) lv_obj_add_flag(_dv, LV_OBJ_FLAG_HIDDEN);
-            if (_rv) lv_obj_clear_flag(_rv, LV_OBJ_FLAG_HIDDEN);
+            lv_obj_t* default_v[6] = {
+              id(slot1_default_view), id(slot2_default_view), id(slot3_default_view),
+              id(slot4_default_view), id(slot5_default_view), id(slot6_default_view)
+            };
+            lv_obj_t* running_v[6] = {
+              id(slot1_running_view), id(slot2_running_view), id(slot3_running_view),
+              id(slot4_running_view), id(slot5_running_view), id(slot6_running_view)
+            };
+            lv_obj_add_flag(default_v[i], LV_OBJ_FLAG_HIDDEN);
+            lv_obj_clear_flag(running_v[i], LV_OBJ_FLAG_HIDDEN);
             if (id(auto_rotation)) {
               if (id(dr_modus)) id(script_drehen_start)->execute();
               else              id(script_schwenker_start)->execute();
@@ -323,6 +322,68 @@ script:
           lv_obj_add_flag(running_v[i], LV_OBJ_FLAG_HIDDEN);
           lv_obj_clear_flag(default_v[i], LV_OBJ_FLAG_HIDDEN);
           if (id(auto_rotation)) id(script_schwenker_stop)->execute();
+
+  - id: script_slot_start
+    parameters:
+      slot_idx: int
+    then:
+      - lambda: |-
+          int i = slot_idx;
+          if (i < 0 || i > 5) return;
+          id(slot_is_countdown)[i] = false;
+          id(slot_elapsed_ms)[i] = 0;
+          id(slot_start_ms)[i] = millis();
+          id(slot_status)[i] = 1;
+          lv_obj_t* slot_time_lbl[6] = {
+            id(lbl_slot1_time), id(lbl_slot2_time), id(lbl_slot3_time),
+            id(lbl_slot4_time), id(lbl_slot5_time), id(lbl_slot6_time)
+          };
+          lv_label_set_text(slot_time_lbl[i], "00:00");
+          lv_obj_t* default_v[6] = {
+            id(slot1_default_view), id(slot2_default_view), id(slot3_default_view),
+            id(slot4_default_view), id(slot5_default_view), id(slot6_default_view)
+          };
+          lv_obj_t* running_v[6] = {
+            id(slot1_running_view), id(slot2_running_view), id(slot3_running_view),
+            id(slot4_running_view), id(slot5_running_view), id(slot6_running_view)
+          };
+          lv_obj_add_flag(default_v[i], LV_OBJ_FLAG_HIDDEN);
+          lv_obj_clear_flag(running_v[i], LV_OBJ_FLAG_HIDDEN);
+          if (id(auto_rotation)) {
+            if (id(dr_modus)) id(script_drehen_start)->execute();
+            else id(script_schwenker_start)->execute();
+          }
+
+  - id: script_slot_pause_resume
+    parameters:
+      slot_idx: int
+    then:
+      - lambda: |-
+          int i = slot_idx;
+          if (i < 0 || i > 5) return;
+          if (id(slot_status)[i] == 0) return;
+          if (id(slot_status)[i] == 1) {
+            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
+            id(slot_status)[i] = 2;
+            if (id(auto_rotation)) id(script_schwenker_stop)->execute();
+          } else {
+            id(slot_start_ms)[i] = millis();
+            id(slot_status)[i] = 1;
+            if (id(auto_rotation)) {
+              if (id(dr_modus)) id(script_drehen_start)->execute();
+              else id(script_schwenker_start)->execute();
+            }
+          }
+
+  - id: script_open_countdown_overlay
+    parameters:
+      slot_idx: int
+      mode: int
+    then:
+      - lambda: |-
+          id(overlay_cd_slot) = slot_idx;
+          id(overlay_cd_mode) = mode;
+          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
 
   - id: script_open_timer_overlay
     parameters:
@@ -1065,19 +1126,9 @@ lvgl:
                                     x: 5
                                     styles: style_invis_btn
                                     on_short_click:
-                                      - lambda: |-
-                                          int i = 0;
-                                          id(slot_is_countdown)[i] = false;
-                                          id(slot_elapsed_ms)[i] = 0;
-                                          id(slot_start_ms)[i] = millis();
-                                          id(slot_status)[i] = 1;
-                                          lv_label_set_text(id(lbl_slot1_time), "00:00");
-                                          lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
-                                          lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
-                                          if (id(auto_rotation)) {
-                                            if (id(dr_modus)) id(script_drehen_start)->execute();
-                                            else id(script_schwenker_start)->execute();
-                                          }
+                                      - script.execute:
+                                          id: script_slot_start
+                                          slot_idx: 0
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1092,10 +1143,10 @@ lvgl:
                                     x: -5
                                     styles: style_invis_btn
                                     on_short_click:
-                                      - lambda: |-
-                                          id(overlay_cd_slot) = 0;
-                                          id(overlay_cd_mode) = 0;
-                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                      - script.execute:
+                                          id: script_open_countdown_overlay
+                                          slot_idx: 0
+                                          mode: 0
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1121,26 +1172,14 @@ lvgl:
                                     styles: style_invis_btn
                                     pad_left: 8
                                     on_short_click:
-                                      - lambda: |-
-                                          int i = 0;
-                                          if (id(slot_status)[i] == 0) return;
-                                          if (id(slot_status)[i] == 1) {
-                                            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
-                                            id(slot_status)[i] = 2;
-                                            if (id(auto_rotation)) id(script_schwenker_stop)->execute();
-                                          } else {
-                                            id(slot_start_ms)[i] = millis();
-                                            id(slot_status)[i] = 1;
-                                            if (id(auto_rotation)) {
-                                              if (id(dr_modus)) id(script_drehen_start)->execute();
-                                              else id(script_schwenker_start)->execute();
-                                            }
-                                          }
+                                      - script.execute:
+                                          id: script_slot_pause_resume
+                                          slot_idx: 0
                                     on_long_press:
-                                      - lambda: |-
-                                          id(overlay_cd_slot) = 0;
-                                          id(overlay_cd_mode) = 1;
-                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                      - script.execute:
+                                          id: script_open_countdown_overlay
+                                          slot_idx: 0
+                                          mode: 1
                                     widgets:
                                       - label:
                                           id: lbl_slot1_timer_title
@@ -1251,19 +1290,9 @@ lvgl:
                                     x: 5
                                     styles: style_invis_btn
                                     on_short_click:
-                                      - lambda: |-
-                                          int i = 1;
-                                          id(slot_is_countdown)[i] = false;
-                                          id(slot_elapsed_ms)[i] = 0;
-                                          id(slot_start_ms)[i] = millis();
-                                          id(slot_status)[i] = 1;
-                                          lv_label_set_text(id(lbl_slot2_time), "00:00");
-                                          lv_obj_add_flag(id(slot2_default_view), LV_OBJ_FLAG_HIDDEN);
-                                          lv_obj_clear_flag(id(slot2_running_view), LV_OBJ_FLAG_HIDDEN);
-                                          if (id(auto_rotation)) {
-                                            if (id(dr_modus)) id(script_drehen_start)->execute();
-                                            else id(script_schwenker_start)->execute();
-                                          }
+                                      - script.execute:
+                                          id: script_slot_start
+                                          slot_idx: 1
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1278,10 +1307,10 @@ lvgl:
                                     x: -5
                                     styles: style_invis_btn
                                     on_short_click:
-                                      - lambda: |-
-                                          id(overlay_cd_slot) = 1;
-                                          id(overlay_cd_mode) = 0;
-                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                      - script.execute:
+                                          id: script_open_countdown_overlay
+                                          slot_idx: 1
+                                          mode: 0
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1307,26 +1336,14 @@ lvgl:
                                     styles: style_invis_btn
                                     pad_left: 8
                                     on_short_click:
-                                      - lambda: |-
-                                          int i = 1;
-                                          if (id(slot_status)[i] == 0) return;
-                                          if (id(slot_status)[i] == 1) {
-                                            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
-                                            id(slot_status)[i] = 2;
-                                            if (id(auto_rotation)) id(script_schwenker_stop)->execute();
-                                          } else {
-                                            id(slot_start_ms)[i] = millis();
-                                            id(slot_status)[i] = 1;
-                                            if (id(auto_rotation)) {
-                                              if (id(dr_modus)) id(script_drehen_start)->execute();
-                                              else id(script_schwenker_start)->execute();
-                                            }
-                                          }
+                                      - script.execute:
+                                          id: script_slot_pause_resume
+                                          slot_idx: 1
                                     on_long_press:
-                                      - lambda: |-
-                                          id(overlay_cd_slot) = 1;
-                                          id(overlay_cd_mode) = 1;
-                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                      - script.execute:
+                                          id: script_open_countdown_overlay
+                                          slot_idx: 1
+                                          mode: 1
                                     widgets:
                                       - label:
                                           id: lbl_slot2_timer_title
@@ -1437,19 +1454,9 @@ lvgl:
                                     x: 5
                                     styles: style_invis_btn
                                     on_short_click:
-                                      - lambda: |-
-                                          int i = 2;
-                                          id(slot_is_countdown)[i] = false;
-                                          id(slot_elapsed_ms)[i] = 0;
-                                          id(slot_start_ms)[i] = millis();
-                                          id(slot_status)[i] = 1;
-                                          lv_label_set_text(id(lbl_slot3_time), "00:00");
-                                          lv_obj_add_flag(id(slot3_default_view), LV_OBJ_FLAG_HIDDEN);
-                                          lv_obj_clear_flag(id(slot3_running_view), LV_OBJ_FLAG_HIDDEN);
-                                          if (id(auto_rotation)) {
-                                            if (id(dr_modus)) id(script_drehen_start)->execute();
-                                            else id(script_schwenker_start)->execute();
-                                          }
+                                      - script.execute:
+                                          id: script_slot_start
+                                          slot_idx: 2
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1464,10 +1471,10 @@ lvgl:
                                     x: -5
                                     styles: style_invis_btn
                                     on_short_click:
-                                      - lambda: |-
-                                          id(overlay_cd_slot) = 2;
-                                          id(overlay_cd_mode) = 0;
-                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                      - script.execute:
+                                          id: script_open_countdown_overlay
+                                          slot_idx: 2
+                                          mode: 0
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1493,26 +1500,14 @@ lvgl:
                                     styles: style_invis_btn
                                     pad_left: 8
                                     on_short_click:
-                                      - lambda: |-
-                                          int i = 2;
-                                          if (id(slot_status)[i] == 0) return;
-                                          if (id(slot_status)[i] == 1) {
-                                            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
-                                            id(slot_status)[i] = 2;
-                                            if (id(auto_rotation)) id(script_schwenker_stop)->execute();
-                                          } else {
-                                            id(slot_start_ms)[i] = millis();
-                                            id(slot_status)[i] = 1;
-                                            if (id(auto_rotation)) {
-                                              if (id(dr_modus)) id(script_drehen_start)->execute();
-                                              else id(script_schwenker_start)->execute();
-                                            }
-                                          }
+                                      - script.execute:
+                                          id: script_slot_pause_resume
+                                          slot_idx: 2
                                     on_long_press:
-                                      - lambda: |-
-                                          id(overlay_cd_slot) = 2;
-                                          id(overlay_cd_mode) = 1;
-                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                      - script.execute:
+                                          id: script_open_countdown_overlay
+                                          slot_idx: 2
+                                          mode: 1
                                     widgets:
                                       - label:
                                           id: lbl_slot3_timer_title
@@ -1625,19 +1620,9 @@ lvgl:
                                     x: 5
                                     styles: style_invis_btn
                                     on_short_click:
-                                      - lambda: |-
-                                          int i = 3;
-                                          id(slot_is_countdown)[i] = false;
-                                          id(slot_elapsed_ms)[i] = 0;
-                                          id(slot_start_ms)[i] = millis();
-                                          id(slot_status)[i] = 1;
-                                          lv_label_set_text(id(lbl_slot4_time), "00:00");
-                                          lv_obj_add_flag(id(slot4_default_view), LV_OBJ_FLAG_HIDDEN);
-                                          lv_obj_clear_flag(id(slot4_running_view), LV_OBJ_FLAG_HIDDEN);
-                                          if (id(auto_rotation)) {
-                                            if (id(dr_modus)) id(script_drehen_start)->execute();
-                                            else id(script_schwenker_start)->execute();
-                                          }
+                                      - script.execute:
+                                          id: script_slot_start
+                                          slot_idx: 3
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1652,10 +1637,10 @@ lvgl:
                                     x: -5
                                     styles: style_invis_btn
                                     on_short_click:
-                                      - lambda: |-
-                                          id(overlay_cd_slot) = 3;
-                                          id(overlay_cd_mode) = 0;
-                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                      - script.execute:
+                                          id: script_open_countdown_overlay
+                                          slot_idx: 3
+                                          mode: 0
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1681,26 +1666,14 @@ lvgl:
                                     styles: style_invis_btn
                                     pad_left: 8
                                     on_short_click:
-                                      - lambda: |-
-                                          int i = 3;
-                                          if (id(slot_status)[i] == 0) return;
-                                          if (id(slot_status)[i] == 1) {
-                                            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
-                                            id(slot_status)[i] = 2;
-                                            if (id(auto_rotation)) id(script_schwenker_stop)->execute();
-                                          } else {
-                                            id(slot_start_ms)[i] = millis();
-                                            id(slot_status)[i] = 1;
-                                            if (id(auto_rotation)) {
-                                              if (id(dr_modus)) id(script_drehen_start)->execute();
-                                              else id(script_schwenker_start)->execute();
-                                            }
-                                          }
+                                      - script.execute:
+                                          id: script_slot_pause_resume
+                                          slot_idx: 3
                                     on_long_press:
-                                      - lambda: |-
-                                          id(overlay_cd_slot) = 3;
-                                          id(overlay_cd_mode) = 1;
-                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                      - script.execute:
+                                          id: script_open_countdown_overlay
+                                          slot_idx: 3
+                                          mode: 1
                                     widgets:
                                       - label:
                                           id: lbl_slot4_timer_title
@@ -1811,19 +1784,9 @@ lvgl:
                                     x: 5
                                     styles: style_invis_btn
                                     on_short_click:
-                                      - lambda: |-
-                                          int i = 4;
-                                          id(slot_is_countdown)[i] = false;
-                                          id(slot_elapsed_ms)[i] = 0;
-                                          id(slot_start_ms)[i] = millis();
-                                          id(slot_status)[i] = 1;
-                                          lv_label_set_text(id(lbl_slot5_time), "00:00");
-                                          lv_obj_add_flag(id(slot5_default_view), LV_OBJ_FLAG_HIDDEN);
-                                          lv_obj_clear_flag(id(slot5_running_view), LV_OBJ_FLAG_HIDDEN);
-                                          if (id(auto_rotation)) {
-                                            if (id(dr_modus)) id(script_drehen_start)->execute();
-                                            else id(script_schwenker_start)->execute();
-                                          }
+                                      - script.execute:
+                                          id: script_slot_start
+                                          slot_idx: 4
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1838,10 +1801,10 @@ lvgl:
                                     x: -5
                                     styles: style_invis_btn
                                     on_short_click:
-                                      - lambda: |-
-                                          id(overlay_cd_slot) = 4;
-                                          id(overlay_cd_mode) = 0;
-                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                      - script.execute:
+                                          id: script_open_countdown_overlay
+                                          slot_idx: 4
+                                          mode: 0
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1867,26 +1830,14 @@ lvgl:
                                     styles: style_invis_btn
                                     pad_left: 8
                                     on_short_click:
-                                      - lambda: |-
-                                          int i = 4;
-                                          if (id(slot_status)[i] == 0) return;
-                                          if (id(slot_status)[i] == 1) {
-                                            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
-                                            id(slot_status)[i] = 2;
-                                            if (id(auto_rotation)) id(script_schwenker_stop)->execute();
-                                          } else {
-                                            id(slot_start_ms)[i] = millis();
-                                            id(slot_status)[i] = 1;
-                                            if (id(auto_rotation)) {
-                                              if (id(dr_modus)) id(script_drehen_start)->execute();
-                                              else id(script_schwenker_start)->execute();
-                                            }
-                                          }
+                                      - script.execute:
+                                          id: script_slot_pause_resume
+                                          slot_idx: 4
                                     on_long_press:
-                                      - lambda: |-
-                                          id(overlay_cd_slot) = 4;
-                                          id(overlay_cd_mode) = 1;
-                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                      - script.execute:
+                                          id: script_open_countdown_overlay
+                                          slot_idx: 4
+                                          mode: 1
                                     widgets:
                                       - label:
                                           id: lbl_slot5_timer_title
@@ -1997,19 +1948,9 @@ lvgl:
                                     x: 5
                                     styles: style_invis_btn
                                     on_short_click:
-                                      - lambda: |-
-                                          int i = 5;
-                                          id(slot_is_countdown)[i] = false;
-                                          id(slot_elapsed_ms)[i] = 0;
-                                          id(slot_start_ms)[i] = millis();
-                                          id(slot_status)[i] = 1;
-                                          lv_label_set_text(id(lbl_slot6_time), "00:00");
-                                          lv_obj_add_flag(id(slot6_default_view), LV_OBJ_FLAG_HIDDEN);
-                                          lv_obj_clear_flag(id(slot6_running_view), LV_OBJ_FLAG_HIDDEN);
-                                          if (id(auto_rotation)) {
-                                            if (id(dr_modus)) id(script_drehen_start)->execute();
-                                            else id(script_schwenker_start)->execute();
-                                          }
+                                      - script.execute:
+                                          id: script_slot_start
+                                          slot_idx: 5
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -2024,10 +1965,10 @@ lvgl:
                                     x: -5
                                     styles: style_invis_btn
                                     on_short_click:
-                                      - lambda: |-
-                                          id(overlay_cd_slot) = 5;
-                                          id(overlay_cd_mode) = 0;
-                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                      - script.execute:
+                                          id: script_open_countdown_overlay
+                                          slot_idx: 5
+                                          mode: 0
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -2053,26 +1994,14 @@ lvgl:
                                     styles: style_invis_btn
                                     pad_left: 8
                                     on_short_click:
-                                      - lambda: |-
-                                          int i = 5;
-                                          if (id(slot_status)[i] == 0) return;
-                                          if (id(slot_status)[i] == 1) {
-                                            id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
-                                            id(slot_status)[i] = 2;
-                                            if (id(auto_rotation)) id(script_schwenker_stop)->execute();
-                                          } else {
-                                            id(slot_start_ms)[i] = millis();
-                                            id(slot_status)[i] = 1;
-                                            if (id(auto_rotation)) {
-                                              if (id(dr_modus)) id(script_drehen_start)->execute();
-                                              else id(script_schwenker_start)->execute();
-                                            }
-                                          }
+                                      - script.execute:
+                                          id: script_slot_pause_resume
+                                          slot_idx: 5
                                     on_long_press:
-                                      - lambda: |-
-                                          id(overlay_cd_slot) = 5;
-                                          id(overlay_cd_mode) = 1;
-                                          lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
+                                      - script.execute:
+                                          id: script_open_countdown_overlay
+                                          slot_idx: 5
+                                          mode: 1
                                     widgets:
                                       - label:
                                           id: lbl_slot6_timer_title
