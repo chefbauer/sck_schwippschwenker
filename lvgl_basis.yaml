@@ -249,6 +249,7 @@ script:
     then:
       - lambda: |-
           int i = id(overlay_cd_slot);
+          if (i < 0 || i > 5) return;
           id(overlay_cd_selected_min)[i] = minutes;
           id(slot_countdown_max_ms)[i] = (uint32_t)minutes * 60000U;
           id(slot_is_countdown)[i] = true;
@@ -436,7 +437,7 @@ interval:
             }
           }
 lvgl:
-  log_level: INFO
+  log_level: WARN
   color_depth: 16
   
   # Farbdefinitionen (Helles Design)
