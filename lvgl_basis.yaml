@@ -139,6 +139,13 @@ font:
     glyphs:
       - "\uF05B"  # Crosshairs / Laser (IR)
 
+  # cd_mini buttonmatrix Zifferntasten (42px, ~50% größer als font_normal)
+  - file: "gfonts://Roboto@700"
+    id: font_cd_btn
+    size: 42
+    bpp: 4
+    glyphs: " 123789X"
+
   # IR-Temperatur-Overlay: Temperaturwert 120px
   - file: "gfonts://Roboto@700"
     id: font_ts_xl
@@ -1020,7 +1027,10 @@ lvgl:
                                           lv_label_set_text(id(lbl_slot1_time), "00:00");
                                           lv_obj_add_flag(id(slot1_default_view), LV_OBJ_FLAG_HIDDEN);
                                           lv_obj_clear_flag(id(slot1_running_view), LV_OBJ_FLAG_HIDDEN);
-                                          if (id(auto_rotation)) id(script_schwenker_start)->execute();
+                                          if (id(auto_rotation)) {
+                                            if (id(dr_modus)) id(script_drehen_start)->execute();
+                                            else id(script_schwenker_start)->execute();
+                                          }
                                     widgets:
                                       - label:
                                           align: CENTER
@@ -1074,7 +1084,10 @@ lvgl:
                                           } else {
                                             id(slot_start_ms)[i] = millis();
                                             id(slot_status)[i] = 1;
-                                            if (id(auto_rotation)) id(script_schwenker_start)->execute();
+                                            if (id(auto_rotation)) {
+                                              if (id(dr_modus)) id(script_drehen_start)->execute();
+                                              else id(script_schwenker_start)->execute();
+                                            }
                                           }
                                     on_long_press:
                                       - lambda: |-

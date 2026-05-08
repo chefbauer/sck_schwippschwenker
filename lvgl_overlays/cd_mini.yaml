@@ -3,15 +3,15 @@
 # Vor dem Einblenden per Lambda setzen:
 #   overlay_cd_slot = <Slot-Index 0-5>
 #   overlay_cd_mode = 0 (neuer Countdown) | 1 (Zeit-Update ohne Neustart)
-# Layout: 400×62px, 1 Reihe btnmatrix mit 7 Zellen
+# Layout: 400×93px, 1 Reihe buttonmatrix mit 7 Zellen
 #   1 | 2 | 3 | 7 | 8 | 9 | X
-# 2 Widgets (1× btnmatrix + container)
+# 2 Widgets (1× buttonmatrix + container)
 # ─────────────────────────────────────────────────────────────────────────────────
 
 obj:
   id: overlay_cd_mini
   width: 400
-  height: 62
+  height: 93
   align: TOP_LEFT
   x: 15
   y: 110
@@ -38,7 +38,7 @@ obj:
           bg_opa: COVER
           border_width: 0
           radius: 6
-          text_font: font_normal
+          text_font: font_cd_btn
           text_color: 0xFFFFFF
           checked:
             bg_color: 0x882222
