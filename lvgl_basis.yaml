@@ -92,6 +92,7 @@ font:
       - "\uF72F"  # wine-bottle (Kühl-Saldo Getränkesymbol)
       - "\uF2F2"  # stopwatch (Stoppuhr)
       - "\uF252"  # hourglass-half (Countdown/Sanduhr)
+      - "\uF4A6"  # jar (Dose/Konserve, cd_mini Reihen-Icon)
 
   # Dot-Matrix Font für Timer-Anzeige
   - file: "fonts/5x7-dot-matrix.ttf"
@@ -144,7 +145,7 @@ font:
     id: font_cd_btn
     size: 42
     bpp: 4
-    glyphs: " 123789X"
+    glyphs: "0123456789. "
 
   # IR-Temperatur-Overlay: Temperaturwert 120px
   - file: "gfonts://Roboto@700"
@@ -250,15 +251,15 @@ binary_sensor:
     internal: true
 
 script:
-  - id: set_countdown_minutes
+  - id: set_countdown_secs
     parameters:
-      minutes: int
+      secs: int
     then:
       - lambda: |-
           int i = id(overlay_cd_slot);
           if (i < 0 || i > 5) return;
-          id(overlay_cd_selected_min)[i] = minutes;
-          id(slot_countdown_max_ms)[i] = (uint32_t)minutes * 60000U;
+          id(overlay_cd_selected_min)[i] = secs;
+          id(slot_countdown_max_ms)[i] = (uint32_t)secs * 1000U;
           id(slot_is_countdown)[i] = true;
 
           if (id(overlay_cd_mode) == 0) {
@@ -383,6 +384,11 @@ script:
       - lambda: |-
           id(overlay_cd_slot) = slot_idx;
           id(overlay_cd_mode) = mode;
+          // Position: Links (0-2) x=15, Rechts (3-5) x=609; y folgt Slot-Position
+          const int slot_ys[6] = {110, 250, 390, 110, 250, 390};
+          int ox = (slot_idx < 3) ? 15 : (1024 - 400 - 15);
+          int oy = slot_ys[slot_idx];
+          lv_obj_set_pos(id(overlay_cd_mini), ox, oy);
           lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
 
   - id: script_open_timer_overlay
