@@ -16,7 +16,7 @@
 obj:
   id: overlay_cd_mini
   width: 400
-  height: 154
+  height: 178
   align: TOP_LEFT
   x: 15
   y: 110
@@ -34,7 +34,7 @@ obj:
     # ── Kopfzeile: "Minuten:" + X ──────────────────────────────────────────────
     - obj:
         width: 100%
-        height: 42
+        height: 66
         align: TOP_MID
         y: 0
         bg_opa: TRANSP
@@ -49,8 +49,8 @@ obj:
               text_color: 0x222222
               align: LEFT_MID
           - button:
-              width: 42
-              height: 42
+              width: 63
+              height: 63
               align: RIGHT_MID
               bg_color: 0xCC0000
               bg_opa: COVER
@@ -71,7 +71,7 @@ obj:
         width: 100%
         height: 48
         align: TOP_MID
-        y: 46
+        y: 70
         bg_opa: TRANSP
         border_width: 0
         pad_all: 0
@@ -86,7 +86,7 @@ obj:
               x: 2
           - buttonmatrix:
               id: btnmatrix_cd_can
-              width: 342
+              width: 285
               height: 100%
               align: RIGHT_MID
               x: -2
@@ -119,7 +119,7 @@ obj:
         width: 100%
         height: 48
         align: TOP_MID
-        y: 98
+        y: 122
         bg_opa: TRANSP
         border_width: 0
         pad_all: 0

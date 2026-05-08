@@ -1049,7 +1049,7 @@ lvgl:
                                       - label:
                                           text: "\uF2F2"
                                           text_font: font_icons
-                                          text_color: 0xC0C0C0
+                                          text_color: 0x000000
                                           align: CENTER
                                 - button:
                                     id: slot1_btn_countdown
@@ -1067,7 +1067,7 @@ lvgl:
                                       - label:
                                           text: "\uF252"
                                           text_font: font_icons
-                                          text_color: 0x8B4513
+                                          text_color: 0x000000
                                           align: CENTER
                           # ── Laufend-Ansicht: Zeit + X ─────────────────────────────────────
                           - obj:
@@ -1213,7 +1213,7 @@ lvgl:
                                       - label:
                                           text: "\uF2F2"
                                           text_font: font_icons
-                                          text_color: 0xC0C0C0
+                                          text_color: 0x000000
                                           align: CENTER
                                 - button:
                                     id: slot2_btn_countdown
@@ -1231,7 +1231,7 @@ lvgl:
                                       - label:
                                           text: "\uF252"
                                           text_font: font_icons
-                                          text_color: 0x8B4513
+                                          text_color: 0x000000
                                           align: CENTER
                           # ── Laufend-Ansicht: Zeit + X ─────────────────────────────────────
                           - obj:
@@ -1377,7 +1377,7 @@ lvgl:
                                       - label:
                                           text: "\uF2F2"
                                           text_font: font_icons
-                                          text_color: 0xC0C0C0
+                                          text_color: 0x000000
                                           align: CENTER
                                 - button:
                                     id: slot3_btn_countdown
@@ -1395,7 +1395,7 @@ lvgl:
                                       - label:
                                           text: "\uF252"
                                           text_font: font_icons
-                                          text_color: 0x8B4513
+                                          text_color: 0x000000
                                           align: CENTER
                           # ── Laufend-Ansicht: Zeit + X ─────────────────────────────────────
                           - obj:
@@ -1543,7 +1543,7 @@ lvgl:
                                       - label:
                                           text: "\uF2F2"
                                           text_font: font_icons
-                                          text_color: 0xC0C0C0
+                                          text_color: 0x000000
                                           align: CENTER
                                 - button:
                                     id: slot4_btn_countdown
@@ -1561,7 +1561,7 @@ lvgl:
                                       - label:
                                           text: "\uF252"
                                           text_font: font_icons
-                                          text_color: 0x8B4513
+                                          text_color: 0x000000
                                           align: CENTER
                           # ── Laufend-Ansicht: Zeit + X ─────────────────────────────────────
                           - obj:
@@ -1707,7 +1707,7 @@ lvgl:
                                       - label:
                                           text: "\uF2F2"
                                           text_font: font_icons
-                                          text_color: 0xC0C0C0
+                                          text_color: 0x000000
                                           align: CENTER
                                 - button:
                                     id: slot5_btn_countdown
@@ -1725,7 +1725,7 @@ lvgl:
                                       - label:
                                           text: "\uF252"
                                           text_font: font_icons
-                                          text_color: 0x8B4513
+                                          text_color: 0x000000
                                           align: CENTER
                           # ── Laufend-Ansicht: Zeit + X ─────────────────────────────────────
                           - obj:
@@ -1871,7 +1871,7 @@ lvgl:
                                       - label:
                                           text: "\uF2F2"
                                           text_font: font_icons
-                                          text_color: 0xC0C0C0
+                                          text_color: 0x000000
                                           align: CENTER
                                 - button:
                                     id: slot6_btn_countdown
@@ -1889,7 +1889,7 @@ lvgl:
                                       - label:
                                           text: "\uF252"
                                           text_font: font_icons
-                                          text_color: 0x8B4513
+                                          text_color: 0x000000
                                           align: CENTER
                           # ── Laufend-Ansicht: Zeit + X ─────────────────────────────────────
                           - obj:
