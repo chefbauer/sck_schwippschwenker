@@ -62,5 +62,5 @@ obj:
                 lv_obj_add_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
                 // X-Button nach dem Toggle sofort wieder rot setzen
                 lv_buttonmatrix_set_button_ctrl(id(btnmatrix_cd_mini)->obj, 6,
-                  LV_BUTTONMATRIX_CTRL_CHECKABLE | LV_BUTTONMATRIX_CTRL_CHECKED);
+                  (lv_buttonmatrix_ctrl_t)(LV_BUTTONMATRIX_CTRL_CHECKABLE | LV_BUTTONMATRIX_CTRL_CHECKED));
               }
