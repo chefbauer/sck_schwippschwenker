@@ -40,6 +40,5 @@ lvgl:
       - !include lvgl_overlays/schwenker.yaml
       - !include lvgl_overlays/sensorphalanx.yaml
       - !include lvgl_overlays/temp_messung.yaml
-      - !include lvgl_overlays/timer.yaml
       - !include lvgl_overlays/cooling.yaml
       - !include lvgl_overlays/cd_mini.yaml

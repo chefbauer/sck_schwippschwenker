@@ -12,11 +12,10 @@
 #             font_clock, font_temp, font_icons, font_timer, font_arc_val, font_icon_xl
 #  globals:   slot_start_ms, slot_elapsed_ms, slot_status,
 #             slot_is_countdown, slot_countdown_max_ms,
-#             overlay_tc_open_slot, overlay_tc_type, overlay_tc_seconds,
-#             overlay_tc_mask,
+#             overlay_cd_slot, overlay_cd_mode, overlay_cd_selected_min,
 #             brightness_auto_mode, brightness_auto_updating, system_ein
 #  binary_sensor: bin_slot1_blink .. bin_slot6_blink  (template, internal)
-#  script:    script_open_timer_overlay
+#  script:    script_open_countdown_overlay
 #  interval:  500ms (Timer/Countdown-Anzeige + Blink + AMG), 10s (LVGL-Idle)
 #  lvgl:      page_main, page_settings
 # ─────────────────────────────────────────────────────────────────────────────────
@@ -211,22 +210,6 @@ globals:
     type: std::array<uint32_t, 6>
     restore_value: true
     initial_value: '{240000, 240000, 240000, 240000, 240000, 240000}'
-  - id: overlay_tc_open_slot
-    type: int
-    restore_value: false
-    initial_value: '0'
-  - id: overlay_tc_type
-    type: int
-    restore_value: false
-    initial_value: '0'
-  - id: overlay_tc_seconds
-    type: int
-    restore_value: false
-    initial_value: '240'  # 4 Minuten in Sekunden
-  - id: overlay_tc_mask
-    type: int
-    restore_value: false
-    initial_value: '1'
   # ── Countdown Mini-Overlay ─────────────────────────────────────
   - id: overlay_cd_slot
     type: int
@@ -406,61 +389,6 @@ script:
           int oy = slot_ys[slot_idx];
           lv_obj_set_pos(id(overlay_cd_mini), ox, oy);
           lv_obj_clear_flag(id(overlay_cd_mini), LV_OBJ_FLAG_HIDDEN);
-
-  - id: script_open_timer_overlay
-    parameters:
-      slot_idx: int
-    then:
-      - lambda: |-
-          id(overlay_tc_open_slot) = slot_idx;
-          id(overlay_tc_type) = id(slot_is_countdown)[slot_idx] ? 1 : 0;
-          // Sekunden aus gespeichertem Max-Wert, auf 30s-Raster einrasten
-          int secs = (int)(id(slot_countdown_max_ms)[slot_idx] / 1000);
-          secs = (secs / 30) * 30;
-          if (secs < 30)  secs = 30;
-          if (secs > 720) secs = 720;
-          id(overlay_tc_seconds) = secs;
-          id(overlay_tc_mask) = (1 << slot_idx);
-          // Slot-Buttons: bg_color + text_color setzen
-          const uint32_t fc[6]     = {0xFF0000,0xFFFF00,0x00FF00,0x00FFFF,0x0000FF,0xFF00FF};
-          const uint32_t tc_on[6]  = {0xFFFFFF,0x111111,0x111111,0x111111,0xFFFFFF,0xFFFFFF};
-          const uint32_t tc_off[6] = {0xCC0000,0x777700,0x006600,0x007777,0x0000CC,0xAA00AA};
-          lv_obj_t* sb[6] = {
-            id(btn_tc_s1), id(btn_tc_s2), id(btn_tc_s3),
-            id(btn_tc_s4), id(btn_tc_s5), id(btn_tc_s6)
-          };
-          for (int s = 0; s < 6; s++) {
-            bool on = (id(overlay_tc_mask) & (1 << s));
-            lv_obj_set_style_bg_color(sb[s], lv_color_hex(on ? fc[s] : 0xFFFFFF), 0);
-            lv_obj_set_style_text_color(lv_obj_get_child(sb[s], 0), lv_color_hex(on ? tc_on[s] : tc_off[s]), 0);
-          }
-          lv_obj_set_style_bg_opa(id(btn_tc_all), LV_OPA_COVER, 0);
-          // Typ-Tabs
-          if (id(overlay_tc_type) == 0) {
-            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0x334488), 0);
-            lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0xCCCCCC), 0);
-            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_timer), 0), lv_color_hex(0xFFFFFF), 0);
-            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_cd), 0),    lv_color_hex(0x333333), 0);
-            lv_obj_clear_flag(id(obj_tc_timer_content), LV_OBJ_FLAG_HIDDEN);
-            lv_obj_add_flag(id(obj_tc_cd_content), LV_OBJ_FLAG_HIDDEN);
-          } else {
-            lv_obj_set_style_bg_color(id(btn_tc_type_timer), lv_color_hex(0xCCCCCC), 0);
-            lv_obj_set_style_bg_color(id(btn_tc_type_cd),    lv_color_hex(0x334488), 0);
-            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_timer), 0), lv_color_hex(0x333333), 0);
-            lv_obj_set_style_text_color(lv_obj_get_child(id(btn_tc_type_cd), 0),    lv_color_hex(0xFFFFFF), 0);
-            lv_obj_add_flag(id(obj_tc_timer_content), LV_OBJ_FLAG_HIDDEN);
-            lv_obj_clear_flag(id(obj_tc_cd_content), LV_OBJ_FLAG_HIDDEN);
-          }
-          // Slider-Wert + Label
-          lv_slider_set_value(id(slider_tc_minutes), id(overlay_tc_seconds), LV_ANIM_OFF);
-          { int m = id(overlay_tc_seconds)/60, s2 = id(overlay_tc_seconds)%60;
-            char buf[24];
-            if (m == 0)       snprintf(buf, sizeof(buf), "%d sek", s2);
-            else if (s2 == 0) snprintf(buf, sizeof(buf), "%d min", m);
-            else              snprintf(buf, sizeof(buf), "%d:%02d", m, s2);
-            lv_label_set_text(id(lbl_tc_minutes_val), buf); }
-          // Overlay einblenden
-          lv_obj_clear_flag(id(overlay_timer_cowntdown), LV_OBJ_FLAG_HIDDEN);
 
 interval:
   - interval: 500ms
@@ -878,9 +806,6 @@ lvgl:
                                 lv_label_set_text(id(lbl_slot1_symbol), "\xef\x81\x8b");
                               }
                               id(script_schwenker_goto_slot)->execute(1);
-                        on_long_press:
-                          - lambda: |-
-                              id(script_open_timer_overlay)->execute(0);
                         widgets:
                           - label:
                               text: "1"
@@ -917,9 +842,6 @@ lvgl:
                                 lv_label_set_text(id(lbl_slot2_symbol), "\xef\x81\x8b");
                               }
                               id(script_schwenker_goto_slot)->execute(2);
-                        on_long_press:
-                          - lambda: |-
-                              id(script_open_timer_overlay)->execute(1);
                         widgets:
                           - label:
                               text: "2"
@@ -956,9 +878,6 @@ lvgl:
                                 lv_label_set_text(id(lbl_slot3_symbol), "\xef\x81\x8b");
                               }
                               id(script_schwenker_goto_slot)->execute(3);
-                        on_long_press:
-                          - lambda: |-
-                              id(script_open_timer_overlay)->execute(2);
                         widgets:
                           - label:
                               text: "3"
@@ -995,9 +914,6 @@ lvgl:
                                 lv_label_set_text(id(lbl_slot4_symbol), "\xef\x81\x8b");
                               }
                               id(script_schwenker_goto_slot)->execute(4);
-                        on_long_press:
-                          - lambda: |-
-                              id(script_open_timer_overlay)->execute(3);
                         widgets:
                           - label:
                               text: "4"
@@ -1034,9 +950,6 @@ lvgl:
                                 lv_label_set_text(id(lbl_slot5_symbol), "\xef\x81\x8b");
                               }
                               id(script_schwenker_goto_slot)->execute(5);
-                        on_long_press:
-                          - lambda: |-
-                              id(script_open_timer_overlay)->execute(4);
                         widgets:
                           - label:
                               text: "5"
@@ -1073,9 +986,6 @@ lvgl:
                                 lv_label_set_text(id(lbl_slot6_symbol), "\xef\x81\x8b");
                               }
                               id(script_schwenker_goto_slot)->execute(6);
-                        on_long_press:
-                          - lambda: |-
-                              id(script_open_timer_overlay)->execute(5);
                         widgets:
                           - label:
                               text: "6"
