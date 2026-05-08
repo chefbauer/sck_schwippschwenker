@@ -13,8 +13,8 @@
 
 obj:
   id: overlay_cd_mini
-  width: 120
-  height: 62
+  width: 290
+  height: 120
   align: TOP_LEFT
   x: 15
   y: 110
@@ -29,14 +29,86 @@ obj:
   clickable: false
   widgets:
 
-    # ── TEST: nur Button 4 ────────────────────────────────────────────────────
+    # ── Zeile 1: Buttons 1–5 ──────────────────────────────────────────────────
+
+    - button:
+        id: btn_cdm_1
+        width: 52
+        height: 54
+        align: TOP_LEFT
+        x: 6
+        y: 4
+        bg_color: 0x444444
+        border_width: 0
+        shadow_width: 0
+        outline_width: 0
+        radius: 6
+        pad_all: 0
+        on_click:
+          - script.execute:
+              id: set_countdown_minutes
+              minutes: 1
+        widgets:
+          - label:
+              align: CENTER
+              text: "1"
+              text_font: font_normal
+              text_color: 0xFFFFFF
+
+    - button:
+        id: btn_cdm_2
+        width: 52
+        height: 54
+        align: TOP_LEFT
+        x: 62
+        y: 4
+        bg_color: 0x444444
+        border_width: 0
+        shadow_width: 0
+        outline_width: 0
+        radius: 6
+        pad_all: 0
+        on_click:
+          - script.execute:
+              id: set_countdown_minutes
+              minutes: 2
+        widgets:
+          - label:
+              align: CENTER
+              text: "2"
+              text_font: font_normal
+              text_color: 0xFFFFFF
+
+    - button:
+        id: btn_cdm_3
+        width: 52
+        height: 54
+        align: TOP_LEFT
+        x: 118
+        y: 4
+        bg_color: 0x444444
+        border_width: 0
+        shadow_width: 0
+        outline_width: 0
+        radius: 6
+        pad_all: 0
+        on_click:
+          - script.execute:
+              id: set_countdown_minutes
+              minutes: 3
+        widgets:
+          - label:
+              align: CENTER
+              text: "3"
+              text_font: font_normal
+              text_color: 0xFFFFFF
 
     - button:
         id: btn_cdm_4
         width: 52
         height: 54
         align: TOP_LEFT
-        x: 6
+        x: 174
         y: 4
         bg_color: 0x444444
         border_width: 0
@@ -55,14 +127,136 @@ obj:
               text_font: font_normal
               text_color: 0xFFFFFF
 
+    - button:
+        id: btn_cdm_5
+        width: 52
+        height: 54
+        align: TOP_LEFT
+        x: 230
+        y: 4
+        bg_color: 0x444444
+        border_width: 0
+        shadow_width: 0
+        outline_width: 0
+        radius: 6
+        pad_all: 0
+        on_click:
+          - script.execute:
+              id: set_countdown_minutes
+              minutes: 5
+        widgets:
+          - label:
+              align: CENTER
+              text: "5"
+              text_font: font_normal
+              text_color: 0xFFFFFF
+
+    # ── Zeile 2: Buttons 6–9 + X ─────────────────────────────────────────────
+
+    - button:
+        id: btn_cdm_6
+        width: 52
+        height: 54
+        align: TOP_LEFT
+        x: 6
+        y: 62
+        bg_color: 0x444444
+        border_width: 0
+        shadow_width: 0
+        outline_width: 0
+        radius: 6
+        pad_all: 0
+        on_click:
+          - script.execute:
+              id: set_countdown_minutes
+              minutes: 6
+        widgets:
+          - label:
+              align: CENTER
+              text: "6"
+              text_font: font_normal
+              text_color: 0xFFFFFF
+
+    - button:
+        id: btn_cdm_7
+        width: 52
+        height: 54
+        align: TOP_LEFT
+        x: 62
+        y: 62
+        bg_color: 0x444444
+        border_width: 0
+        shadow_width: 0
+        outline_width: 0
+        radius: 6
+        pad_all: 0
+        on_click:
+          - script.execute:
+              id: set_countdown_minutes
+              minutes: 7
+        widgets:
+          - label:
+              align: CENTER
+              text: "7"
+              text_font: font_normal
+              text_color: 0xFFFFFF
+
+    - button:
+        id: btn_cdm_8
+        width: 52
+        height: 54
+        align: TOP_LEFT
+        x: 118
+        y: 62
+        bg_color: 0x444444
+        border_width: 0
+        shadow_width: 0
+        outline_width: 0
+        radius: 6
+        pad_all: 0
+        on_click:
+          - script.execute:
+              id: set_countdown_minutes
+              minutes: 8
+        widgets:
+          - label:
+              align: CENTER
+              text: "8"
+              text_font: font_normal
+              text_color: 0xFFFFFF
+
+    - button:
+        id: btn_cdm_9
+        width: 52
+        height: 54
+        align: TOP_LEFT
+        x: 174
+        y: 62
+        bg_color: 0x444444
+        border_width: 0
+        shadow_width: 0
+        outline_width: 0
+        radius: 6
+        pad_all: 0
+        on_click:
+          - script.execute:
+              id: set_countdown_minutes
+              minutes: 9
+        widgets:
+          - label:
+              align: CENTER
+              text: "9"
+              text_font: font_normal
+              text_color: 0xFFFFFF
+
     # ── X: Abbrechen / Schließen ──────────────────────────────────────────────
     - button:
         id: btn_cdm_x
         width: 52
         height: 54
         align: TOP_LEFT
-        x: 62
-        y: 4
+        x: 230
+        y: 62
         bg_color: 0x882222
         border_width: 0
         shadow_width: 0

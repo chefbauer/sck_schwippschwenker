@@ -14,6 +14,8 @@
 esphome:
   platformio_options:
     build_flags:
+      # LVGL interner Heap: Standard 48KB reicht nicht für ~400 Widgets → auf 128KB erhöhen
+      - -DLV_MEM_SIZE=131072
       # LVGL-Task-Stack auf 32 KB erhöhen (Standard: 8 KB → Stack-Overflow bei komplexen Lambdas)
       - -DESPHOME_LVGL_TASK_STACK_SIZE=32768
 
