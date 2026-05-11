@@ -1121,9 +1121,15 @@ interval:
           uint8_t acc  = (uint8_t)std::max(1, std::min(254, (int)roundf(_acc_pct / 100.0f * 254.0f)));
           int speed    = std::max(1, std::min(3000, id(sw_max_speed_rpm) * 16));  // echte UPM ×16 = F6-Wert für 256 Sub
 
+          // Bremszeit-Schätzung: ramp_ms = speed_raw × (256 − acc) × 0,05 ms  (identische Formel wie Drehen)
+          // Stopp-Befehl wird ramp_ms früher gesendet → Richtungswechsel trifft auf sw_halbperiode_ms
+          uint32_t _ramp_ms = (uint32_t)(speed * (256 - (int)acc) * 0.05f + 0.5f);
+          uint32_t _fire_ms = (id(sw_halbperiode_ms) > _ramp_ms) ? (id(sw_halbperiode_ms) - _ramp_ms) : 0;
+
           // ── Brems-Phase: warte bis Motor nach Richtungswechsel-Stop stillsteht ──────
           // Firmware-Einschränkung: F6-Richtungswechsel ohne Stop = abrupter Ruck → daher stoppen,
           // auf Stillstand warten (Winkel-Delta < 5 von 16384 ≈ 0,1°), dann neue Richtung starten
+          // sw_phase_ms wird erst hier auf 0 gesetzt → eingestellte Zeit = Fahrt bis echter Richtungswechsel
           if (id(sw_braking)) {
             int _cur  = (int)id(sensor_motor_position).state;
             int _prev = id(sw_pos_prev);
@@ -1134,14 +1140,15 @@ interval:
             int _delta = abs(_cur - _prev);
             if (_delta > 8192) _delta = 16384 - _delta;  // Wrap 0°/360°
             if (_delta < 5) {
-              // Motor steht → neue Richtung starten
+              // Motor steht → neue Richtung starten; Phase-Zähler auf 0 (= Beginn nächste Halbperiode)
               id(sw_braking)  = false;
               id(sw_pos_prev) = -1;
+              id(sw_phase_ms) = 0;
               int _dir = (id(sw_richtung) > 0) ? 1 : 0;
               id(can_bus)->send_data(${motor_can_id}, false,
                   gen_data_can_motor_set_speed(${motor_can_id}, _dir, speed, acc));
-              ESP_LOGI("schwenker", "Flip done: dir=%+d F6=%d acc=%d (%d%%)",
-                       id(sw_richtung), speed, (int)acc, _acc_pct);
+              ESP_LOGI("schwenker", "Flip done: dir=%+d F6=%d acc=%d (%d%%) ramp_war=%u ms",
+                       id(sw_richtung), speed, (int)acc, _acc_pct, _ramp_ms);
             } else {
               id(sw_pos_prev) = _cur;  // Snapshot für nächsten Check
             }
@@ -1150,8 +1157,9 @@ interval:
 
           id(sw_phase_ms) += 50;
 
-          // ── Flip-Trigger: Halbperiode abgelaufen ──────────────────────────────────
-          if (id(sw_phase_ms) >= id(sw_halbperiode_ms)) {
+          // ── Flip-Trigger: _fire_ms vor Halbperiode → Stopp-Befehl so früh, dass
+          //    Richtungswechsel nach ~ramp_ms Bremszeit auf sw_halbperiode_ms trifft ──
+          if (id(sw_phase_ms) >= _fire_ms) {
             if (id(sw_stop_pending)) {
               // Sanfter Stop: F6 speed=0 → Motor bremst per acc-Byte
               id(sw_stop_pending) = false;
@@ -1168,18 +1176,17 @@ interval:
                        (int)acc, _acc_pct, id(sw_richtung));
               return;
             }
-            // Richtungswechsel: erst in alter Richtung abbremsen, dann Stillstand abwarten
+            // Richtungswechsel: Stopp-Befehl senden (phase läuft noch bis Stillstand, dann Reset auf 0)
             int _old_dir = (id(sw_richtung) > 0) ? 1 : 0;
             id(can_bus)->send_data(${motor_can_id}, false,
                 gen_data_can_motor_set_speed(${motor_can_id}, _old_dir, 0, acc));
             id(sw_richtung) = -(id(sw_richtung));
-            id(sw_phase_ms) = 0;
             id(sw_braking)  = true;
             id(sw_pos_prev) = (int)id(sensor_motor_position).state;
-            ESP_LOGI("schwenker", "Flip: Bremse alt-dir=%d, warte Stillstand → dann %+d",
-                     _old_dir, id(sw_richtung));
+            ESP_LOGI("schwenker", "Flip: Bremse alt-dir=%d, ramp~%u ms, warte Stillstand → dann %+d",
+                     _old_dir, _ramp_ms, id(sw_richtung));
           }
-          // sw_phase_ms läuft; Motor fährt in aktueller Richtung bis nächster Flip
+          // sw_phase_ms läuft; Motor fährt in aktueller Richtung bis _fire_ms
 
   # ── RV-Automodus: Beckenpumpe Intervall-Zyklus (nur wenn RV=true, Modus=AUTO, Motor aus) ────
   - interval: 500ms
