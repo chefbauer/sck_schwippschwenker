@@ -26,8 +26,6 @@ esphome:
             id: light_screen_background
             brightness: 70%
         - lambda: |-
-            id(brightness_auto_mode) = true;
-            lv_obj_add_state(id(sw_brightness_auto), LV_STATE_CHECKED);
             // Motor-Strom-Slider + Label aus NVS synchronisieren
             int cur = std::max(500, std::min(2000, id(sw_work_current_mA)));
             lv_slider_set_value(id(slider_motor_strom), cur, LV_ANIM_OFF);
