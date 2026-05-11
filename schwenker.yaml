@@ -608,7 +608,14 @@ script:
                 lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x666666), 0);
                 lv_obj_set_style_bg_color(id(btn_motor_main), lv_color_hex(0x666666), 0);
                 ESP_LOGI("goto_slot", "Drehen gestoppt fuer Slot-Fahrt");
-            - delay: 500ms
+            - script.execute: script_motor_get_status
+            - delay: 50ms
+            - while:
+                condition:
+                  lambda: return id(sensor_motor_status).state != 1;
+                then:
+                  - script.execute: script_motor_get_status
+                  - delay: 50ms
       # ── Schwenker sanft stoppen falls er läuft ───────────
       - if:
           condition:
@@ -651,8 +658,11 @@ script:
           // WICHTIG: acc muss ≥1 sein – acc=0 oder 255 = kein Ramping → harter Ruck!
           uint8_t slot_acc = 100;
           id(script_motor_goto_relative_degree)->execute(96, slot_acc, rel);
-      # 12 RPM: max. Weg 180° ≈ 2.5 s + Rampe ≈ 3.5 s
-      - delay: 3500ms
+      # 12 RPM: max. Weg 180° ≈ 2.5 s – wartet auf F1-Status=1 (stopped)
+      - wait_until:
+          condition:
+            lambda: return id(sensor_motor_status).state == 1;
+          timeout: 10s
       - lambda: |-
           id(sw_motor_busy) = false;
           id(sw_motor_last_move_ms) = millis();

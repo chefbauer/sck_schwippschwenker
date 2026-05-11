@@ -435,10 +435,9 @@ interval:
                 blink_s[ii]->publish_state(true);
                 lv_label_set_text(slot_time_lbl[ii], "00:00");
                 lv_label_set_text(slot_sym_lbl[ii], "\xef\x81\x8b");
-                // Motor-Automode: bei CD-Ablauf stoppen
+                // Motor-Automode: bei CD-Ablauf → Slot anfahren
                 if (id(auto_motorbetrieb)) {
-                  if (id(sw_aktiv)) id(script_schwenker_stop)->execute();
-                  if (id(dr_aktiv)) id(script_drehen_stop)->execute();
+                  id(script_schwenker_goto_slot)->execute(ii + 1);
                 }
               } else {
                 uint32_t rem = max_ms - total_ms;

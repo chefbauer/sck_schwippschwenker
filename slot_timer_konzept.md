@@ -75,18 +75,25 @@ Das Overlay erscheint **über dem jeweiligen Slot**:
   - Drücken einer Taste: **nur neue Zielzeit setzen** (`slot_countdown_max_ms[i] = secs * 1000`), Countdown läuft weiter ohne Reset
   - **[X]**: Overlay schließen, aktueller Zustand bleibt
 
-### Countdown abgelaufen – Quittierung (Blink-Phase)
+### Countdown abgelaufen – automatisches Anfahren + Quittierung (Blink-Phase)
 
-Wenn Countdown auf 0 läuft: `bin_slotN_blink = true`, Slot blinkt, zeigt `00:00`.
+Wenn Countdown auf 0 läuft:
+1. `bin_slotN_blink = true`, Slot blinkt, zeigt `00:00`
+2. **`slot_status[i] = 2`** (pausiert/abgelaufen)
+3. **wenn `auto_motorbetrieb`:** `script_schwenker_goto_slot(i+1)` → Motor fährt **automatisch** zum abgelaufenen Slot
 
-**Short Press auf blinkenden Slot-Bereich (nicht X):**
+Der Motor kommt selbstständig zum Getränk. Kein manueller Tap nötig, um den Slot anzufahren.
+
+**Short Press auf blinkenden Slot-Bereich (nicht X) — Quittierung:**
 1. `bin_slotN_blink = false` (Blink stopp, quittiert)
-2. `slot_status[i] = 2` (Pause / quittiert – Zeit bleibt bei `00:00`)
-3. wenn `auto_rotation`: `script_schwenker_goto_slot(i+1)` → Motor parkt am Slot, Schwenker/Drehen stoppt
-4. Slot verbleibt in Laufend-Ansicht mit `00:00`, kein Zurück zu Default-Ansicht
+2. `slot_status[i] = 2` bleibt (bereits pausiert)
+3. **kein erneutes `goto_slot`** — Motor steht bereits am Slot
+4. Slot verbleibt in Laufend-Ansicht mit `00:00`
 
-Der Slot gilt jetzt als **gequittiert/parkiert** – das Getränk wartet an diesem Slot.  
+Der Slot gilt jetzt als **gequittiert** — der Nutzer hat bestätigt, dass er das Getränk gesehen hat.  
 Alle anderen noch aktiven Timer/Countdowns laufen im Hintergrund **unverändert weiter**.
+
+**Mehrere CDs laufen gleichzeitig ab:** Jeder Ablauf triggert `goto_slot`. Da `script_schwenker_goto_slot` `mode: restart` hat, bricht der zweite Aufruf die erste Fahrt ab und fährt zum neueren Slot. Kein Problem.
 
 **X-Button nach Quittierung:** s. unten (Smart Stop / Weiter).
 
@@ -189,12 +196,13 @@ Die globale Variable `auto_rotation` (bool, in `schwenker.yaml`) steuert ob der 
 - Countdown pausiert → Weiter → **wenn `auto_rotation`:** `script_schwenker_start()`
 
 ### Countdown abgelaufen (Blink-Phase)
-- Countdown läuft ab → **wenn `auto_rotation`:** `script_schwenker_stop()` (gemäß Interval-Loop)
-  - Motor bleibt wo er war – kein automatisches goto_slot; das macht erst der Nutzer per Touch
+- Countdown läuft ab → **wenn `auto_motorbetrieb`:** `script_schwenker_goto_slot(i+1)` (Interval-Loop)
+  - `goto_slot` stoppt Motor intern (Stop-Befehl + warten) und fährt dann zur Zielposition
 
 ### Blink-Quittierung (Nutzer drückt blinkenden Slot)
-- **wenn `auto_rotation`:** `script_schwenker_goto_slot(i+1)` → Motor parkt am Slot
-  - Andere Slots laufen weiter, Schwenker pausiert
+- **kein erneutes `goto_slot`** — Motor steht bereits am Slot (automatisch hingefahren)
+- Nur: `bin_slotN_blink = false` (Blink quittieren)
+- Andere Slots laufen weiter
 
 ### Timer/Countdown Stop (X-Button)
 - **wenn `auto_rotation`:** Smart Stop/Weiter (s. X-Button-Abschnitt)
@@ -206,8 +214,8 @@ Die globale Variable `auto_rotation` (bool, in `schwenker.yaml`) steuert ob der 
 | Timer/CD Start | — | `script_schwenker_start()` | Motor läuft bereits |
 | Pause (läuft → paused) | — | `script_schwenker_goto_slot(i+1)` | Motor steht + bereits an Slot N |
 | Weiter (paused → läuft) | — | `script_schwenker_start()` | Motor läuft bereits |
-| CD abgelaufen (auto) | — | `script_schwenker_stop()` | Motor steht bereits |
-| Blink quittiert (Nutzer-Touch) | — | `script_schwenker_goto_slot(i+1)` | Motor steht + bereits an Slot N |
+| CD abgelaufen (auto) | — | `script_schwenker_goto_slot(i+1)` | Motor steht bereits an Slot N |
+| Blink quittiert (Nutzer-Touch) | — | *(kein goto_slot – Motor schon dort)* | — |
 | X-Stop, andere aktiv | — | `script_schwenker_start()` | Motor läuft bereits |
 | X-Stop, keine mehr aktiv | — | `script_schwenker_stop()` | Motor steht bereits |
 
@@ -226,10 +234,61 @@ Timer (Stoppuhr) und Countdown verhalten sich **identisch** – es gibt nur eine
 
 1. Nutzer pausiert einen **laufenden Timer** (Stoppuhr, status 1→2)
 2. Nutzer pausiert einen **laufenden Countdown** (status 1→2)
-3. Nutzer **quittiert einen abgelaufenen Countdown** (Blink-Touch, bin_blink→false, status→2)
+3. **Countdown läuft automatisch ab** (Interval-Loop, bin_blink→true, status→2) ← neu
+4. ~~Nutzer quittiert einen abgelaufenen Countdown~~ — entfällt; Motor steht bereits am Slot
 
 In allen drei Fällen: Motor fährt zu Slot N, Schwenker/Drehen pausiert.  
-`script_schwenker_goto_slot` handhabt das interne Stoppen selbst (F5 + Warten + Positionsfahrt).
+`script_schwenker_goto_slot` handhabt das interne Stoppen **und Warten** selbst — s. nächster Abschnitt.
+
+### Wie stellt das System fest, ob der Motor steht? (`goto_slot` intern)
+
+`script_schwenker_goto_slot` ist ein ESPHome-Script mit Delays und `wait_until` — es läuft als **Coroutine auf AppCore** und kann tatsächlich warten:
+
+```
+goto_slot(slot):
+  sw_motor_busy = true
+
+  if dr_aktiv:
+    dr_aktiv = false
+    F6 speed=0 (Bremsbefehl per CAN)
+    delay: 500ms          ← feste Wartezeit, KEINE echte Stillstands-Erkennung (⚠ s.u.)
+
+  if sw_aktiv:
+    sw_stop_pending = true         ← Signal an Interval-Loop: nächsten Halbzyklus beenden
+    wait_until(!sw_aktiv, 10s)    ← Interval-Loop setzt sw_aktiv=false am Zyklusende
+    delay: 200ms                   ← Beruhigungspause
+
+  Motor-Init (Closed Loop, 128 MSTEP)
+  script_motor_goto_relative_degree(speed=96, acc=100, rel_deg)
+  delay: 3500ms                    ← max. Fahrzeit 180° bei 12 RPM
+  sw_motor_busy = false
+```
+
+**Schwenken — echte Stillstands-Erkennung:**  
+Der 50ms-Interval-Loop prüft während `sw_braking=true` den Positionssensor:  
+`delta = |sensor_motor_position[now] - sensor_motor_position[prev]|`  
+Erst wenn `delta < 5` (≈ 0,1° bei 16384 Ticks) → Motor steht → neue Richtung starten.  
+Für goto_slot: `sw_stop_pending=true` → Interval setzt `sw_aktiv=false` am nächsten Bremsende → `wait_until(!sw_aktiv)` in goto_slot wartet darauf.
+
+**Drehen — nur feste Wartezeit, kein Winkel-Check: ⚠**  
+`goto_slot` sendet F6 speed=0 und wartet pauschal 500ms. Die tatsächliche Bremszeit hängt aber von Geschwindigkeit und `dr_acc` ab:  
+`ramp_ms = speed_raw × (256 − acc) × 0,05 ms`  
+Beispiel: 30 RPM bei 128 MSTEP → speed_raw=240, acc=20 → ramp_ms = 240 × 236 × 0,05 ≈ **2830 ms**  
+→ Bei hoher Drehzahl oder sanftem acc kann 500ms zu kurz sein. Motor dreht noch, wenn Positionsfahrt startet → falsche Startposition.
+
+**Lösung: Winkel-basiertes Warten auch für Drehen (⚠ noch zu implementieren):**  
+Nach F6 speed=0 auf `sensor_motor_position`-Delta warten, exakt wie beim Schwenken:
+```cpp
+// Nach dr_aktiv=false + F6 speed=0:
+wait_until(abs(pos_now - pos_prev) < 5, timeout=5s)
+```
+Alternativ: Bremszeit dynamisch berechnen und als delay verwenden:
+```cpp
+uint32_t ramp_ms = (uint32_t)(speed_raw * (256 - dr_acc) * 0.05f) + 200;
+delay: ramp_ms
+```
+
+**goto_slot `mode: restart`:** Ein zweiter Aufruf während die Fahrt läuft bricht ab und startet neu. Das ist gewünscht (z.B. zwei CDs laufen gleichzeitig ab — zweiter Slot gewinnt).
 
 ### Wann kommt der Schwenker wieder?
 
@@ -294,31 +353,27 @@ t=0:05  [Touch] Slot 2, Countdown-Symbol
 
 t=2:00  [Interval] Slot 1: total_ms ≥ 120000
           → slot_status[0]=2, bin_slot1_blink=true, lbl="00:00"
-          → script_schwenker_stop() — Motor stoppt
-          (Slot 2 läuft intern weiter: elapsed zählt auch im Pause-Zustand nicht,
-           aber slot_start_ms[1] wurde bei Slot-2-Start gesetzt → Zeit läuft weiter ②)
+          → script_schwenker_goto_slot(1)  (Slot 1 = 0°) — automatisch!
+          Motor fährt zu Position 0°, 3.5 s. Slot 2 läuft weiter ②
 
-t=2:02  [Touch] Slot 1 blinkt → Nutzer drückt auf Slot 1 (Laufend-Ansicht)
-          → bin_slot1_blink=false  (quittiert)
-          → slot_status[0]=2  (bleibt pausiert/quittiert)
-          → script_schwenker_goto_slot(1)  (Slot 1 = 0°)
-          Motor fährt zu Position 0°, 3.5 s
+t=2:03  Motor an Slot 1. Slot 1 blinkt, zeigt "00:00".
+          Slot 2 läuft noch: verbleibend ~1:57 min
 
-t=2:06  Motor an Position Slot 1. Slot 1 zeigt "00:00", kein Blink.
-          Slot 2 läuft noch: verbleibend ~1:54 min
+t=2:05  [Touch] Slot 1 blinkt → Nutzer drückt auf Slot 1
+          → bin_slot1_blink=false  (quittiert, kein erneutes goto_slot)
 
-          [Touch] [X] Slot 1 (Getränk entnommen)
+t=2:07  [Touch] [X] Slot 1 (Getränk entnommen)
           → slot_status[0]=0, zurück Default-Ansicht
           → Smart-Prüfung: slot_status[1]=1 → any_active=true
           → script_schwenker_start() — Motor startet wieder Schwenken
 
 t=4:05  [Interval] Slot 2: total_ms ≥ 240000
           → slot_status[1]=2, bin_slot2_blink=true, lbl="00:00"
-          → script_schwenker_stop() — Motor stoppt
+          → script_schwenker_goto_slot(2)  (Slot 2 = 60°) — automatisch!
+          Motor fährt zu 60°
 
-t=4:07  [Touch] Slot 2 blinkt → Nutzer drückt
-          → bin_slot2_blink=false
-          → script_schwenker_goto_slot(2)  (Slot 2 = 60°)
+t=4:08  [Touch] Slot 2 blinkt → Nutzer drückt
+          → bin_slot2_blink=false  (quittiert)
           Motor fährt zu Position 60°
 
           [Touch] [X] Slot 2
@@ -398,16 +453,18 @@ t=0:45  [Touch] [X] Slot 5 (mitten im Lauf, kein Blink, Nutzer bricht ab)
           Motor schwenkt weiter
 
 t=1:00  [Interval] Slot 4 abgelaufen
-          → bin_slot4_blink=true, script_schwenker_stop()
-          Motor stoppt
-
-t=1:02  [Touch] Slot 4 (blinkt)
-          → bin_slot4_blink=false
-          → script_schwenker_goto_slot(4)  (Slot 4 = 180°)
+          → bin_slot4_blink=true, status[3]=2
+          → script_schwenker_goto_slot(4)  (Slot 4 = 180°) — automatisch!
           Motor fährt zu 180°
 
           Slot 6 läuft weiter (noch ~58 s verbleibend)
-          — Motor steht gerade an 180° nach goto_slot, sw_aktiv=false
+
+t=1:03  Motor an Slot 4. Slot 4 blinkt.
+
+t=1:05  [Touch] Slot 4 (blinkt)
+          → bin_slot4_blink=false  (quittiert, kein erneutes goto_slot)
+
+          Slot 6 läuft noch, Motor steht an 180°, sw_aktiv=false
 
 t=1:10  [Touch] [X] Slot 4
           → status[3]=0, Default-Ansicht
@@ -415,13 +472,12 @@ t=1:10  [Touch] [X] Slot 4
           → script_schwenker_start() — Motor startet Schwenken wieder
 
 t=2:10  [Interval] Slot 6 abgelaufen
-          → bin_slot6_blink=true, script_schwenker_stop()
-          Motor stoppt
-
-t=2:12  [Touch] Slot 6 (blinkt)
-          → bin_slot6_blink=false
-          → script_schwenker_goto_slot(6)  (Slot 6 = 300°)
+          → bin_slot6_blink=true, status[5]=2
+          → script_schwenker_goto_slot(6)  (Slot 6 = 300°) — automatisch!
           Motor fährt zu 300°
+
+t=2:13  [Touch] Slot 6 (blinkt)
+          → bin_slot6_blink=false  (quittiert)
 
           [Touch] [X] Slot 6
           → status[5]=0
@@ -455,29 +511,22 @@ t=1:04  [Touch] Slot 2 (pausiert, kein Blink)
           Motor dreht wieder (letzten gespeicherten Drehen-Modus)
 
 t=2:00  [Interval] Slot 2 abgelaufen
-          → bin_slot2_blink=true
-          → script_schwenker_stop():
-              sw_aktiv=false → Guard: schon false → No-op für Schwenker-Teil
-              dr_aktiv=true → ?? (script_schwenker_stop stoppt nur Schwenker, NICHT Drehen)
-          Motor dreht weiter ④
-
-t=2:02  [Touch] Slot 2 (blinkt)
-          → bin_slot2_blink=false, status[1]=2
-          → script_schwenker_goto_slot(2)
-          → dr_aktiv=true → wird in goto_slot gestoppt (Hard-Stop + 500ms)
+          → bin_slot2_blink=true, status[1]=2
+          → script_schwenker_goto_slot(2) — automatisch!
+          → goto_slot: dr_aktiv=true → Drehen wird intern gestoppt (Hard-Stop + 500ms)
           → Motor fährt zu 60°
+
+t=2:04  Motor an Slot 2. Slot 2 blinkt.
+
+t=2:06  [Touch] Slot 2 (blinkt)
+          → bin_slot2_blink=false  (quittiert)
+
+          [Touch] [X] Slot 2
+          → status[1]=0, Default-Ansicht
+          → any_active=false → script_schwenker_stop() →→ IGNORIERT (steht)
 ```
 
-**Anmerkung ④:** `script_schwenker_stop` beendet nur Schwenken (`sw_aktiv=false`). Wenn `dr_aktiv=true`, läuft Drehen weiter — das ist ein offener Punkt. **Konzept-Entscheid: Bei CD-Ablauf wird `script_drehen_stop()` ebenfalls ausgelöst, wenn `dr_aktiv && auto_motorbetrieb`.**
-
-→ Anpassung Interval-Loop (noch zu implementieren):
-```
-// CD-Ablauf (Interval): auto_motorbetrieb-Stop
-if (id(auto_motorbetrieb)) {
-    if (id(sw_aktiv)) id(script_schwenker_stop)->execute();
-    if (id(dr_aktiv)) id(script_drehen_stop)->execute();
-}
-```
+**Anmerkung (aktualisiert):** Bei CD-Ablauf wird nun direkt `goto_slot(ii+1)` ausgelöst — dieser stoppt intern sowohl Schwenken als auch Drehen (Hard-Stop + Warten). Separate `schwenker_stop`/`drehen_stop`-Aufrufe beim CD-Ablauf entfallen.
 
 ---
 

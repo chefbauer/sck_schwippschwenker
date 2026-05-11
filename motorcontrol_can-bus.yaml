@@ -507,13 +507,13 @@ script:
           //GOTO RELATIVE POSITION Degree
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0xF4, speed_h, speed_l, accel_l, npr_hh, npr_h, npr_l })); // F4 relative °
       - script.execute: script_motor_get_status
-      - delay: 250ms
+      - delay: 50ms
       - while:
           condition:
             lambda: |-
               return id(sensor_motor_status).state != 1;  
           then: 
-            - delay: 250ms
+            - delay: 50ms
             - script.execute: script_motor_get_status
       - lambda: |-
           //id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x82, 0x05 }));  // MODE FOC
