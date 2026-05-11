@@ -260,7 +260,7 @@ script:
             };
             lv_obj_add_flag(default_v[i], LV_OBJ_FLAG_HIDDEN);
             lv_obj_clear_flag(running_v[i], LV_OBJ_FLAG_HIDDEN);
-            if (id(auto_rotation)) {
+            if (id(auto_motorbetrieb)) {
               if (id(dr_modus)) id(script_drehen_start)->execute();
               else              id(script_schwenker_start)->execute();
             }
@@ -305,7 +305,7 @@ script:
           };
           lv_obj_add_flag(running_v[i], LV_OBJ_FLAG_HIDDEN);
           lv_obj_clear_flag(default_v[i], LV_OBJ_FLAG_HIDDEN);
-          if (id(auto_rotation)) id(script_schwenker_stop)->execute();
+          if (id(auto_motorbetrieb)) id(script_schwenker_stop)->execute();
 
   - id: script_slot_start
     parameters:
@@ -333,7 +333,7 @@ script:
           };
           lv_obj_add_flag(default_v[i], LV_OBJ_FLAG_HIDDEN);
           lv_obj_clear_flag(running_v[i], LV_OBJ_FLAG_HIDDEN);
-          if (id(auto_rotation)) {
+          if (id(auto_motorbetrieb)) {
             if (id(dr_modus)) id(script_drehen_start)->execute();
             else id(script_schwenker_start)->execute();
           }
@@ -349,11 +349,11 @@ script:
           if (id(slot_status)[i] == 1) {
             id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
             id(slot_status)[i] = 2;
-            if (id(auto_rotation)) id(script_schwenker_stop)->execute();
+            if (id(auto_motorbetrieb)) id(script_schwenker_stop)->execute();
           } else {
             id(slot_start_ms)[i] = millis();
             id(slot_status)[i] = 1;
-            if (id(auto_rotation)) {
+            if (id(auto_motorbetrieb)) {
               if (id(dr_modus)) id(script_drehen_start)->execute();
               else id(script_schwenker_start)->execute();
             }
@@ -423,8 +423,8 @@ interval:
                 blink_s[ii]->publish_state(true);
                 lv_label_set_text(slot_time_lbl[ii], "00:00");
                 lv_label_set_text(slot_sym_lbl[ii], "\xef\x81\x8b");
-                // Dreher-Automode: bei CD-Ablauf stoppen
-                if (id(auto_rotation)) id(script_schwenker_stop)->execute();
+                // Motor-Automode: bei CD-Ablauf stoppen
+                if (id(auto_motorbetrieb)) id(script_schwenker_stop)->execute();
               } else {
                 uint32_t rem = max_ms - total_ms;
                 uint32_t s = rem / 1000;
@@ -627,11 +627,11 @@ lvgl:
                         text_color: 0xFFFFFF
               
               # Auto-Motor-Button (rund, tangential 45° links oben am Ring)
-              # AN (auto_rotation=true):  grüner BG 0x00FF00, Pfeil+A weiß
-              # AUS (auto_rotation=false): dunkelgrauer BG, Pfeil hellgrau, A dunkelgrau
+              # AN (auto_motorbetrieb=true):  grüner BG 0x00FF00, Pfeil+A weiß
+              # AUS (auto_motorbetrieb=false): dunkelgrauer BG, Pfeil hellgrau, A dunkelgrau
               # Short: Toggle AN ↔ AUS
               - button:
-                  id: btn_auto_rotation
+                  id: btn_auto_motorbetrieb
                   width: 80
                   height: 80
                   align: CENTER
@@ -642,25 +642,25 @@ lvgl:
                   styles: style_action_btn
                   on_short_click:
                     - lambda: |-
-                        id(auto_rotation) = !id(auto_rotation);
-                        if (id(auto_rotation)) {
-                          lv_obj_set_style_bg_color(id(btn_auto_rotation), lv_color_hex(0x00FF00), 0);
-                          lv_obj_set_style_text_color(id(lbl_auto_rotation_icon), lv_color_hex(0xFFFFFF), 0);
-                          lv_obj_set_style_text_color(id(lbl_auto_rotation_a), lv_color_hex(0xFFFFFF), 0);
+                        id(auto_motorbetrieb) = !id(auto_motorbetrieb);
+                        if (id(auto_motorbetrieb)) {
+                          lv_obj_set_style_bg_color(id(btn_auto_motorbetrieb), lv_color_hex(0x00FF00), 0);
+                          lv_obj_set_style_text_color(id(lbl_auto_motorbetrieb_icon), lv_color_hex(0xFFFFFF), 0);
+                          lv_obj_set_style_text_color(id(lbl_auto_motorbetrieb_a), lv_color_hex(0xFFFFFF), 0);
                         } else {
-                          lv_obj_set_style_bg_color(id(btn_auto_rotation), lv_color_hex(0x444444), 0);
-                          lv_obj_set_style_text_color(id(lbl_auto_rotation_icon), lv_color_hex(0xAAAAAA), 0);
-                          lv_obj_set_style_text_color(id(lbl_auto_rotation_a), lv_color_hex(0xAAAAAA), 0);
+                          lv_obj_set_style_bg_color(id(btn_auto_motorbetrieb), lv_color_hex(0x444444), 0);
+                          lv_obj_set_style_text_color(id(lbl_auto_motorbetrieb_icon), lv_color_hex(0xAAAAAA), 0);
+                          lv_obj_set_style_text_color(id(lbl_auto_motorbetrieb_a), lv_color_hex(0xAAAAAA), 0);
                         }
                   widgets:
                     - label:  # Dreh-Icon: ~30% größer als Standard (52px), weiß (AN) / hellgrau (AUS)
-                        id: lbl_auto_rotation_icon
+                        id: lbl_auto_motorbetrieb_icon
                         align: CENTER
                         text: "\uF021"
                         text_font: font_icons_md
                         text_color: 0xFFFFFF
                     - label:  # A-Overlay: ~30% größer (36px), passt in Drehsymbol, weiß (AN) / dunkelgrau (AUS)
-                        id: lbl_auto_rotation_a
+                        id: lbl_auto_motorbetrieb_a
                         align: CENTER
                         text: "A"
                         text_font: font_auto_a
@@ -704,9 +704,9 @@ lvgl:
                         text_font: font_arc_val
                         text_color: 0xAADDFF
 
-              # Schwenker-Steuerung: Großer runder Toggle-Button
+              # Motorbetrieb-Steuerung: Großer runder Toggle-Button
               - obj:
-                  id: schwenker_ring
+                  id: motor_ring
                   width: 360
                   height: 360
                   align: CENTER
@@ -732,7 +732,7 @@ lvgl:
                         clickable: false
                         pad_all: 0
                     - button:
-                        id: btn_schwenker_main
+                        id: btn_motor_main
                         width: 196
                         height: 196
                         align: CENTER
@@ -754,7 +754,7 @@ lvgl:
                           - script.execute: script_schwenker_settings_open
                         widgets:
                           - label:
-                              id: lbl_schwenker_icon
+                              id: lbl_motor_icon
                               align: CENTER
                               text: "\uF021"
                               text_font: font_icon_xl

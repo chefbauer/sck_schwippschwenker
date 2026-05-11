@@ -46,7 +46,7 @@
 #            script_motor_reboot, script_pumpe_a_kurz, script_pumpe_a_lang,
 #            script_pumpe_a_aus, script_system_ein, script_system_aus,
 #            script_drehen_start, script_drehen_stop, script_drehen_settings_open
-#  button:   btn_schwenker_toggle
+#  button:   btn_motor_toggle
 #  interval: (kein id)
 # ─────────────────────────────────────────────────────────────────────────────────
 
@@ -289,7 +289,7 @@ globals:
     restore_value: no
     initial_value: '-1.0'
 
-  - id: auto_rotation           # true = Automatik-Betrieb aktiv (Startbildschirm-Toggle)
+  - id: auto_motorbetrieb        # true = Automatik-Betrieb aktiv (Startbildschirm-Toggle)
     type: bool
     restore_value: no            # beim Reboot immer AN
     initial_value: 'true'
@@ -525,8 +525,8 @@ script:
                    id(sw_halbperiode_ms), id(sw_max_speed_rpm));
           id(sw_aktiv)     = true;
           id(dr_modus)     = false;   // Modus auf Schwenken speichern (NVS)
-          lv_label_set_text(id(lbl_schwenker_icon), "\xef\x80\xa1");  // U+F021 arrows-rotate (Schwenken)
-          lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x229933), 0);
+          lv_label_set_text(id(lbl_motor_icon), "\xef\x80\xa1");  // U+F021 arrows-rotate (Schwenken)
+          lv_obj_set_style_bg_color(id(btn_motor_main), lv_color_hex(0x229933), 0);
           lv_obj_set_style_bg_color(id(btn_schwenker_overlay_toggle), lv_color_hex(0x229933), 0);
           // Auto-Stop: Flag setzen wenn mindestens ein Slot läuft
           id(sw_auto_stop_armed) = false;
@@ -576,7 +576,7 @@ script:
           }
           // Kein blinkender Slot → normaler Stop
           id(sw_stop_pending) = true;
-          lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0xAA8800), 0);
+          lv_obj_set_style_bg_color(id(btn_motor_main), lv_color_hex(0xAA8800), 0);
           lv_obj_set_style_bg_color(id(btn_schwenker_overlay_toggle), lv_color_hex(0xAA8800), 0);
           ESP_LOGI("schwenker", "STOP angefordert – warte auf Zyklusende");
 
@@ -602,7 +602,7 @@ script:
                 id(can_bus)->send_data(${motor_can_id}, false,
                     gen_data_can_motor_set_speed(${motor_can_id}, _dr_dir, 0, _acc_b));
                 lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x666666), 0);
-                lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x666666), 0);
+                lv_obj_set_style_bg_color(id(btn_motor_main), lv_color_hex(0x666666), 0);
                 ESP_LOGI("goto_slot", "Drehen gestoppt fuer Slot-Fahrt");
             - delay: 500ms
       # ── Schwenker sanft stoppen falls er läuft ───────────
@@ -612,7 +612,7 @@ script:
           then:
             - lambda: |-
                 id(sw_stop_pending) = true;
-                lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0xAA8800), 0);
+                lv_obj_set_style_bg_color(id(btn_motor_main), lv_color_hex(0xAA8800), 0);
                 lv_obj_set_style_bg_color(id(btn_schwenker_overlay_toggle), lv_color_hex(0xAA8800), 0);
                 ESP_LOGI("schwenker", "goto_slot: Schwenker läuft – warte auf Zyklusende");
             # Warten bis Interval den Halbzyklus beendet und sw_aktiv=false setzt
@@ -974,7 +974,7 @@ script:
               gen_data_can_motor_set_speed(${motor_can_id}, dr_dir, speed_val, acc_b));
           id(dr_aktiv)  = true;
           id(dr_modus)  = true;   // Modus auf Drehen speichern (NVS)
-          lv_label_set_text(id(lbl_schwenker_icon), "\xef\x8b\xb9");  // U+F2F9 rotate-right (Drehen)
+          lv_label_set_text(id(lbl_motor_icon), "\xef\x8b\xb9");  // U+F2F9 rotate-right (Drehen)
           // Pumpe: RV=true → kein Turbo, normal dauerhaft ein; RV=false → 100% wenn dr_pumpe_auto + aktiv
           if (id(global_rv_aktiv)) {
             id(rv_auto_phase_ms) = 0;    // Interval-Zyklus stoppen
@@ -993,7 +993,7 @@ script:
             id(pumpe_vor_drehen_level) = -1.0f;
           }
           lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x229933), 0);
-          lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x229933), 0);
+          lv_obj_set_style_bg_color(id(btn_motor_main), lv_color_hex(0x229933), 0);
           // Auto-Stop: Flag setzen wenn mindestens ein Slot läuft
           id(dr_auto_stop_armed) = false;
           for (int _s = 0; _s < 6; _s++) {
@@ -1035,7 +1035,7 @@ script:
           id(can_bus)->send_data(${motor_can_id}, false,
               gen_data_can_motor_set_speed(${motor_can_id}, dr_dir, 0, acc_b));
           lv_obj_set_style_bg_color(id(btn_dr_start_stop), lv_color_hex(0x666666), 0);
-          lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x666666), 0);
+          lv_obj_set_style_bg_color(id(btn_motor_main), lv_color_hex(0x666666), 0);
           id(sw_motor_busy) = false;
           id(sw_motor_last_move_ms) = millis();
           ESP_LOGI("drehen", "STOP: Bremsbefehl gesendet");
@@ -1177,7 +1177,7 @@ interval:
               int _dir = (id(sw_richtung) > 0) ? 1 : 0;
               id(can_bus)->send_data(${motor_can_id}, false,
                   gen_data_can_motor_set_speed(${motor_can_id}, _dir, 0, acc));
-              lv_obj_set_style_bg_color(id(btn_schwenker_main), lv_color_hex(0x666666), 0);
+              lv_obj_set_style_bg_color(id(btn_motor_main), lv_color_hex(0x666666), 0);
               lv_obj_set_style_bg_color(id(btn_schwenker_overlay_toggle), lv_color_hex(0x666666), 0);
               id(sw_motor_busy) = false;
               id(sw_motor_last_move_ms) = millis();
@@ -1242,8 +1242,8 @@ interval:
 # ============================================================
 button:
   - platform: template
-    name: "Schwenker Start/Stop"
-    id: btn_schwenker_toggle
+    name: "Motor Start/Stop"
+    id: btn_motor_toggle
     on_press:
       - lambda: |-
           if (id(dr_aktiv)) {

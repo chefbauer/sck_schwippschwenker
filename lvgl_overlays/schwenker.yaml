@@ -27,11 +27,11 @@ obj:
           - lambda: |-
               if (lv_tabview_get_tab_act(id(tabview_schwenker)) == 1) {
                 id(dr_modus) = true;
-                lv_label_set_text(id(lbl_schwenker_icon), "\xef\x8b\xb9");  // rotate-right (Drehen)
+                lv_label_set_text(id(lbl_motor_icon), "\xef\x8b\xb9");  // rotate-right (Drehen)
                 id(script_drehen_settings_open).execute();
               } else {
                 id(dr_modus) = false;
-                lv_label_set_text(id(lbl_schwenker_icon), "\xef\x80\xa1");  // arrows-rotate (Schwenken)
+                lv_label_set_text(id(lbl_motor_icon), "\xef\x80\xa1");  // arrows-rotate (Schwenken)
               }
         tabs:
           # ══════════════════════════════════════════════════
