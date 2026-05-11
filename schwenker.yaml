@@ -471,6 +471,10 @@ script:
     then:
       # Motor-Init: Closed Loop, 128 Subdivisions (identisch zu Drehen), gespeicherter Strom, Idle min
       - lambda: |-
+          if (id(sw_aktiv)) {
+            ESP_LOGI("schwenker", "START ignoriert – laeuft bereits");
+            return;
+          }
           // ── Drehen sofort hard-stoppen falls es noch läuft ────────────────
           // (Guard: btn_schwenker_overlay_toggle prüft dr_aktiv nicht)
           if (id(dr_aktiv)) {
@@ -932,6 +936,10 @@ script:
     mode: single
     then:
       - lambda: |-
+          if (id(dr_aktiv)) {
+            ESP_LOGI("drehen", "START ignoriert – laeuft bereits");
+            return;
+          }
           // ── Schwenker sofort hard-stoppen falls er noch läuft ─────────────
           // (Bug-Guard: btn_dr_start_stop im Overlay prüft sw_aktiv nicht)
           if (id(sw_aktiv)) {
