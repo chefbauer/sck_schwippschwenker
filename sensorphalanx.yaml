@@ -254,6 +254,28 @@ sensor:
                 call.set_brightness(pct / 100.0f);
                 call.perform();
               }
+              if (id(led_auto_brightness)) {
+                // 1 lux → 20%, 100 lux → 100%, darüber gedeckelt; unter 1 lux = 20%
+                float lux = x < 1.0f ? 1.0f : x;
+                float pct_f;
+                if (lux >= 100.0f) {
+                  pct_f = 100.0f;
+                } else {
+                  // logarithmische Rampe: log(1)=0 → 20%, log(100)=2 → 100%
+                  pct_f = 20.0f + (log10f(lux) / 2.0f) * 80.0f;
+                }
+                if (pct_f < 20.0f) pct_f = 20.0f;
+                int led_pct = (int)(pct_f / 5.0f + 0.5f) * 5;
+                int led_cur = lv_slider_get_value(id(slider_led_helligkeit));
+                if (abs(led_pct - led_cur) < 5) return;
+                id(led_auto_updating) = true;
+                lv_slider_set_value(id(slider_led_helligkeit), led_pct, LV_ANIM_OFF);
+                lv_label_set_text_fmt(id(lbl_led_helligkeit_val), "%d%%", led_pct);
+                id(led_auto_updating) = false;
+                auto led_call = id(light_slots_outer).make_call();
+                led_call.set_brightness(led_pct / 100.0f);
+                led_call.perform();
+              }
 
   # ── MLX90632 – IR-Objekttemperatur (berechnete Ableitung) ─
   - platform: template

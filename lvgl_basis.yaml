@@ -177,6 +177,15 @@ globals:
     type: bool
     restore_value: false
     initial_value: 'false'
+  # LED-Helligkeits-Automodus (VEML7700)
+  - id: led_auto_brightness
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: led_auto_updating
+    type: bool
+    restore_value: false
+    initial_value: 'false'
   - id: system_ein
     type: bool
     restore_value: true
@@ -2799,13 +2808,44 @@ lvgl:
                                   text_font: font_normal
                                   text_color: 0x003366
 
+                        # Zeile: LED-Helligkeit Auto
+                        - obj:
+                            id: row_led_auto
+                            width: 960
+                            height: 70
+                            align: TOP_MID
+                            y: 200
+                            bg_opa: TRANSP
+                            border_width: 0
+                            scrollable: false
+                            scrollbar_mode: "off"
+                            widgets:
+                              - label:
+                                  text: "Auto (VEML7700):"
+                                  align: LEFT_MID
+                                  x: 10
+                                  text_font: font_normal
+                                  text_color: 0x000000
+                              - switch:
+                                  id: sw_led_auto
+                                  align: LEFT_MID
+                                  x: 240
+                                  on_value:
+                                    - lambda: |-
+                                        if (!id(led_auto_updating)) {
+                                          id(led_auto_brightness) = x;
+                                          if (!x) {
+                                            // Auto aus: Slider wieder freigeben (nichts weiter)
+                                          }
+                                        }
+
                         # Zeile: Effekt-Auswahl
                         - obj:
                             id: row_led_effekt
                             width: 960
                             height: 70
                             align: TOP_MID
-                            y: 200
+                            y: 290
                             bg_opa: TRANSP
                             border_width: 0
                             scrollable: false
@@ -2914,7 +2954,7 @@ lvgl:
                             width: 960
                             height: 70
                             align: TOP_MID
-                            y: 290
+                            y: 380
                             bg_opa: TRANSP
                             border_width: 0
                             scrollable: false
@@ -2971,7 +3011,7 @@ lvgl:
                             width: 960
                             height: 70
                             align: TOP_MID
-                            y: 380
+                            y: 470
                             bg_opa: TRANSP
                             border_width: 0
                             scrollable: false
