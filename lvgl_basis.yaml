@@ -93,11 +93,11 @@ font:
       - "\uF252"  # hourglass-half (Countdown/Sanduhr)
       - "\ue516"  # jar (fa-jar, FA6 v6.0, Dose/Konserve, cd_mini Reihen-Icon)
 
-  # Dot-Matrix Font für Timer-Anzeige
-  - file: "fonts/5x7-dot-matrix.ttf"
+  # Orbitron Font für Timer-Anzeige
+  - file: "gfonts://Orbitron@700"
     id: font_timer
     size: 38
-    bpp: 1
+    bpp: 4
     glyphs: "0123456789:"
 
   # Arc-Wert-Font (Schwenker-Overlay, groß)
