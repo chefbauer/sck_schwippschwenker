@@ -100,6 +100,16 @@ globals:
     restore_value: no
     initial_value: 'false'
 
+  - id: sw_braking             # true = Richtungswechsel läuft: Speed=0 gesendet, warte auf Stillstand
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+
+  - id: sw_pos_prev            # Winkel-Snapshot für Stillstandserkennung (0–16383, -1=ungültig)
+    type: int
+    restore_value: no
+    initial_value: '-1'
+
   - id: sw_auto_stop_armed     # true = Schwenker soll stoppen wenn alle Timer/CDs enden
     type: bool
     restore_value: no
@@ -473,7 +483,7 @@ script:
           data = add_crc(${motor_can_id}, { 0x82, 0x04 });         // MODE: Closed Loop (4)
           id(can_bus)->send_data(${motor_can_id}, false, data);
           ESP_LOGI("schwenker", "Motor-Modus: Closed Loop (4)");
-          data = add_crc(${motor_can_id}, { 0x84, 0x80 });        // MSTEP: 128 subdivisions (wie Drehen)
+          data = add_crc(${motor_can_id}, { 0x84, 0xFF });        // MSTEP: 256 subdivisions (0xFF, Schwenken)
           id(can_bus)->send_data(${motor_can_id}, false, data);
           int cur_ma = std::max(500, std::min(2000, id(sw_work_current_mA)));
           uint8_t cur_h = (uint8_t)(cur_ma >> 8);
@@ -499,6 +509,8 @@ script:
           // (beim Stop wird sw_richtung negiert, nächster Start = Gegenrichtung)
           id(sw_phase_ms)     = 0;
           id(sw_stop_pending) = false;  // goto_slot kann dieses Flag hinterlassen → explizit löschen
+          id(sw_braking)      = false;
+          id(sw_pos_prev)     = -1;
           ESP_LOGI("schwenker", "START  halbperiode=%u ms  max=%d RPM",
                    id(sw_halbperiode_ms), id(sw_max_speed_rpm));
           id(sw_aktiv)     = true;
@@ -519,7 +531,7 @@ script:
           // Initialer F6-Befehl: einmalig senden – Motor läuft von selbst bis Richtungswechsel
           int _acc_pct0 = std::max(5, std::min(100, id(sw_acc)));
           uint8_t _acc0 = (uint8_t)std::max(1, std::min(254, (int)roundf(_acc_pct0 / 100.0f * 254.0f)));
-          int _spd0     = std::max(1, std::min(3000, id(sw_max_speed_rpm) * 8));
+          int _spd0     = std::max(1, std::min(3000, id(sw_max_speed_rpm) * 16));  // 256 Sub → ×16
           int _dir0     = (id(sw_richtung) > 0) ? 1 : 0;
           id(can_bus)->send_data(${motor_can_id}, false,
               gen_data_can_motor_set_speed(${motor_can_id}, _dir0, _spd0, _acc0));
@@ -602,8 +614,8 @@ script:
       # Closed Loop + 128 Sub + Work current aus NVS laden
       - lambda: |-
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x82, 0x04 }));
-          id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x84, 0x80 }));  // 128 Sub (Schwenken + Drehen identisch)
-          ESP_LOGI("schwenker", "goto_slot: Closed Loop + 128 Sub");
+          id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x84, 0xFF }));  // 256 Sub (Schwenken)
+          ESP_LOGI("schwenker", "goto_slot: Closed Loop + 256 Sub");
           id(script_motor_set_work_current_mA)->execute(id(sw_work_current_mA));
           ESP_LOGI("schwenker", "goto_slot: Work current = %d mA", id(sw_work_current_mA));
       # Relative Fahrt zur Zielposition
@@ -656,7 +668,7 @@ script:
           std::vector<unsigned char> data;
           data = add_crc(${motor_can_id}, { 0x82, 0x04 });        // MODE: Closed Loop
           id(can_bus)->send_data(${motor_can_id}, false, data);
-          data = add_crc(${motor_can_id}, { 0x84, 0x80 });        // MSTEP: 128 subdivisions (Schwenken + Drehen)
+          data = add_crc(${motor_can_id}, { 0x84, 0xFF });        // MSTEP: 256 Sub (Schwenken; Drehen-Start setzt 0x80)
           id(can_bus)->send_data(${motor_can_id}, false, data);
           data = add_crc(${motor_can_id}, { 0x83, 0x03, 0xE8 });  // Work current: 1000 mA
           id(can_bus)->send_data(${motor_can_id}, false, data);
@@ -1101,20 +1113,47 @@ interval:
 
           if (!id(sw_aktiv)) return;
 
-          // ══ Motorbetrieb F6, 128 Sub: Motor regelt Rampe intern via acc-Byte ══
+          // ══ Motorbetrieb F6, 256 Sub (0xFF): Motor regelt Rampe intern via acc-Byte ══
           // sw_acc = 5–100 % Beschleunigung; 100% = acc_byte 254 (schnellste nutzb. Rampe, nie 255!)
           // 5% = acc_byte ~13 (sanfteste Rampe) | Formel: round(pct/100 * 254)
+          // 256 Sub → F6-speed = echte UPM × 16 | Winkelwert (0–16383) ist encoder-absolut, MSTEP-unabhängig
           int _acc_pct = std::max(5, std::min(100, id(sw_acc)));
           uint8_t acc  = (uint8_t)std::max(1, std::min(254, (int)roundf(_acc_pct / 100.0f * 254.0f)));
-          int speed    = std::max(1, std::min(3000, id(sw_max_speed_rpm) * 8));  // echte UPM ×8 = F6-Wert für 128 Sub
+          int speed    = std::max(1, std::min(3000, id(sw_max_speed_rpm) * 16));  // echte UPM ×16 = F6-Wert für 256 Sub
+
+          // ── Brems-Phase: warte bis Motor nach Richtungswechsel-Stop stillsteht ──────
+          // Firmware-Einschränkung: F6-Richtungswechsel ohne Stop = abrupter Ruck → daher stoppen,
+          // auf Stillstand warten (Winkel-Delta < 5 von 16384 ≈ 0,1°), dann neue Richtung starten
+          if (id(sw_braking)) {
+            int _cur  = (int)id(sensor_motor_position).state;
+            int _prev = id(sw_pos_prev);
+            if (_prev < 0) {
+              id(sw_pos_prev) = _cur;  // Erstwert
+              return;
+            }
+            int _delta = abs(_cur - _prev);
+            if (_delta > 8192) _delta = 16384 - _delta;  // Wrap 0°/360°
+            if (_delta < 5) {
+              // Motor steht → neue Richtung starten
+              id(sw_braking)  = false;
+              id(sw_pos_prev) = -1;
+              int _dir = (id(sw_richtung) > 0) ? 1 : 0;
+              id(can_bus)->send_data(${motor_can_id}, false,
+                  gen_data_can_motor_set_speed(${motor_can_id}, _dir, speed, acc));
+              ESP_LOGI("schwenker", "Flip done: dir=%+d F6=%d acc=%d (%d%%)",
+                       id(sw_richtung), speed, (int)acc, _acc_pct);
+            } else {
+              id(sw_pos_prev) = _cur;  // Snapshot für nächsten Check
+            }
+            return;  // sw_phase_ms pausiert während Bremsphase
+          }
 
           id(sw_phase_ms) += 50;
 
-          // Flip-Trigger: Halbperiode abgelaufen → einmalig F6 mit neuer Richtung senden
-          // Motor bremst ab und läuft hoch von selbst per acc-Byte; kein Dauerversand nötig
+          // ── Flip-Trigger: Halbperiode abgelaufen ──────────────────────────────────
           if (id(sw_phase_ms) >= id(sw_halbperiode_ms)) {
             if (id(sw_stop_pending)) {
-              // Sanfter Stop: einmalig F6 speed=0 → Motor bremst selbst aus per acc-Byte
+              // Sanfter Stop: F6 speed=0 → Motor bremst per acc-Byte
               id(sw_stop_pending) = false;
               id(sw_aktiv) = false;
               int _dir = (id(sw_richtung) > 0) ? 1 : 0;
@@ -1129,16 +1168,18 @@ interval:
                        (int)acc, _acc_pct, id(sw_richtung));
               return;
             }
-            // Richtungswechsel: einmalig F6 mit neuer Richtung senden – Motor macht den Rest
+            // Richtungswechsel: erst in alter Richtung abbremsen, dann Stillstand abwarten
+            int _old_dir = (id(sw_richtung) > 0) ? 1 : 0;
+            id(can_bus)->send_data(${motor_can_id}, false,
+                gen_data_can_motor_set_speed(${motor_can_id}, _old_dir, 0, acc));
             id(sw_richtung) = -(id(sw_richtung));
             id(sw_phase_ms) = 0;
-            int _dir = (id(sw_richtung) > 0) ? 1 : 0;
-            id(can_bus)->send_data(${motor_can_id}, false,
-                gen_data_can_motor_set_speed(${motor_can_id}, _dir, speed, acc));
-            ESP_LOGI("schwenker", "Richtungswechsel → %+d  F6-speed=%d  acc=%d (%d%%)",
-                     id(sw_richtung), speed, (int)acc, _acc_pct);
+            id(sw_braking)  = true;
+            id(sw_pos_prev) = (int)id(sensor_motor_position).state;
+            ESP_LOGI("schwenker", "Flip: Bremse alt-dir=%d, warte Stillstand → dann %+d",
+                     _old_dir, id(sw_richtung));
           }
-          // Kein weiteres Senden – Motor läuft selbst bis zum nächsten Flip
+          // sw_phase_ms läuft; Motor fährt in aktueller Richtung bis nächster Flip
 
   # ── RV-Automodus: Beckenpumpe Intervall-Zyklus (nur wenn RV=true, Modus=AUTO, Motor aus) ────
   - interval: 500ms
