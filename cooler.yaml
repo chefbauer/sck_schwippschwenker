@@ -194,8 +194,9 @@ script:
           }
           if (new_trend != kuehl_trend) {
             kuehl_trend = new_trend;
+          } else {
+            kuehl_trend_since_ms = now;  // Trend bestätigt, Fenster erneuern
           }
-          kuehl_trend_since_ms = now;  // bei jedem akzeptierten Update neu starten
 
           // ── Rohleistung berechnen ──────────────────────────────────────────────────
           //  P = m · c · ΔT / Δt  (m=12 kg, c=4186 J/kg·K)
