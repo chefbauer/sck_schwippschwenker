@@ -134,8 +134,8 @@ script:
     mode: single
     then:
       - lambda: |-
-          // Auf 0.05°C-Raster runden (echte Auflösung 1/16°C = 0.0625°C, Mittelwert erzeugt Zwischenwerte)
-          float new_temp = roundf(id(sensor_temp_becken).state * 20.0f) / 20.0f;
+          // Auf 0.05°C-Raster bereits im Sensor gerundet → direkt verwenden
+          float new_temp = id(sensor_temp_becken).state;
           if (isnan(new_temp)) return;
 
           uint32_t now = millis();
@@ -159,7 +159,7 @@ script:
           // ── Dreher-Start: Display auf 0 zurücksetzen ─────────────────────────
           if (dreher_aktiv && !id(kuehl_dreher_war_aktiv)) {
             id(kuehl_p_watts) = 0.0f;
-            id(kuehl_last_temp) = roundf(new_temp * 20.0f) / 20.0f;  // gerundeten Startwert speichern
+            id(kuehl_last_temp) = new_temp;  // bereits gerundet
             id(kuehl_last_change_ms) = now;
             id(kuehl_dreher_war_aktiv) = dreher_aktiv;
             lv_label_set_text(id(lbl_kuehlsaldo), "0W");
@@ -170,9 +170,9 @@ script:
           }
           id(kuehl_dreher_war_aktiv) = dreher_aktiv;
 
-          // ── Temperaturdelta detektieren (0.05°C-Raster → Schwellwert knapp darunter) ──
+          // ── Temperaturdelta detektieren: erst ab 0.10°C Unterschied ─────────
           float delta = new_temp - id(kuehl_last_temp);
-          if (fabsf(delta) < 0.04f) return;   // kleiner als ein Rasterschritt → ignorieren
+          if (fabsf(delta) < 0.09f) return;   // weniger als 2 × 0.05°C-Schritte → ignorieren
 
           uint32_t dt_ms = now - id(kuehl_last_change_ms);
           id(kuehl_last_temp) = new_temp;

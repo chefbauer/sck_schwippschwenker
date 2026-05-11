@@ -220,7 +220,7 @@ sensor:
       if (err != i2c::ERROR_OK) return {};
       int16_t raw = (int16_t)((buf[0] << 8) | buf[1]);
       if (raw == (int16_t)0x8000) return {};
-      return raw / 16.0f;
+      return roundf(raw / 16.0f * 20.0f) / 20.0f;  // auf 0.05°C runden
     on_value:
       - lvgl.widget.refresh: lbl_temp_becken
       - script.execute: script_kuehl_update
