@@ -39,6 +39,8 @@
 > **Generelle Arbeitsanweisungen & Fallstricke** (addressable_lambda, LVGL, YAML-Regeln):
 > → [`sc_arbeitsanweisungen.md`](sc_arbeitsanweisungen.md) — **vor jeder Änderung an `lights.yaml` zwingend lesen!**
 >
+> → [`motor_mks_servo42d.md`](motor_mks_servo42d.md) — **Motor-Referenz: speed_raw-Formel, alle CAN-Kommandos, MSTEP-Tabelle, F4/F5/F6-Format. VOR jedem Motor-Kommando lesen!**
+>
 > **YAML-Komponenten-Übersichten:** Jede YAML-Datei hat am Anfang einen `# ── Komponenten ──`
 > Kommentarblock mit allen ESPHome-Typen und ihren IDs. Dieser Kommentarblock **muss
 > ebenfalls aktualisiert werden**, wenn Komponenten hinzukommen, wegfallen oder umbenannt werden.

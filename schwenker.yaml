@@ -1,23 +1,33 @@
 # ============================================================
-# Schwenker – Sinus-Pendelbewegung via F5 (MKS Servo42D CAN)
+# Schwenker – F6 Motorbetrieb (MKS Servo42D CAN-Bus)
 # ============================================================
 #
-# Speed-Sinus:
-#   → speed = max_rpm × sin(π × t / T_half),  Ziel = ±8.000.000 (∞)
-#   → Motor-internes acc glättet die 50ms-Stufen
-#   → Speed-Auflösung: 1 RPM-Stufe
-#
-# F5-Format (verifiziert, offizielle Doku):
-#   { 0xF5, spd_H, spd_L, acc, pos_HH, pos_H, pos_L } + CRC
-#   speed:   0–3000 RPM  (2 Byte)
-#   acc:     1–254  = Motor interpoliert intern  |  0/255 = kein Ramping
-#   absAxis: int24_t, −8388607 … +8388607  (3 Byte Two's Complement)
+# ┌─────────────────────────────────────────────────────────┐
+# │  MKS Servo42D – SPEED-KONVENTION (F5 / F6 / F4)        │
+# │                                                         │
+# │  speed_raw = rpm × (mstep / 16)                         │
+# │                                                         │
+# │  mstep 16/32/64 → speed_raw = rpm      (nativ, Firmware kompensiert intern) │
+# │  Nur außerhalb 16–64 muss manuell gerechnet werden:              │
+# │  mstep   8 → rpm × 0,5  (selten)                              │
+# │  mstep 128 → rpm × 8   (Drehmodus)                             │
+# │  mstep 256 → rpm × 16  (Schwenkmodus)                          │
+# │                                                         │
+# │  Für mstep 16–64: speed_raw = rpm (nativ, kein Faktor nötig!)    │
+# │  Außerhalb: speed_raw = rpm × (mstep/16) – immer manuell!       │
+# │                                                         │
+# │  acc:  1–254  = Motor interpoliert Rampe intern          │
+# │        0 / 255 = KEIN Ramping → harter Ruck!             │
+# │                                                         │
+# │  F4-Format: { 0xF4, spd_H, spd_L, acc, pos_HH, pos_H, pos_L }
+# │  F5-Format: { 0xF5, spd_H, spd_L, acc, pos_HH, pos_H, pos_L }
+# │  F6-Format: via gen_data_can_motor_set_speed(id, dir, raw, acc)
+# └─────────────────────────────────────────────────────────┘
 #
 # Parameter:
-#   sw_halbperiode_ms :  Zeit pro Richtung in ms  (default: 3000 ms)
-#   sw_max_speed_rpm  :  Scheitel-RPM
-#   sw_acc            :  10–100 % der Halbperiode für Rampen (acc+dec zusammen)
-#                        100 % = purer Sinus (kein Plateau) | 50 % = 25 % rauf, 50 % Plateau, 25 % runter
+#   sw_halbperiode_ms :  Zeit von Start bis Richtungswechsel
+#   sw_max_speed_rpm  :  Fahrgeschwindigkeit in echten RPM
+#   sw_acc            :  5–100 % Beschleunigung (acc-Byte = round(pct/100 × 254))
 #   sw_motor_ramp     :  Motor-internes acc-Byte (1–254) für 50ms-Stufenglättung
 #
 # ============================================================
@@ -483,7 +493,7 @@ script:
           data = add_crc(${motor_can_id}, { 0x82, 0x04 });         // MODE: Closed Loop (4)
           id(can_bus)->send_data(${motor_can_id}, false, data);
           ESP_LOGI("schwenker", "Motor-Modus: Closed Loop (4)");
-          data = add_crc(${motor_can_id}, { 0x84, 0xFF });        // MSTEP: 256 subdivisions (0xFF, Schwenken)
+          data = add_crc(${motor_can_id}, { 0x84, 0xFF });        // MSTEP: 256 Sub → F6: speed_raw = rpm × 16
           id(can_bus)->send_data(${motor_can_id}, false, data);
           int cur_ma = std::max(500, std::min(2000, id(sw_work_current_mA)));
           uint8_t cur_h = (uint8_t)(cur_ma >> 8);
@@ -531,7 +541,7 @@ script:
           // Initialer F6-Befehl: einmalig senden – Motor läuft von selbst bis Richtungswechsel
           int _acc_pct0 = std::max(5, std::min(100, id(sw_acc)));
           uint8_t _acc0 = (uint8_t)std::max(1, std::min(254, (int)roundf(_acc_pct0 / 100.0f * 254.0f)));
-          int _spd0     = std::max(1, std::min(3000, id(sw_max_speed_rpm) * 16));  // 256 Sub → ×16
+          int _spd0     = std::max(1, std::min(3000, id(sw_max_speed_rpm) * 16));  // mstep=256 → rpm × (256/16) = rpm × 16
           int _dir0     = (id(sw_richtung) > 0) ? 1 : 0;
           id(can_bus)->send_data(${motor_can_id}, false,
               gen_data_can_motor_set_speed(${motor_can_id}, _dir0, _spd0, _acc0));
@@ -614,8 +624,8 @@ script:
       # Closed Loop + 128 Sub + Work current aus NVS laden
       - lambda: |-
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x82, 0x04 }));
-          id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x84, 0xFF }));  // 256 Sub (Schwenken)
-          ESP_LOGI("schwenker", "goto_slot: Closed Loop + 256 Sub");
+          id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x84, 0x40 }));  // MSTEP: 64 Sub → nativ 1:1 (speed_raw = rpm, Firmware kompensiert intern)
+          ESP_LOGI("schwenker", "goto_slot: Closed Loop + 64 Sub (Positionsfahrt)");
           id(script_motor_set_work_current_mA)->execute(id(sw_work_current_mA));
           ESP_LOGI("schwenker", "goto_slot: Work current = %d mA", id(sw_work_current_mA));
       # Relative Fahrt zur Zielposition
@@ -668,7 +678,7 @@ script:
           std::vector<unsigned char> data;
           data = add_crc(${motor_can_id}, { 0x82, 0x04 });        // MODE: Closed Loop
           id(can_bus)->send_data(${motor_can_id}, false, data);
-          data = add_crc(${motor_can_id}, { 0x84, 0xFF });        // MSTEP: 256 Sub (Schwenken; Drehen-Start setzt 0x80)
+          data = add_crc(${motor_can_id}, { 0x84, 0xFF });        // MSTEP: 256 Sub → F6: speed_raw = rpm × 16  (Drehen-Start setzt 0x80 = 128 Sub = rpm × 8)
           id(can_bus)->send_data(${motor_can_id}, false, data);
           data = add_crc(${motor_can_id}, { 0x83, 0x03, 0xE8 });  // Work current: 1000 mA
           id(can_bus)->send_data(${motor_can_id}, false, data);
@@ -953,7 +963,7 @@ script:
               add_crc(${motor_can_id}, { 0x82, mode_byte }));
           ESP_LOGI("drehen", "Motor-Modus: %d", (int)mode_byte);
           id(can_bus)->send_data(${motor_can_id}, false,
-              add_crc(${motor_can_id}, { 0x84, 0x80 }));  // 128 Subdivisions (Feinrampe)
+              add_crc(${motor_can_id}, { 0x84, 0x80 }));  // MSTEP: 128 Sub → F6: speed_raw = rpm × 8
           int cur_ma = std::max(500, std::min(2000, id(sw_work_current_mA)));
           uint8_t cur_h = (uint8_t)(cur_ma >> 8);
           uint8_t cur_l = (uint8_t)(cur_ma & 0xFF);
@@ -964,11 +974,11 @@ script:
           ESP_LOGI("drehen", "Strom: %d mA", cur_ma);
       - delay: 150ms
       - lambda: |-
-          // 128 Subdivisions: echte UPM × 8 = F6-Speed-Wert
+          // mstep=128 → F6: speed_raw = rpm × (128/16) = rpm × 8
           // acc 1–254: Motor-Hardware-Rampe; 0/255 = kein Ramping!
           id(dr_speed_rpm) = std::max(1, std::min(150, id(dr_speed_rpm)));
           id(dr_acc)       = std::max(1, std::min(254, id(dr_acc)));
-          int speed_val    = id(dr_speed_rpm) * 8;           // ×8 für 128 Subdivisions
+          int speed_val    = id(dr_speed_rpm) * 8;           // mstep=128 → rpm × 8
           uint8_t acc_b    = (uint8_t)id(dr_acc);
           int dr_dir       = (id(dr_richtung) > 0) ? 1 : 0;
           id(can_bus)->send_data(${motor_can_id}, false,
@@ -1130,7 +1140,7 @@ interval:
           // 256 Sub → F6-speed = echte UPM × 16 | Winkelwert (0–16383) ist encoder-absolut, MSTEP-unabhängig
           int _acc_pct = std::max(5, std::min(100, id(sw_acc)));
           uint8_t acc  = (uint8_t)std::max(1, std::min(254, (int)roundf(_acc_pct / 100.0f * 254.0f)));
-          int speed    = std::max(1, std::min(3000, id(sw_max_speed_rpm) * 16));  // echte UPM ×16 = F6-Wert für 256 Sub
+          int speed    = std::max(1, std::min(3000, id(sw_max_speed_rpm) * 16));  // mstep=256 → rpm × (256/16) = rpm × 16
 
           // Bremszeit-Schätzung: ramp_ms = speed_raw × (256 − acc) × 0,05 ms  (identische Formel wie Drehen)
           // Stopp-Befehl wird ramp_ms früher gesendet → Richtungswechsel trifft auf sw_halbperiode_ms

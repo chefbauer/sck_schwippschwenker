@@ -123,10 +123,13 @@ canbus:
             {
               id(sensor_motor_status).publish_state(p1);
               ESP_LOGI("candump F1", "Motor Status: %i", p1);
-              if (p1 == 1) // Stopp!
-              {
-                id(script_motor_get_winkel).execute();
-              }
+              // AUSKOMMENTIERT: auto-trigger script_motor_get_winkel bei Stopp
+              // Stört Schwenker-Bremsphase: 0x30 wird bereits alle 10ms gesendet (interval);
+              // ein zusätzliches 0x30 hier erzeugt Race-Condition in sw_braking-Winkelvergleich
+              // if (p1 == 1) // Stopp!
+              // {
+              //   id(script_motor_get_winkel).execute();
+              // }
             }
             else
             {
@@ -448,6 +451,10 @@ script:
       #     std::vector<uint8_t> data = add_crc(can_id, {0xA4, 0x00, idle_percent});
       #     id(can_bus)->send_data(can_id, use_extended_id, data);
 
+  # speed_rpm-Konvention für F4 (relative Positionsfahrt):
+  # mstep 16/32/64 = NATIV: speed_raw = rpm (1:1, Firmware kompensiert intern)
+  # → goto_slot setzt mstep=64 → speed_rpm=6 bedeutet exakt 6 RPM, kein Faktor!
+  # Außerhalb 16–64: speed_raw = rpm × (mstep/16) — manuell rechnen!
   - id: script_motor_goto_relative_degree
     parameters:
       speed_rpm: int
