@@ -211,9 +211,10 @@ sensor:
     state_class: measurement
     update_interval: 1s
     filters:
-      - sliding_window_moving_average:
-          window_size: 5
+      - median:
+          window_size: 3
           send_every: 1
+          send_first_at: 2
     lambda: |-
       uint8_t buf[2];
       auto err = id(i2c_bus)->read(0x48, buf, 2);
