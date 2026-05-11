@@ -647,7 +647,7 @@ script:
           // WICHTIG: acc muss ≥1 sein – acc=0 oder 255 = kein Ramping → harter Ruck!
           uint8_t slot_acc = 100;
           id(script_motor_goto_relative_degree)->execute(96, slot_acc, rel);
-      // 12 RPM: max. Weg 180° ≈ 2.5 s + Rampe ≈ 3.5 s
+      # 12 RPM: max. Weg 180° ≈ 2.5 s + Rampe ≈ 3.5 s
       - delay: 3500ms
       - lambda: |-
           id(sw_motor_busy) = false;
