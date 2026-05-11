@@ -144,9 +144,9 @@ obj:
                         height: 260
                         align: TOP_MID
                         y: 40
-                        min_value: 10
+                        min_value: 5
                         max_value: 100
-                        value: 100
+                        value: 50
                         adjustable: true
                         arc_color: 0x885500
                         arc_width: 15
@@ -160,19 +160,18 @@ obj:
                           radius: 11
                         on_value:
                           - lambda: |-
-                              id(sw_acc) = (int)x;
-                              char buf[8];
-                              snprintf(buf, sizeof(buf), "%d%%", (int)x);
+                              // Snap auf 5%-Schritte; 100%=acc_byte 254, nie 0/255 (= Ruck!)
+                              int val = ((int)x / 5) * 5;
+                              if (val < 5) val = 5;
+                              id(sw_acc) = val;
+                              // Nur snap-zurücksetzen wenn tatsächlich geründet (verhindert Rekursion)
+                              if (val != (int)x) lv_arc_set_value(id(arc_acc), val);
+                              char buf[6];
+                              snprintf(buf, sizeof(buf), "%d%%", val);
                               lv_label_set_text(id(lbl_arc_acc_val), buf);
-                              const char* shape;
-                              if (x >= 80)      shape = "/\\";
-                              else if (x >= 55) shape = "/_\\";
-                              else if (x >= 35) shape = "/___\\";
-                              else              shape = "/_____\\";
-                              lv_label_set_text(id(lbl_trapez_shape), shape);
                     - label:
                         id: lbl_arc_acc_val
-                        text: "100%"
+                        text: "50%"
                         align: TOP_MID
                         y: 148
                         text_font: font_arc_val
@@ -180,7 +179,8 @@ obj:
                         text_align: CENTER
                     - label:
                         id: lbl_trapez_shape
-                        text: "/\\"
+                        text: ""          # [VERALTET] war Sinus-Trapez-Visualisierung
+                        hidden: true
                         align: TOP_MID
                         y: 210
                         text_font: font_normal
@@ -292,14 +292,8 @@ obj:
                               lv_label_set_text(id(lbl_arc_zeit_val), b1);
                               char b2[6]; snprintf(b2,sizeof(b2),"%d",id(preset1_rpm));
                               lv_label_set_text(id(lbl_arc_rpm_val), b2);
-                              char b3[8]; snprintf(b3,sizeof(b3),"%d%%",id(preset1_acc));
+                              char b3[6]; snprintf(b3,sizeof(b3),"%d%%",id(preset1_acc));
                               lv_label_set_text(id(lbl_arc_acc_val), b3);
-                              int _a1=id(preset1_acc); const char* _sh1;
-                              if(_a1>=80) _sh1="/\\";
-                              else if(_a1>=55) _sh1="/_\\";
-                              else if(_a1>=35) _sh1="/___\\";
-                              else _sh1="/_____\\";
-                              lv_label_set_text(id(lbl_trapez_shape), _sh1);
                               ESP_LOGI("preset","P1 geladen");
                         on_long_press:
                           - lambda: |-
@@ -347,14 +341,8 @@ obj:
                               lv_label_set_text(id(lbl_arc_zeit_val), b1);
                               char b2[6]; snprintf(b2,sizeof(b2),"%d",id(preset2_rpm));
                               lv_label_set_text(id(lbl_arc_rpm_val), b2);
-                              char b3[8]; snprintf(b3,sizeof(b3),"%d%%",id(preset2_acc));
+                              char b3[6]; snprintf(b3,sizeof(b3),"%d%%",id(preset2_acc));
                               lv_label_set_text(id(lbl_arc_acc_val), b3);
-                              int _a2=id(preset2_acc); const char* _sh2;
-                              if(_a2>=80) _sh2="/\\";
-                              else if(_a2>=55) _sh2="/_\\";
-                              else if(_a2>=35) _sh2="/___\\";
-                              else _sh2="/_____\\";
-                              lv_label_set_text(id(lbl_trapez_shape), _sh2);
                               ESP_LOGI("preset","P2 geladen");
                         on_long_press:
                           - lambda: |-
@@ -402,14 +390,8 @@ obj:
                               lv_label_set_text(id(lbl_arc_zeit_val), b1);
                               char b2[6]; snprintf(b2,sizeof(b2),"%d",id(preset3_rpm));
                               lv_label_set_text(id(lbl_arc_rpm_val), b2);
-                              char b3[8]; snprintf(b3,sizeof(b3),"%d%%",id(preset3_acc));
+                              char b3[6]; snprintf(b3,sizeof(b3),"%d%%",id(preset3_acc));
                               lv_label_set_text(id(lbl_arc_acc_val), b3);
-                              int _a3=id(preset3_acc); const char* _sh3;
-                              if(_a3>=80) _sh3="/\\";
-                              else if(_a3>=55) _sh3="/_\\";
-                              else if(_a3>=35) _sh3="/___\\";
-                              else _sh3="/_____\\";
-                              lv_label_set_text(id(lbl_trapez_shape), _sh3);
                               ESP_LOGI("preset","P3 geladen");
                         on_long_press:
                           - lambda: |-
@@ -457,14 +439,8 @@ obj:
                               lv_label_set_text(id(lbl_arc_zeit_val), b1);
                               char b2[6]; snprintf(b2,sizeof(b2),"%d",id(preset4_rpm));
                               lv_label_set_text(id(lbl_arc_rpm_val), b2);
-                              char b3[8]; snprintf(b3,sizeof(b3),"%d%%",id(preset4_acc));
+                              char b3[6]; snprintf(b3,sizeof(b3),"%d%%",id(preset4_acc));
                               lv_label_set_text(id(lbl_arc_acc_val), b3);
-                              int _a4=id(preset4_acc); const char* _sh4;
-                              if(_a4>=80) _sh4="/\\";
-                              else if(_a4>=55) _sh4="/_\\";
-                              else if(_a4>=35) _sh4="/___\\";
-                              else _sh4="/_____\\";
-                              lv_label_set_text(id(lbl_trapez_shape), _sh4);
                               ESP_LOGI("preset","P4 geladen");
                         on_long_press:
                           - lambda: |-
@@ -512,14 +488,8 @@ obj:
                               lv_label_set_text(id(lbl_arc_zeit_val), b1);
                               char b2[6]; snprintf(b2,sizeof(b2),"%d",id(preset5_rpm));
                               lv_label_set_text(id(lbl_arc_rpm_val), b2);
-                              char b3[8]; snprintf(b3,sizeof(b3),"%d%%",id(preset5_acc));
+                              char b3[6]; snprintf(b3,sizeof(b3),"%d%%",id(preset5_acc));
                               lv_label_set_text(id(lbl_arc_acc_val), b3);
-                              int _a5=id(preset5_acc); const char* _sh5;
-                              if(_a5>=80) _sh5="/\\";
-                              else if(_a5>=55) _sh5="/_\\";
-                              else if(_a5>=35) _sh5="/___\\";
-                              else _sh5="/_____\\";
-                              lv_label_set_text(id(lbl_trapez_shape), _sh5);
                               ESP_LOGI("preset","P5 geladen");
                         on_long_press:
                           - lambda: |-
