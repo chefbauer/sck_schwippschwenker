@@ -851,10 +851,14 @@ script:
           lv_obj_set_style_bg_color(id(btn_system_power), lv_color_hex(0x229933), 0);
           auto call = id(climate_thermostat).make_call();
           call.set_mode("cool");
+          // Zieltemperatur auf gespeicherten Wert setzen (verhindert -1°C Artefakt)
+          float _t = id(thermostat_ziel_x10) / 10.0f;
+          if (_t < -10.0f || _t > 30.0f) _t = 8.0f;  // Plausibilitäts-Guard
+          call.set_target_temperature(_t);
           call.perform();
           // Pumpe auf AUTO setzen
           id(script_beckenpumpe_set_modus)->execute(2);
-          ESP_LOGI("system", "EIN");
+          ESP_LOGI("system", "EIN: Thermostat COOL %.1f°C", _t);
 
   # ── System AUS ───────────────────────────────────────────
   - id: script_system_aus
@@ -864,16 +868,23 @@ script:
           id(system_ein) = false;
           lv_obj_set_style_bg_color(id(btn_system_power), lv_color_hex(0xAA2200), 0);
           id(script_schwenker_stop).execute();
-          auto call = id(climate_thermostat).make_call();
-          call.set_mode("off");
-          call.perform();
+          {
+            auto call = id(climate_thermostat).make_call();
+            call.set_mode("off");
+            // Zieltemperatur auf gespeicherten Wert rücksetzen (verhindert -1°C Dauerbetrieb beim nächsten EIN)
+            float _t = id(thermostat_ziel_x10) / 10.0f;
+            if (_t < -10.0f || _t > 30.0f) _t = 8.0f;
+            call.set_target_temperature(_t);
+            call.perform();
+          }
           id(output_pumpe_dacA).turn_off();
           id(pumpe_a_aktiv) = false;
           id(pumpe_a_auto_war_an) = false;
           id(script_beckenpumpe_set_modus)->execute(0);
           if (id(dr_aktiv)) id(script_drehen_stop).execute();
           id(output_pumpe_dacB).turn_off();
-          ESP_LOGI("system", "AUS");
+          ESP_LOGI("system", "AUS: Thermostat OFF, Ziel=%.1f°C gesichert",
+                   id(thermostat_ziel_x10) / 10.0f);
 
   # ── Drehen: Einstellungs-Overlay syncen ──────────────────
   - id: script_drehen_settings_open
