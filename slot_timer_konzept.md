@@ -107,8 +107,57 @@ Gilt für Stoppuhr **und** Countdown identisch. **Neu: Smart Weiter-Logik.**
 6. Wechsel zurück zur **Default-Ansicht**
 7. **Dreher-Automode Smart Stop/Weiter:** falls `auto_rotation == true`:
    - Prüfe ob noch andere Slots aktiv: irgendein `slot_status[j] > 0` (j ≠ i) **oder** irgendein `bin_slotN_blink == true`
-   - **Aktive Slots vorhanden** → `script_schwenker_start()` – Schwenker läuft weiter
-   - **Kein aktiver Slot mehr** → `script_schwenker_stop()` – alles stoppt
+   - **Aktive Slots vorhanden** → Trigger: `script_schwenker_start()` – wird ignoriert falls Motor bereits läuft
+   - **Kein aktiver Slot mehr** → Trigger: `script_schwenker_stop()` – wird ignoriert falls Motor bereits steht
+
+---
+
+## Trigger-Logik (Grundprinzip)
+
+Alle timer-ausgelösten Motor-Aktionen sind **einseitige Anfragen (Fire-and-Forget)**, keine erzwungenen Zustandsübergänge.
+
+### Regeln
+
+1. **Trigger prüft aktuellen Motorstatus** und handelt nur wenn der angeforderte Zielzustand sich vom Ist-Zustand unterscheidet.
+   - START-Trigger, Motor läuft bereits → **ignoriert**
+   - STOP-Trigger, Motor steht bereits → **ignoriert**
+
+2. **Manueller Override erlaubt.** Der Nutzer kann den Motor jederzeit manuell starten oder stoppen — das bricht keine laufende Timer-Logik. Die Timer laufen weiter.
+
+3. **Nächster Trigger wirkt normal.** Wurde der Motor manuell gestartet (z. B. Drehen) und der nächste Pause-Trigger kommt → Motor wird pausiert/goto_slot. Der manuelle Stand wird nicht „gemerkt" und nicht bevorzugt.
+
+4. **Doppelte Trigger werden ignoriert.** Feuern zwei Events dasselbe an (z. B. Weiter-Trigger, aber Motor dreht schon manuell) → kein zweifaches Starten, kein Fehler.
+
+### Praxisbeispiel 1: Manuelles Weiterdrehen nach Pause
+
+```
+[Trigger] Pause → goto_slot(N)         Motor stoppt + fährt zu Slot N
+[Manuell] Nutzer startet Drehen        Motor dreht
+[Trigger] nächster Pause → goto_slot   Motor stoppt + fährt zu neuem Slot
+```
+→ Funktioniert korrekt. Manueller Start zwischen Triggern ist ausdrücklich erlaubt.
+
+### Praxisbeispiel 2: Quittierung, Motor läuft bereits
+
+```
+[Manuell] Nutzer dreht manuell         sw_aktiv / dr_aktiv = true
+[Touch]   Nutzer quittiert blink-Slot  → Trigger: schwenker_start() (Weiter, weil andere Slots aktiv)
+[Prüfung] Motor läuft bereits          → Trigger ignoriert (Doppel-Trigger = same state)
+```
+→ Das „Weiter"-Signal der Quittierung wird geschluckt, weil Motor schon läuft.
+
+### Was ist „gleicher Zustand" (Duplikat)?
+
+| Trigger | Ignoriert wenn |
+|---------|---------------|
+| `schwenker_start()` | `sw_aktiv == true` |
+| `drehen_start()` | `dr_aktiv == true` |
+| `schwenker_stop()` | `!sw_aktiv && !dr_aktiv` |
+| `goto_slot(N)` | Motor steht bereits und aktuelle Position ≈ Slot N (innerhalb Toleranz) |
+
+### Wo wird geprüft?
+
+Die Duplikat-Prüfung liegt in den **Scripts selbst** (`script_schwenker_start`, `script_drehen_start`, `script_schwenker_stop`), nicht im aufrufenden Event-Handler. Die Timer-Events müssen nichts prüfen — sie feuern einfach.
 
 ---
 
@@ -152,15 +201,15 @@ Die globale Variable `auto_rotation` (bool, in `schwenker.yaml`) steuert ob der 
 
 ### Zusammenfassung
 
-| Ereignis | `auto_rotation == false` | `auto_rotation == true` |
-|----------|--------------------------|-------------------------|
-| Timer/CD Start | — | `script_schwenker_start()` |
-| Pause (läuft → paused) | — | `script_schwenker_goto_slot(i+1)` |
-| Weiter (paused → läuft) | — | `script_schwenker_start()` |
-| CD abgelaufen (auto) | — | `script_schwenker_stop()` |
-| Blink quittiert (Nutzer-Touch) | — | `script_schwenker_goto_slot(i+1)` |
-| X-Stop, andere aktiv | — | `script_schwenker_start()` (weiter) |
-| X-Stop, keine mehr aktiv | — | `script_schwenker_stop()` |
+| Ereignis | `auto_rotation == false` | `auto_rotation == true` | Trigger ignoriert wenn |
+|----------|--------------------------|-------------------------|------------------------|
+| Timer/CD Start | — | `script_schwenker_start()` | Motor läuft bereits |
+| Pause (läuft → paused) | — | `script_schwenker_goto_slot(i+1)` | Motor steht + bereits an Slot N |
+| Weiter (paused → läuft) | — | `script_schwenker_start()` | Motor läuft bereits |
+| CD abgelaufen (auto) | — | `script_schwenker_stop()` | Motor steht bereits |
+| Blink quittiert (Nutzer-Touch) | — | `script_schwenker_goto_slot(i+1)` | Motor steht + bereits an Slot N |
+| X-Stop, andere aktiv | — | `script_schwenker_start()` | Motor läuft bereits |
+| X-Stop, keine mehr aktiv | — | `script_schwenker_stop()` | Motor steht bereits |
 
 ---
 
@@ -373,28 +422,75 @@ Für Slots 2–6 identisch mit entsprechendem Index.
 
 ### 🔜 Noch zu implementieren
 
-1. **Pause → goto_slot (neue Logik):**
-   - `script_slot_pause_resume` ruft bei Pause aktuell noch `script_schwenker_stop()` — muss auf `script_schwenker_goto_slot(i+1)` geändert werden
-   - Betrifft: `script_slot_pause_resume` in `lvgl_basis.yaml`
+> **Implementierungsstand-Analyse (11.05.2026):** Die meisten Timer-Scripts sind fertig. Folgende 4 Stellen weichen noch vom Konzept ab:
 
-2. **Blink-Quittierung → goto_slot:**
-   - Wenn `bin_slotN_blink == true` und Nutzer drückt Timer-Bereich (`slotN_running_touch`): `script_schwenker_goto_slot(i+1)` (statt aktuell nichts / schwenker_stop)
-   - Status → 2 (pausiert/quittiert), Blink aus
-   - Slot verbleibt in Laufend-Ansicht (kein Zurück zu Default)
-   - Achtung: der bestehende Blink-Loop in `script_schwenker_stop` fährt den Motor bei manuell ausgelöstem Stop zu blinkenden Slots – das bleibt; neu ist, dass der Nutzer-Touch auf einem blinkenden Slot ebenfalls goto_slot triggert
+---
 
-3. **X-Button Smart Stop/Weiter (`script_slot_stop`):**
-   - Nach Slot-Clear: Prüfung auf verbleibende aktive Slots (`slot_status[j]>0` oder `bin_slotN_blink==true` für j≠i)
-   - Aktive vorhanden → `script_schwenker_start()` (weiter, nicht stop)
-   - Keine mehr → `script_schwenker_stop()` (wie bisher)
-   - Betrifft: `script_slot_stop` in `lvgl_basis.yaml`
+#### ① `script_slot_pause_resume` in `lvgl_basis.yaml` — Pause-Zweig falsch
 
-4. **Interval-Loop Countdown-Ablauf:**
-   - Bei Ablauf: `bin_slotN_blink = true` + `script_schwenker_stop()` — bleibt wie bisher
-   - Kein automatisches goto_slot beim Ablauf; erst Nutzer-Touch auf Blink löst goto_slot aus
+**Ist:** `if (slot_status == 1) { … status=2; script_schwenker_stop() }`  
+**Soll:** `if (slot_status == 1) { … status=2; script_schwenker_goto_slot(i+1) }`
 
-5. **`font_cd_btn` prüfen:** Muss in `font:`-Block von `lvgl_basis.yaml` definiert sein (42px Roboto).
+→ Datei: `lvgl_basis.yaml`, Script `script_slot_pause_resume`, Pause-Zweig
 
-6. **Icon `\uE516`** (FA jar) muss in `font_icons`-Glyphs eingetragen sein.
+---
 
-7. **Kein status=3:** `bin_slotN_blink` bleibt separates Flag. Nach Blink-Quittierung: status=2, bin_blink=false.
+#### ② `script_slot_stop` in `lvgl_basis.yaml` — kein Smart Stop/Weiter
+
+**Ist:** `if (auto_rotation) script_schwenker_stop()` (immer, blind)  
+**Soll:** andere Slots prüfen → aktive vorhanden: `schwenker_start()` / keine mehr: `schwenker_stop()`
+
+```
+// Pseudo:
+bool any_active = false;
+for j ≠ i: if (slot_status[j] > 0 || bin_slotj_blink) { any_active = true; break; }
+if (any_active) { if (dr_modus) script_drehen_start() else schwenker_start() }
+else            { schwenker_stop() }
+```
+
+→ Datei: `lvgl_basis.yaml`, Script `script_slot_stop`, letzter `if (auto_rotation)`-Block
+
+---
+
+#### ③ `slotN_running_touch` on_short_click — kein Blink-Check
+
+**Ist:** ruft bedingungslos `script_slot_pause_resume(i)` auf  
+**Soll:** wenn `bin_slotN_blink`: Blink quittieren + `goto_slot(i+1)` (nicht pause_resume); sonst `pause_resume(i)`
+
+```
+// Pseudo in Lambda:
+if (blink_s[i]->state) {
+    blink_s[i]->publish_state(false);
+    slot_status[i] = 2;
+    lv_label reset …
+    if (auto_rotation) script_schwenker_goto_slot(i+1)
+} else {
+    script_slot_pause_resume(i)
+}
+```
+
+→ Datei: `lvgl_basis.yaml`, alle 6 `slotN_running_touch` on_short_click-Handler (Slots 1–6)  
+**Hinweis:** Die Ring-Marker-Buttons (`ring_slotN_marker`) machen goto_slot bereits korrekt direkt – die müssen nicht geändert werden.
+
+---
+
+#### ④ `script_schwenker_start` + `script_drehen_start` — kein Idempotenz-Guard
+
+**Ist:** kein Guard für „läuft bereits"; `mode: single` verhindert nur konkurrente Ausführung, nicht erneute sequentielle Starts  
+**Soll:** jeweils als erste Zeile:  
+- `script_schwenker_start`: `if (id(sw_aktiv)) { ESP_LOGI(…); return; }`  
+- `script_drehen_start`: `if (id(dr_aktiv)) { ESP_LOGI(…); return; }`
+
+→ Datei: `schwenker.yaml`, beide Scripts; Guard in der **ersten Lambda**, vor Motor-Init
+
+---
+
+#### ✅ Bereits korrekt (kein Änderungsbedarf)
+
+- `script_schwenker_stop`: Guard `if (!sw_aktiv)` → No-op ✅  
+- `script_schwenker_stop`: Blink-Loop → goto_slot wenn Slot blinkt ✅  
+- `script_drehen_stop`: Blink-Loop → goto_slot ✅  
+- Ring-Marker-Buttons (`ring_slotN_marker`): rufen `goto_slot` direkt auf, ohne stop-Trigger ✅  
+- Interval-Loop Countdown-Ablauf: `schwenker_stop()` bei CD=0 ✅  
+- `set_countdown_secs` (mode=0): `schwenker_start()`/`drehen_start()` je nach `dr_modus` ✅  
+- `script_slot_start`: `schwenker_start()`/`drehen_start()` je nach `dr_modus` ✅

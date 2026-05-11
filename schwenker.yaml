@@ -624,8 +624,8 @@ script:
       # Closed Loop + 128 Sub + Work current aus NVS laden
       - lambda: |-
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x82, 0x04 }));
-          id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x84, 0x40 }));  // MSTEP: 64 Sub → nativ 1:1 (speed_raw = rpm, Firmware kompensiert intern)
-          ESP_LOGI("schwenker", "goto_slot: Closed Loop + 64 Sub (Positionsfahrt)");
+          id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x84, 0x80 }));  // MSTEP: 128 Sub → speed_raw = rpm × 8 (mstep/16)
+          ESP_LOGI("schwenker", "goto_slot: Closed Loop + 128 Sub (Positionsfahrt)");
           id(script_motor_set_work_current_mA)->execute(id(sw_work_current_mA));
           ESP_LOGI("schwenker", "goto_slot: Work current = %d mA", id(sw_work_current_mA));
       # Relative Fahrt zur Zielposition
@@ -643,23 +643,12 @@ script:
           while (rel < -180.0f) rel += 360.0f;
           ESP_LOGI("schwenker", "goto_slot %d  target=%.1f°  aktuell=%.1f°  rel=%.1f°",
                    slot, target_deg, current_deg, rel);
-          // 6 RPM + acc 10: sanft, ruckelfrei im Wasser
+          // 12 RPM real, mstep 128 → speed_raw = 12 × 8 = 96; acc 100
           // WICHTIG: acc muss ≥1 sein – acc=0 oder 255 = kein Ramping → harter Ruck!
-          uint8_t slot_acc = 10;  // nie 0 setzen!
-          if (slot_acc == 0) slot_acc = 1;
-          id(script_motor_goto_relative_degree)->execute(6, slot_acc, rel);
-      # Wartezeit: max. Weg ≈ 180° bei 6 RPM + acc 10 ≈ ~7 s
-      - delay: 7000ms
-      - lambda: |-
-          // Sanfter Halt: F5 speed=0 mit acc=10 → Motor bremst kontrolliert
-          // Danach FOC → kein Haltestrom
-          uint8_t stop_acc = 10;  // nie 0 – 0 = sofortiger Ruck!
-          int32_t target = (int32_t)(id(sw_richtung)) * 8000000;
-          uint32_t val = (uint32_t)(target) & 0x00FFFFFFU;
-          id(can_bus)->send_data(${motor_can_id}, false,
-              add_crc(${motor_can_id}, { 0xF5, 0x00, 0x00, stop_acc,
-                  (uint8_t)((val>>16)&0xFF), (uint8_t)((val>>8)&0xFF), (uint8_t)(val&0xFF) }));
-      - delay: 500ms
+          uint8_t slot_acc = 100;
+          id(script_motor_goto_relative_degree)->execute(96, slot_acc, rel);
+      // 12 RPM: max. Weg 180° ≈ 2.5 s + Rampe ≈ 3.5 s
+      - delay: 3500ms
       - lambda: |-
           id(sw_motor_busy) = false;
           id(sw_motor_last_move_ms) = millis();

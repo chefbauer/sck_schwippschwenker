@@ -658,7 +658,7 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 >   höhere Ströme würden den Motor überlasten und bei Blockade wäre ein Motorschaden möglich.
 > - Geschwindigkeit und Beschleunigung müssen **wasserangepasst** klein bleiben:
 >   - **Schwenken:** `sw_max_speed_rpm = 15`, `sw_acc = 200` (Sinus glättet Richtungswechsel)
->   - **Positionsfahrt:** `speed = 5 RPM`, `acc = 50` (langsam und weich im Wasser)
+>   - **Positionsfahrt (goto_slot):** `speed_raw = 96` (= 12 RPM × 8 bei mstep 128), `acc = 100`, delay 3,5 s
 > - Eine Blockierung durch übermäßige Last → Motor bleibt stehen, 2 A Limit verhindert Schlimmeres.
 >   Die Motortemperatur und das Verhalten im Wasser müssen bei der Inbetriebnahme beobachtet werden.
 
