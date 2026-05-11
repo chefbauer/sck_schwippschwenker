@@ -181,7 +181,7 @@ globals:
   - id: led_auto_brightness
     type: bool
     restore_value: false
-    initial_value: 'false'
+    initial_value: 'true'
   - id: led_auto_updating
     type: bool
     restore_value: false
@@ -2796,6 +2796,10 @@ lvgl:
                                   value: 100
                                   on_value:
                                     - lambda: |-
+                                        if (!id(led_auto_updating)) {
+                                          id(led_auto_brightness) = false;
+                                          lv_obj_clear_state(id(sw_led_auto), LV_STATE_CHECKED);
+                                        }
                                         auto call = id(light_slots_outer).make_call();
                                         call.set_brightness((float)x / 100.0f);
                                         call.perform();
@@ -2830,6 +2834,7 @@ lvgl:
                                   id: sw_led_auto
                                   align: LEFT_MID
                                   x: 240
+                                  checked: true
                                   on_value:
                                     - lambda: |-
                                         if (!id(led_auto_updating)) {
