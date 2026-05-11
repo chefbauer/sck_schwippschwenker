@@ -64,7 +64,7 @@ font:
     id: font_temp
     size: 40
     bpp: 4
-    glyphs: "0123456789.-°C "
+    glyphs: "0123456789.-°CW"
 
   # Symbol-Font – Font Awesome Solid (Play/Pause/Schneeflocke/Einstellungen)
   - file: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.ttf"

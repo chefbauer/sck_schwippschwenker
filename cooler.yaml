@@ -135,6 +135,8 @@ script:
     then:
       - lambda: |-
           // Auf 0.05°C-Raster bereits im Sensor gerundet → direkt verwenden
+          static int      kuehl_trend          = 0;   // -1=fällt, 0=unbekannt, +1=steigt
+          static uint32_t kuehl_trend_since_ms = 0;   // millis() beim letzten Trendwechsel
           float new_temp = id(sensor_temp_becken).state;
           if (isnan(new_temp)) return;
 
@@ -161,6 +163,8 @@ script:
             id(kuehl_p_watts) = 0.0f;
             id(kuehl_last_temp) = new_temp;  // bereits gerundet
             id(kuehl_last_change_ms) = now;
+            kuehl_trend          = 0;   // Trend zurücksetzen
+            kuehl_trend_since_ms = now;
             id(kuehl_dreher_war_aktiv) = dreher_aktiv;
             lv_label_set_text(id(lbl_kuehlsaldo), "0W");
             lv_obj_set_style_bg_color(id(obj_kuehlsaldo_bg), lv_color_hex(0x70C9E0), 0);
@@ -180,6 +184,18 @@ script:
 
           // Sanity-Check: dt zwischen 0,8 s und 3 min
           if (dt_ms < 800 || dt_ms > 180000) return;
+
+          // ── Trend-Sperre: Richtungswechsel erst nach 5s erlaubt ──────────────
+          // Strömungsbedingte kurze Gegenläufer (1-2s, 0.05°C) werden ignoriert.
+          // last_temp/last_ms sind bereits aktualisiert → nächstes delta korrekt.
+          int new_trend = (delta < 0.0f) ? -1 : 1;
+          if (new_trend != kuehl_trend && kuehl_trend != 0) {
+            if ((now - kuehl_trend_since_ms) < 5000U) return;  // zu früh
+          }
+          if (new_trend != kuehl_trend) {
+            kuehl_trend = new_trend;
+          }
+          kuehl_trend_since_ms = now;  // bei jedem akzeptierten Update neu starten
 
           // ── Rohleistung berechnen ──────────────────────────────────────────────────
           //  P = m · c · ΔT / Δt  (m=12 kg, c=4186 J/kg·K)
@@ -219,7 +235,8 @@ script:
 
           // ── Display aktualisieren ─────────────────────────────────────────────
           char tbuf[10];
-          snprintf(tbuf, sizeof(tbuf), "%dW", (int)roundf(fabsf(p_display)));
+          int p_show = std::min(9999, (int)roundf(fabsf(p_display)));
+          snprintf(tbuf, sizeof(tbuf), "%dW", p_show);
           lv_label_set_text(id(lbl_kuehlsaldo), tbuf);
           lv_obj_set_style_bg_color(id(obj_kuehlsaldo_bg),  lv_color_hex(bg_col),  0);
           lv_obj_set_style_text_color(id(lbl_kuehlsaldo), lv_color_hex(txt_col), 0);
