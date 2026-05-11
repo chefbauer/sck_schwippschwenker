@@ -5,6 +5,7 @@
 #            kuehl_last_temp, kuehl_last_change_ms,
 #            kuehl_p_buf, kuehl_p_buf_idx,
 #            kuehl_p_watts, kuehl_kompressor_start_ms,
+#  (kuehl_p_buf: Ringpuffer über 3 berechnete P-Werte – Temperatur-Glättung übernimmt ESPHome-Filter)
 #            kuehl_komp_war_ein, kuehl_dreher_war_aktiv
 #  script:   script_kuehl_update  (von sensor_temp_becken.on_value aufgerufen)
 #  Steuerung: vollständig in thermostat_steuerung + umwaelzpumpe_steuerung (hardware.yaml, 500ms)
@@ -75,13 +76,12 @@ globals:
     type: std::array<float, 3>
     restore_value: no
     initial_value: '{NAN, NAN, NAN}'
-    # Ringpuffer: letzte 3 Leistungswerte (W, vorzeichenbehaftet)
+    # Ringpuffer der letzten 3 berechneten P-Werte (W) – glättet Rauschen bei kleinen Deltas
 
   - id: kuehl_p_buf_idx
     type: int
     restore_value: no
     initial_value: '0'
-    # Schreibzeiger in kuehl_p_buf
 
   - id: kuehl_p_watts
     type: float
@@ -146,7 +146,8 @@ script:
     mode: single
     then:
       - lambda: |-
-          float new_temp = id(sensor_temp_becken).state;
+          // Auf 0.05°C-Raster runden (echte Auflösung 1/16°C = 0.0625°C, Mittelwert erzeugt Zwischenwerte)
+          float new_temp = roundf(id(sensor_temp_becken).state * 20.0f) / 20.0f;
           if (isnan(new_temp)) return;
 
           uint32_t now = millis();
@@ -185,16 +186,16 @@ script:
           }
           id(kuehl_dreher_war_aktiv) = dreher_aktiv;
 
-          // ── Temperaturdelta detektieren (~0,1 °C Schritt) ────────────────────
+          // ── Temperaturdelta detektieren (0.05°C-Raster → Schwellwert knapp darunter) ──
           float delta = new_temp - id(kuehl_last_temp);
-          if (fabsf(delta) < 0.09f) return;   // kein Sprung → nichts zu tun
+          if (fabsf(delta) < 0.04f) return;   // kleiner als ein Rasterschritt → ignorieren
 
           uint32_t dt_ms = now - id(kuehl_last_change_ms);
           id(kuehl_last_temp) = new_temp;
           id(kuehl_last_change_ms) = now;
 
-          // Sanity-Check: dt zwischen 0,5 s und 3 min
-          if (dt_ms < 500 || dt_ms > 180000) return;
+          // Sanity-Check: dt zwischen 0,8 s und 3 min
+          if (dt_ms < 800 || dt_ms > 180000) return;
 
           // ── Rohleistung berechnen + in Ringpuffer schreiben ──────────────────
           //  P = 12 kg · 4186 J/kg/K · |ΔT| / dt
@@ -202,11 +203,10 @@ script:
           float p_raw = (12.0f * 4186.0f * fabsf(delta)) / dt_s;
           float p_signed = (delta > 0.0f) ? p_raw : -p_raw;
 
+          // Gleitender Mittelwert über 3 P-Werte (Rauschunterdrückung bei kleinen Deltas)
           int idx = id(kuehl_p_buf_idx);
           id(kuehl_p_buf)[idx] = p_signed;
           id(kuehl_p_buf_idx) = (idx + 1) % 3;
-
-          // Gleitender Mittelwert über bis zu 3 Werte
           float sum = 0.0f; int cnt = 0;
           for (int i = 0; i < 3; i++) {
             float v = id(kuehl_p_buf)[i];

@@ -1,6 +1,11 @@
 # ================================
 # BLE – BTHome v2 Empfang via bthome_receiver
 #
+# !! NICHT VERWENDET !!
+# sensor_temp_becken wird per I²C-Bridge (ESP32-C3, Adresse 0x48) gelesen,
+# definiert in hardware.yaml (platform: template, update_interval: 1s).
+# Diese Datei ist inaktiv und wird NICHT als Package eingebunden.
+#
 # esp32_hosted (ESP32-C6 via SDIO) ist extern definiert.
 # Externe Komponente: github://dz0ny/esphome-bthome
 # ble_stack: bluedroid (Standard) – passend für P4+C6.

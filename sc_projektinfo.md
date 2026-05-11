@@ -105,7 +105,8 @@ Ausgelegt für **Dosen und Flaschen** — durch das Drehen wird die Kühlleistun
 **Sensor:** DS18B20 via I²C-Bridge (ESP32-C3, ESP-IDF 5.x, `1w_i2c_bridge/`)
 
 **I²C-Adresse:** `0x48` → `i2c_device: temp_bridge` in `hardware.yaml`  
-**Sensor-ID:** `sensor_temp_becken` in `hardware.yaml` (Template-Sensor, `update_interval: 3s`)  
+**Sensor-ID:** `sensor_temp_becken` in `hardware.yaml` (Template-Sensor, `update_interval: 1s`, `accuracy_decimals: 3`)
+**Gleitender Mittelwert:** ESPHome-Filter `sliding_window_moving_average` (window=5, send_every=1) bei `update_interval: 1s` → jede Sekunde ein Wert, gemittelt über die letzten 5
 **Datenformat:** `int16_raw / 16.0` → 0,0625 °C Auflösung; Error-Marker `0x8000`
 
 **Bridge-Firmware (`1w_i2c_bridge/main/main.c`):**
@@ -327,7 +328,7 @@ Anordnung im Uhrzeigersinn nach Farbrad:
 - `status_bar` unten, 1024×60 px (60 px Höhe), `#F0F0F0`
 - **Links:** Uhrzeitanzeige `lbl_status_clock` (`font_clock`, `#333333`) — zeigt `HH:MM:SS` aus SNTP
 - **Mitte:** Schneeflocken-Icon (`lbl_kompressor_icon`): grau = aus, blau = kühlt aktiv
-- **Mitte-Rechts:** Becken-Temperatur (`lbl_temp_becken`, `font_clock`, Farbe `#2299DD` hellblau-cyan), x+80 vom Center, Beispiel: `12.3°C`
+- **Mitte-Rechts:** Becken-Temperatur (`lbl_temp_becken`, `font_temp`, Farbe `#003366`), x+80 vom Center, Beispiel: `12.34°C` (2 Dezimalstellen, abgeschnitten, Wert = `becken_temp_avg`)
 - **Rechts (vor Zahnrad):** `lbl_standby_icon` — Mond-Icon (U+F186, `font_icons`, `#8899BB` blau-grau, x=-72, `hidden: true`) — sichtbar wenn `bin_standby` aktiv
 - **Rechts:** Button `btn_to_settings` (60×54 px, dunkelgrau `#444444`) mit Zahnrad-Icon (`\uF013`) → `lvgl.page.show: page_settings`
 - Farbe des Schneeflocken-Icons wird via `climate.on_state` Lambda gesetzt
@@ -859,6 +860,10 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | 2026-03-15 | 1-Wire / DS2484 / DS18B20 aufgegeben – SHT30 I²C als `sensor_temp_becken` eingebaut | `hardware.yaml` |
 | 2026-03-15 | Becken-Temperatur-Label `lbl_temp_becken` in Statusleiste (rechts neben Schneeflocke, Farbe `#2299DD`) | `lvgl_basis.yaml` |
 | 2026-03-15 | `lbl_temp_becken`: Font auf `font_temp` (hat `°C`), Update via `lvgl.widget.refresh` + Lambda im Widget | `hardware.yaml`, `lvgl_basis.yaml` |
+| 2026-05-11 | `sensor_temp_becken`: manuellen Ringpuffer-Mittelwert ersetzt durch ESPHome-Filter `sliding_window_moving_average` (window=5); Globals `becken_temp_buf/idx/avg` entfernt | `hardware.yaml`, `lvgl_basis.yaml`, `cooler.yaml` |
+| 2026-05-11 | `lbl_temp_becken`: 2 Dezimalstellen (abgeschnitten), Quelle = `sensor_temp_becken.state` (nach Filter) | `lvgl_basis.yaml` |
+| 2026-05-11 | `cooler.yaml`: `script_kuehl_update` nutzt `sensor_temp_becken.state` (bereits geglättet durch Filter) | `cooler.yaml` |
+| 2026-05-11 | `ble.yaml`: als archiviert markiert (NICHT eingebunden, Sensor läuft über I²C-Bridge) | `ble.yaml` |
 | 2026-03-15 | TCA9548A-Multiplexer (0x70) eingebaut; sensorphalanx-Sensoren auf `i2c_mux_ch0`, SHT30 auf Haupt-`i2c_bus` | `hardware.yaml`, `sensorphalanx.yaml` |
 | 2026-03-15 | `mcp4728` fehlende `i2c_id: i2c_bus` ergänzt | `hardware.yaml` |
 | 2026-03-15 | `c_pumpe_standby_perc` → `c_pumpe_umwaelzung_ein_perc: 30` in Substitutions | `display.yaml` |

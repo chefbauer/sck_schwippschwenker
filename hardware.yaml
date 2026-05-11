@@ -205,11 +205,15 @@ sensor:
   - platform: template
     id: sensor_temp_becken
     name: "Temperatur Becken"
-    accuracy_decimals: 1
+    accuracy_decimals: 3
     unit_of_measurement: "°C"
     device_class: temperature
     state_class: measurement
-    update_interval: 3s
+    update_interval: 1s
+    filters:
+      - sliding_window_moving_average:
+          window_size: 5
+          send_every: 1
     lambda: |-
       uint8_t buf[2];
       auto err = id(i2c_bus)->read(0x48, buf, 2);
