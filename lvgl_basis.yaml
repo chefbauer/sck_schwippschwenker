@@ -2103,8 +2103,7 @@ lvgl:
                               text: !lambda |-
                                 if (isnan(id(sensor_temp_becken).state)) return std::string("--.-°C");
                                 char b[12];
-                                float t = floorf(id(sensor_temp_becken).state * 100.0f) / 100.0f;
-                                snprintf(b, sizeof(b), "%.2f°C", t);
+                                snprintf(b, sizeof(b), "%.2f°C", id(sensor_temp_becken).state);
                                 return std::string(b);
                               text_font: font_temp
                               align: CENTER
