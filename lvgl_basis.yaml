@@ -158,11 +158,13 @@ image:
   - file: graphics/stopwatch_23f1.svg
     id: img_stopwatch
     resize: 60x60
-    type: RGBA8888
+    type: RGB
+    transparency: alpha_channel
   - file: graphics/cowntdown_23f3.svg
     id: img_countdown
     resize: 60x60
-    type: RGBA8888
+    type: RGB
+    transparency: alpha_channel
 
 # Timer-Globals für alle 6 Slots
 # Status: 0=gestoppt  1=läuft  2=pausiert
