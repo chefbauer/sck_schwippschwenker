@@ -2,22 +2,44 @@
 # LVGL Display Configuration Package
 # Display Drehwurm - Basis Konfiguration
 # Display: 1024x600 Pixel
-# 
+#
 # Diese Datei wird als Package importiert:
 # packages:
 #   lvgl_config: !include lvgl_basis.yaml
 # ================================
 # ── Komponenten ──────────────────────────────────────────────────────────────────
 #  font:      font_title, font_normal, font_preset_num, font_tab, font_small,
-#             font_clock, font_default_40px, font_icons, font_timer, font_arc_val, font_icon_xl
+#             font_clock, font_default_40px (Roboto 40px, ehem. font_temp),
+#             font_icons, font_timer (digital-7_mono 60px),
+#             font_arc_val, font_icon_xl, font_icons_md, font_auto_a,
+#             font_icon_ts, font_cd_btn, font_ts_xl
+#
+#  image:     img_stopwatch (60x60), img_countdown (60x60)          – Default-Ansicht Buttons
+#             img_stopwatch_bg (120x120), img_countdown_bg (120x120) – BG-Symbol running_view
+#             Quelle: graphics/stopwatch_23f1.svg, graphics/cowntdown_23f3.svg
+#             BG-Widgets: img_bg1..img_bg6 (je 1 Widget, Quelle per lv_image_set_src getauscht)
+#
 #  globals:   slot_start_ms, slot_elapsed_ms, slot_status,
 #             slot_is_countdown, slot_countdown_max_ms,
 #             overlay_cd_slot, overlay_cd_mode, overlay_cd_selected_min,
-#             brightness_auto_mode, brightness_auto_updating, system_ein
+#             brightness_auto_mode, brightness_auto_updating,
+#             led_auto_brightness, led_auto_updating,
+#             system_ein, global_leds_per_slot
+#
 #  binary_sensor: bin_slot1_blink .. bin_slot6_blink  (template, internal)
-#  script:    script_open_countdown_overlay
-#  interval:  500ms (Timer/Countdown-Anzeige + Blink + AMG), 10s (LVGL-Idle)
+#
+#  script:    script_open_countdown_overlay, script_slot_start, script_slot_stop,
+#             script_slot_pause_resume, set_countdown_secs
+#
+#  interval:  500ms – Timer/Countdown-Anzeige, Blink, BG-Symbol-Umschaltung,
+#                     AMG8833-Overlay, Uhrzeit/Datum, Auto-Stop Schwenker+Drehen
+#             10s   – LVGL-Idle
+#
 #  lvgl:      page_main, page_settings
+#             Slot-Container: slot1_red..slot6_..  (je 120px hoch)
+#               – Default-Ansicht: img_stopwatch / img_countdown Buttons (60px SVG)
+#               – Running-Ansicht: BG-Symbol 120px 60% opa (x:-26), Timer font_timer 60px
+#                 lbl_slotX_time: align CENTER x:0 y:0
 # ─────────────────────────────────────────────────────────────────────────────────
 
 # Font Definitionen (Top-Level, nicht unter lvgl!)

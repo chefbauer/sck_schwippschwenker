@@ -15,19 +15,36 @@ Der Wechsel zwischen Ansichten erfolgt durch Sichtbarkeit der Labels/Widgets.
 
 ## Ansicht: Default
 
-Inhalt der rechten Timer-Fläche:
+Inhalt der rechten Timer-Fläche (`slotN_timer_area`, 230×100%, 40% Opacity):
 
 ```
-[ ⏱ Stoppuhr ]  [ ⏳ Countdown ]
+[ ⏱ SVG Stoppuhr 60px ]  [ ⏳ SVG Countdown 60px ]
 ```
 
-- Zwei Symbole nebeneinander (oder übereinander)
-- Kein Zeitlabel sichtbar
-- Kein Play/Pause-Symbol
+- Zwei unsichtbare Buttons nebeneinander (je 105×100%, `style_invis_btn`)
+- Links: `img_stopwatch` (SVG `graphics/stopwatch_23f1.svg`, 60×60)
+- Rechts: `img_countdown` (SVG `graphics/cowntdown_23f3.svg`, 60×60)
+- Kein Zeitlabel sichtbar, kein Play/Pause-Symbol
 
 ---
 
-## Stoppuhr-Modus
+## Ansicht: Laufend
+
+Struktur der `slotN_running_view` (initial `hidden: true`):
+
+```
+[ BG-Symbol 120px 60% (Stopuhr oder Countdown, x:-26) ]
+[ Timer-Touch-Bereich 178px | X-Button 50px ]
+        lbl_slotN_time: font_timer 60px, CENTER
+```
+
+- **Hintergrundsymbol** (`img_bgN`): 120×120 px SVG, 60% Opacity, `align: CENTER, x:-26`
+  - Quelle wird per `lv_image_set_src()` im 500ms-Interval getauscht:
+    - `slot_is_countdown[i] == false` → `img_stopwatch_bg`
+    - `slot_is_countdown[i] == true`  → `img_countdown_bg`
+  - `x:-26` kompensiert den 50px X-Button (Timer-Bereich-Mitte = 89px statt 115px)
+- **Zeitanzeige** `lbl_slotN_time`: `font_timer` (digital-7_mono, 60px), `align: CENTER, x:0, y:0`
+- **X-Button** (50×50, rechts, `btn_slotN_stop`): `script_slot_stop(idx)`
 
 ### Short Press auf Stoppuhr-Symbol
 - Wechselt zur **Laufend-Ansicht** (Zeitanzeige mm:ss + X-Button)

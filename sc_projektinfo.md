@@ -166,8 +166,9 @@ Bei Änderungen von Texten mit `font_title` muss die Glyph-Liste manuell aktuali
 | `font_tab` | Roboto 400 (gfonts) | 30 | Tab-Beschriftungen |
 | `font_small` | Roboto 700 (gfonts) | 18 | Beschriftungen, Overlay-Hilfstexte |
 | `font_preset_num` | Noto Sans Symbols 400 (gfonts) | 28 | Eingekreiste Ziffern ①②③④⑤ (Preset-Labels) |
+| `font_default_40px` | Roboto 400 (gfonts) | 40 | Statusleiste Temperatur/Werte (ehem. `font_temp`) |
 | `font_icons` | Font Awesome Solid 6.5.0 (CDN) | 40 | Icons: U+F773 (Water), U+F021 (arrows-rotate), U+F011 (Power), U+F013 (Gear), U+F186 (Mond/Standby) … |
-| `font_timer` | 5x7-dot-matrix.ttf (lokal) | 35 | Timer-Anzeige MM:SS |
+| `font_timer` | digital-7_mono.ttf (lokal, `fonts/`) | 60 | Timer-Anzeige MM:SS (Digital-7 Mono) |
 | `font_clock` | Roboto 400 (gfonts) | 22 | Uhrzeit HH:MM:SS in Statusleiste |
 | `font_arc_val` | Roboto 400 (gfonts) | 56 | Arc-Wert-Labels (Glyphs: `0–9 . s % `) |
 | `font_icon_xl` | Font Awesome Solid (CDN) | 120 | Nur U+F021 – aktuell nicht mehr in Overlays verwendet |
@@ -299,22 +300,28 @@ Anordnung im Uhrzeigersinn nach Farbrad:
 | 5 | Blau `#0000FF` | rechts | 250 | 4 |
 | 6 | Magenta `#FF00FF` | rechts | 390 | 5 |
 
-**Jeder Slot ist ein `button`** (290×120 px, radius=16, clip_corner=true, bg_opa=TRANSP):
+**Jeder Slot ist ein Container** (290×120 px, radius=16, clip_corner=true, bg_opa=TRANSP):
 
-- **Linker Tab** (60×100%, `clickable: true`): volle Slot-Farbe, Slot-Nummer zentriert  
-  `on_click` → `script_schwenker_goto_slot->execute(N)` (N=1–6, Zielwinkel = (N-1)×60°)
-- **Rechter Bereich** (230×100%, `clickable: false`): 50% Opacity, enthält:
-  - Label "Timer:" oben links
-  - Zeitanzeige `MM:SS` darunter (`font_timer`)
-  - Play/Pause-Icon rechtsbündig (x=-17)
+- **Linker Tab** (`slotN_tab`, 60×100%): volle Slot-Farbe, Slot-Nummer zentriert (`font_normal`, 28px)  
+  `on_press` → `script_schwenker_goto_slot->execute(N)`
+- **Rechter Bereich** (`slotN_timer_area`, 230×100%, 40% Opacity): enthält zwei Ansichten:
+
+  **Default-Ansicht** (`slotN_default_view`):
+  - Zwei unsichtbare Buttons nebeneinander (je 105×100%)
+  - Links: SVG-Stoppuhr `graphics/stopwatch_23f1.svg` (60×60 px, `img_stopwatch`)
+  - Rechts: SVG-Countdown `graphics/cowntdown_23f3.svg` (60×60 px, `img_countdown`)
+
+  **Laufend-Ansicht** (`slotN_running_view`, initial hidden):
+  - Hintergrund: `img_bgN` (120×120 px SVG, 60% opa, x:-26, per `lv_image_set_src` Stopuhr↔Countdown)
+  - Touch-Bereich (178×100%, `slotN_running_touch`): Short=Pause/Resume/Quittierung, Long=Countdown-Overlay
+  - Zeitanzeige `lbl_slotN_time`: `font_timer` (digital-7_mono, 60px), `align: CENTER`
+  - X-Button (50×50, rechts): `script_slot_stop(idx)`
 
 **Touch-Verhalten:**
-- `on_short_click`:
-  - Wenn `bin_slotN_blink` aktiv: Blink stoppen + Zeit-Reset (Status=2, Anzeige=Countdown-Max oder 00:00)
-  - Sonst: Start/Pause-Toggle (Status 0/2 → 1, Status 1 → 2)
-- `on_long_press`: öffnet `overlay_timer_cowntdown` (mit diesem Slot vorbelegt); wenn Blink aktiv: vorher stoppen
-
-> Countdown-Alarm: wenn Countdown auf 0 läuft → `bin_slotN_blink = true` → Tab blinkt + LED-Ring blinkt (500ms-Phase)
+- `on_short_click` auf laufenden Timer:
+  - Wenn `bin_slotN_blink` aktiv: Blink stoppen + Quittierung
+  - Sonst: `script_slot_pause_resume(idx)`
+- `on_long_press`: `script_open_countdown_overlay(slot_idx, mode=1)` (Zeit-Update)
 
 **Textfarben** (auf 50%-Hintergrund):
 | Slot | Textfarbe |
@@ -330,7 +337,7 @@ Anordnung im Uhrzeigersinn nach Farbrad:
 - `status_bar` unten, 1024×60 px (60 px Höhe), `#F0F0F0`
 - **Links:** Uhrzeitanzeige `lbl_status_clock` (`font_clock`, `#333333`) — zeigt `HH:MM:SS` aus SNTP
 - **Mitte:** Schneeflocken-Icon (`lbl_kompressor_icon`): grau = aus, blau = kühlt aktiv
-- **Mitte-Rechts:** Becken-Temperatur (`lbl_temp_becken`, `font_temp`, Farbe `#003366`), x+80 vom Center, Beispiel: `12.34°C` (2 Dezimalstellen, abgeschnitten, Wert = `becken_temp_avg`)
+- **Mitte-Rechts:** Becken-Temperatur (`lbl_temp_becken`, `font_default_40px`, Farbe `#003366`), x+80 vom Center, Beispiel: `12.34°C` (2 Dezimalstellen, abgeschnitten, Wert = `becken_temp_avg`)
 - **Rechts (vor Zahnrad):** `lbl_standby_icon` — Mond-Icon (U+F186, `font_icons`, `#8899BB` blau-grau, x=-72, `hidden: true`) — sichtbar wenn `bin_standby` aktiv
 - **Rechts:** Button `btn_to_settings` (60×54 px, dunkelgrau `#444444`) mit Zahnrad-Icon (`\uF013`) → `lvgl.page.show: page_settings`
 - Farbe des Schneeflocken-Icons wird via `climate.on_state` Lambda gesetzt
