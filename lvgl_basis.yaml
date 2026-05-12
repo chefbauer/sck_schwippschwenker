@@ -1238,7 +1238,7 @@ lvgl:
                               height: 100%
                               styles: style_transp_container
                               bg_image_src: img_stopwatch_bg
-                              bg_image_opa: 80%
+                              bg_image_opa: 20%
                               scrollable: false
                               clickable: false
                               hidden: true
@@ -1412,7 +1412,7 @@ lvgl:
                               height: 100%
                               styles: style_transp_container
                               bg_image_src: img_stopwatch_bg
-                              bg_image_opa: 80%
+                              bg_image_opa: 20%
                               scrollable: false
                               clickable: false
                               hidden: true
@@ -1586,7 +1586,7 @@ lvgl:
                               height: 100%
                               styles: style_transp_container
                               bg_image_src: img_stopwatch_bg
-                              bg_image_opa: 80%
+                              bg_image_opa: 20%
                               scrollable: false
                               clickable: false
                               hidden: true
@@ -1762,7 +1762,7 @@ lvgl:
                               height: 100%
                               styles: style_transp_container
                               bg_image_src: img_stopwatch_bg
-                              bg_image_opa: 80%
+                              bg_image_opa: 20%
                               scrollable: false
                               clickable: false
                               hidden: true
@@ -1936,7 +1936,7 @@ lvgl:
                               height: 100%
                               styles: style_transp_container
                               bg_image_src: img_stopwatch_bg
-                              bg_image_opa: 80%
+                              bg_image_opa: 20%
                               scrollable: false
                               clickable: false
                               hidden: true
@@ -2110,7 +2110,7 @@ lvgl:
                               height: 100%
                               styles: style_transp_container
                               bg_image_src: img_stopwatch_bg
-                              bg_image_opa: 80%
+                              bg_image_opa: 20%
                               scrollable: false
                               clickable: false
                               hidden: true
