@@ -153,6 +153,17 @@ font:
     bpp: 4
     glyphs: "0123456789.,-\xc2\xb0C "
 
+# SVG-Symbole für Slot Timer/Countdown Buttons
+image:
+  - file: graphics/stopwatch_23f1.svg
+    id: img_stopwatch
+    resize: 60x60
+    type: RGBA8888
+  - file: graphics/cowntdown_23f3.svg
+    id: img_countdown
+    resize: 60x60
+    type: RGBA8888
+
 # Timer-Globals für alle 6 Slots
 # Status: 0=gestoppt  1=läuft  2=pausiert
 globals:
@@ -1069,11 +1080,11 @@ lvgl:
                                           id: script_slot_start
                                           slot_idx: 0
                                     widgets:
-                                      - label:
-                                          text: "\uF2F2"
-                                          text_font: font_icons
-                                          text_color: 0x000000
+                                      - image:
+                                          src: img_stopwatch
                                           align: CENTER
+                                          width: 60
+                                          height: 60
                                 - button:
                                     id: slot1_btn_countdown
                                     width: 105
@@ -1087,11 +1098,11 @@ lvgl:
                                           slot_idx: 0
                                           mode: 0
                                     widgets:
-                                      - label:
-                                          text: "\uF252"
-                                          text_font: font_icons
-                                          text_color: 0x000000
+                                      - image:
+                                          src: img_countdown
                                           align: CENTER
+                                          width: 60
+                                          height: 60
                           # ── Laufend-Ansicht: Zeit + X ─────────────────────────────────────
                           - obj:
                               id: slot1_running_view
@@ -1241,11 +1252,11 @@ lvgl:
                                           id: script_slot_start
                                           slot_idx: 1
                                     widgets:
-                                      - label:
-                                          text: "\uF2F2"
-                                          text_font: font_icons
-                                          text_color: 0x000000
+                                      - image:
+                                          src: img_stopwatch
                                           align: CENTER
+                                          width: 60
+                                          height: 60
                                 - button:
                                     id: slot2_btn_countdown
                                     width: 105
@@ -1259,11 +1270,11 @@ lvgl:
                                           slot_idx: 1
                                           mode: 0
                                     widgets:
-                                      - label:
-                                          text: "\uF252"
-                                          text_font: font_icons
-                                          text_color: 0x000000
+                                      - image:
+                                          src: img_countdown
                                           align: CENTER
+                                          width: 60
+                                          height: 60
                           # ── Laufend-Ansicht: Zeit + X ─────────────────────────────────────
                           - obj:
                               id: slot2_running_view
@@ -1413,11 +1424,11 @@ lvgl:
                                           id: script_slot_start
                                           slot_idx: 2
                                     widgets:
-                                      - label:
-                                          text: "\uF2F2"
-                                          text_font: font_icons
-                                          text_color: 0x000000
+                                      - image:
+                                          src: img_stopwatch
                                           align: CENTER
+                                          width: 60
+                                          height: 60
                                 - button:
                                     id: slot3_btn_countdown
                                     width: 105
@@ -1431,11 +1442,11 @@ lvgl:
                                           slot_idx: 2
                                           mode: 0
                                     widgets:
-                                      - label:
-                                          text: "\uF252"
-                                          text_font: font_icons
-                                          text_color: 0x000000
+                                      - image:
+                                          src: img_countdown
                                           align: CENTER
+                                          width: 60
+                                          height: 60
                           # ── Laufend-Ansicht: Zeit + X ─────────────────────────────────────
                           - obj:
                               id: slot3_running_view
@@ -1587,11 +1598,11 @@ lvgl:
                                           id: script_slot_start
                                           slot_idx: 3
                                     widgets:
-                                      - label:
-                                          text: "\uF2F2"
-                                          text_font: font_icons
-                                          text_color: 0x000000
+                                      - image:
+                                          src: img_stopwatch
                                           align: CENTER
+                                          width: 60
+                                          height: 60
                                 - button:
                                     id: slot4_btn_countdown
                                     width: 105
@@ -1605,11 +1616,11 @@ lvgl:
                                           slot_idx: 3
                                           mode: 0
                                     widgets:
-                                      - label:
-                                          text: "\uF252"
-                                          text_font: font_icons
-                                          text_color: 0x000000
+                                      - image:
+                                          src: img_countdown
                                           align: CENTER
+                                          width: 60
+                                          height: 60
                           # ── Laufend-Ansicht: Zeit + X ─────────────────────────────────────
                           - obj:
                               id: slot4_running_view
@@ -1759,11 +1770,11 @@ lvgl:
                                           id: script_slot_start
                                           slot_idx: 4
                                     widgets:
-                                      - label:
-                                          text: "\uF2F2"
-                                          text_font: font_icons
-                                          text_color: 0x000000
+                                      - image:
+                                          src: img_stopwatch
                                           align: CENTER
+                                          width: 60
+                                          height: 60
                                 - button:
                                     id: slot5_btn_countdown
                                     width: 105
@@ -1777,11 +1788,11 @@ lvgl:
                                           slot_idx: 4
                                           mode: 0
                                     widgets:
-                                      - label:
-                                          text: "\uF252"
-                                          text_font: font_icons
-                                          text_color: 0x000000
+                                      - image:
+                                          src: img_countdown
                                           align: CENTER
+                                          width: 60
+                                          height: 60
                           # ── Laufend-Ansicht: Zeit + X ─────────────────────────────────────
                           - obj:
                               id: slot5_running_view
@@ -1931,11 +1942,11 @@ lvgl:
                                           id: script_slot_start
                                           slot_idx: 5
                                     widgets:
-                                      - label:
-                                          text: "\uF2F2"
-                                          text_font: font_icons
-                                          text_color: 0x000000
+                                      - image:
+                                          src: img_stopwatch
                                           align: CENTER
+                                          width: 60
+                                          height: 60
                                 - button:
                                     id: slot6_btn_countdown
                                     width: 105
@@ -1949,11 +1960,11 @@ lvgl:
                                           slot_idx: 5
                                           mode: 0
                                     widgets:
-                                      - label:
-                                          text: "\uF252"
-                                          text_font: font_icons
-                                          text_color: 0x000000
+                                      - image:
+                                          src: img_countdown
                                           align: CENTER
+                                          width: 60
+                                          height: 60
                           # ── Laufend-Ansicht: Zeit + X ─────────────────────────────────────
                           - obj:
                               id: slot6_running_view
