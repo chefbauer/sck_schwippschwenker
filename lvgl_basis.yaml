@@ -583,73 +583,73 @@ interval:
               id(script_drehen_stop)->execute();
             }
           }
-      # ── Hintergrundsymbole: Stopuhr ↔ Countdown (sicheres lvgl.image.update) ──
+      # ── Hintergrundsymbole: Stopuhr ↔ Countdown per bg_image_src ──
       - if:
           condition:
             lambda: 'return id(slot_is_countdown)[0];'
           then:
-            - lvgl.image.update:
-                id: img_bg1
-                src: img_countdown_bg
+            - lvgl.widget.update:
+                id: slot1_running_view
+                bg_image_src: img_countdown_bg
           else:
-            - lvgl.image.update:
-                id: img_bg1
-                src: img_stopwatch_bg
+            - lvgl.widget.update:
+                id: slot1_running_view
+                bg_image_src: img_stopwatch_bg
       - if:
           condition:
             lambda: 'return id(slot_is_countdown)[1];'
           then:
-            - lvgl.image.update:
-                id: img_bg2
-                src: img_countdown_bg
+            - lvgl.widget.update:
+                id: slot2_running_view
+                bg_image_src: img_countdown_bg
           else:
-            - lvgl.image.update:
-                id: img_bg2
-                src: img_stopwatch_bg
+            - lvgl.widget.update:
+                id: slot2_running_view
+                bg_image_src: img_stopwatch_bg
       - if:
           condition:
             lambda: 'return id(slot_is_countdown)[2];'
           then:
-            - lvgl.image.update:
-                id: img_bg3
-                src: img_countdown_bg
+            - lvgl.widget.update:
+                id: slot3_running_view
+                bg_image_src: img_countdown_bg
           else:
-            - lvgl.image.update:
-                id: img_bg3
-                src: img_stopwatch_bg
+            - lvgl.widget.update:
+                id: slot3_running_view
+                bg_image_src: img_stopwatch_bg
       - if:
           condition:
             lambda: 'return id(slot_is_countdown)[3];'
           then:
-            - lvgl.image.update:
-                id: img_bg4
-                src: img_countdown_bg
+            - lvgl.widget.update:
+                id: slot4_running_view
+                bg_image_src: img_countdown_bg
           else:
-            - lvgl.image.update:
-                id: img_bg4
-                src: img_stopwatch_bg
+            - lvgl.widget.update:
+                id: slot4_running_view
+                bg_image_src: img_stopwatch_bg
       - if:
           condition:
             lambda: 'return id(slot_is_countdown)[4];'
           then:
-            - lvgl.image.update:
-                id: img_bg5
-                src: img_countdown_bg
+            - lvgl.widget.update:
+                id: slot5_running_view
+                bg_image_src: img_countdown_bg
           else:
-            - lvgl.image.update:
-                id: img_bg5
-                src: img_stopwatch_bg
+            - lvgl.widget.update:
+                id: slot5_running_view
+                bg_image_src: img_stopwatch_bg
       - if:
           condition:
             lambda: 'return id(slot_is_countdown)[5];'
           then:
-            - lvgl.image.update:
-                id: img_bg6
-                src: img_countdown_bg
+            - lvgl.widget.update:
+                id: slot6_running_view
+                bg_image_src: img_countdown_bg
           else:
-            - lvgl.image.update:
-                id: img_bg6
-                src: img_stopwatch_bg
+            - lvgl.widget.update:
+                id: slot6_running_view
+                bg_image_src: img_stopwatch_bg
 lvgl:
   log_level: WARN
   color_depth: 16
@@ -1237,17 +1237,12 @@ lvgl:
                               width: 100%
                               height: 100%
                               styles: style_transp_container
+                              bg_image_src: img_stopwatch_bg
+                              bg_image_opa: 50%
                               scrollable: false
                               clickable: false
                               hidden: true
                               widgets:
-                                # ── Hintergrundsymbol 200% / 50% opa, zuerst → hinterste Ebene ──────
-                                - image:
-                                    id: img_bg1
-                                    src: img_stopwatch_bg
-                                    align: CENTER
-                                    x: -26
-                                    opa: 70%
                                 - button:
                                     id: slot1_running_touch
                                     width: 178
@@ -1416,16 +1411,12 @@ lvgl:
                               width: 100%
                               height: 100%
                               styles: style_transp_container
+                              bg_image_src: img_stopwatch_bg
+                              bg_image_opa: 50%
                               scrollable: false
                               clickable: false
                               hidden: true
                               widgets:
-                                - image:
-                                    id: img_bg2
-                                    src: img_stopwatch_bg
-                                    align: CENTER
-                                    x: -26
-                                    opa: 70%
                                 - button:
                                     id: slot2_running_touch
                                     width: 178
@@ -1594,16 +1585,12 @@ lvgl:
                               width: 100%
                               height: 100%
                               styles: style_transp_container
+                              bg_image_src: img_stopwatch_bg
+                              bg_image_opa: 50%
                               scrollable: false
                               clickable: false
                               hidden: true
                               widgets:
-                                - image:
-                                    id: img_bg3
-                                    src: img_stopwatch_bg
-                                    align: CENTER
-                                    x: -26
-                                    opa: 70%
                                 - button:
                                     id: slot3_running_touch
                                     width: 178
@@ -1774,16 +1761,12 @@ lvgl:
                               width: 100%
                               height: 100%
                               styles: style_transp_container
+                              bg_image_src: img_stopwatch_bg
+                              bg_image_opa: 50%
                               scrollable: false
                               clickable: false
                               hidden: true
                               widgets:
-                                - image:
-                                    id: img_bg4
-                                    src: img_stopwatch_bg
-                                    align: CENTER
-                                    x: -26
-                                    opa: 70%
                                 - button:
                                     id: slot4_running_touch
                                     width: 178
@@ -1952,16 +1935,12 @@ lvgl:
                               width: 100%
                               height: 100%
                               styles: style_transp_container
+                              bg_image_src: img_stopwatch_bg
+                              bg_image_opa: 50%
                               scrollable: false
                               clickable: false
                               hidden: true
                               widgets:
-                                - image:
-                                    id: img_bg5
-                                    src: img_stopwatch_bg
-                                    align: CENTER
-                                    x: -26
-                                    opa: 70%
                                 - button:
                                     id: slot5_running_touch
                                     width: 178
@@ -2130,16 +2109,12 @@ lvgl:
                               width: 100%
                               height: 100%
                               styles: style_transp_container
+                              bg_image_src: img_stopwatch_bg
+                              bg_image_opa: 50%
                               scrollable: false
                               clickable: false
                               hidden: true
                               widgets:
-                                - image:
-                                    id: img_bg6
-                                    src: img_stopwatch_bg
-                                    align: CENTER
-                                    x: -26
-                                    opa: 70%
                                 - button:
                                     id: slot6_running_touch
                                     width: 178
