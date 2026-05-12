@@ -1239,7 +1239,6 @@ lvgl:
                               styles: style_transp_container
                               bg_image_src: img_stopwatch_bg
                               bg_image_opa: 80%
-                              bg_image_offset_x: -26
                               scrollable: false
                               clickable: false
                               hidden: true
@@ -1414,7 +1413,6 @@ lvgl:
                               styles: style_transp_container
                               bg_image_src: img_stopwatch_bg
                               bg_image_opa: 80%
-                              bg_image_offset_x: -26
                               scrollable: false
                               clickable: false
                               hidden: true
@@ -1589,7 +1587,6 @@ lvgl:
                               styles: style_transp_container
                               bg_image_src: img_stopwatch_bg
                               bg_image_opa: 80%
-                              bg_image_offset_x: -26
                               scrollable: false
                               clickable: false
                               hidden: true
@@ -1766,7 +1763,6 @@ lvgl:
                               styles: style_transp_container
                               bg_image_src: img_stopwatch_bg
                               bg_image_opa: 80%
-                              bg_image_offset_x: -26
                               scrollable: false
                               clickable: false
                               hidden: true
@@ -1941,7 +1937,6 @@ lvgl:
                               styles: style_transp_container
                               bg_image_src: img_stopwatch_bg
                               bg_image_opa: 80%
-                              bg_image_offset_x: -26
                               scrollable: false
                               clickable: false
                               hidden: true
@@ -2116,7 +2111,6 @@ lvgl:
                               styles: style_transp_container
                               bg_image_src: img_stopwatch_bg
                               bg_image_opa: 80%
-                              bg_image_offset_x: -26
                               scrollable: false
                               clickable: false
                               hidden: true
