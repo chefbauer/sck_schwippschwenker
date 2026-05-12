@@ -484,24 +484,15 @@ interval:
               lv_label_set_text(slot_time_lbl[ii], buf);
             }
           }
-          // ── Hintergrundsymbole: Stopuhr ↔ Countdown je nach Modus (alle 6 Slots) ──
-          lv_obj_t* img_bg_sw[6] = {
-            id(img_bg1_stopwatch), id(img_bg2_stopwatch), id(img_bg3_stopwatch),
-            id(img_bg4_stopwatch), id(img_bg5_stopwatch), id(img_bg6_stopwatch)
-          };
-          lv_obj_t* img_bg_cd[6] = {
-            id(img_bg1_countdown), id(img_bg2_countdown), id(img_bg3_countdown),
-            id(img_bg4_countdown), id(img_bg5_countdown), id(img_bg6_countdown)
+          // ── Hintergrundsymbole: Stopuhr ↔ Countdown per lv_image_set_src (alle 6 Slots) ──
+          lv_obj_t* img_bg[6] = {
+            id(img_bg1), id(img_bg2), id(img_bg3),
+            id(img_bg4), id(img_bg5), id(img_bg6)
           };
           for (int _bi = 0; _bi < 6; _bi++) {
             if (id(slot_status)[_bi] > 0) {
-              if (id(slot_is_countdown)[_bi]) {
-                lv_obj_add_flag(img_bg_sw[_bi], LV_OBJ_FLAG_HIDDEN);
-                lv_obj_clear_flag(img_bg_cd[_bi], LV_OBJ_FLAG_HIDDEN);
-              } else {
-                lv_obj_clear_flag(img_bg_sw[_bi], LV_OBJ_FLAG_HIDDEN);
-                lv_obj_add_flag(img_bg_cd[_bi], LV_OBJ_FLAG_HIDDEN);
-              }
+              lv_image_set_src(img_bg[_bi],
+                id(slot_is_countdown)[_bi] ? &img_countdown_bg : &img_stopwatch_bg);
             }
           }
           // AMG8833 Overlay aktualisieren wenn sichtbar
@@ -1148,18 +1139,11 @@ lvgl:
                               widgets:
                                 # ── Hintergrundsymbol 200% / 50% opa, zuerst → hinterste Ebene ──────
                                 - image:
-                                    id: img_bg1_stopwatch
+                                    id: img_bg1
                                     src: img_stopwatch_bg
                                     align: CENTER
                                     x: -26
                                     opa: 60%
-                                - image:
-                                    id: img_bg1_countdown
-                                    src: img_countdown_bg
-                                    align: CENTER
-                                    x: -26
-                                    opa: 60%
-                                    hidden: true
                                 - button:
                                     id: slot1_running_touch
                                     width: 178
@@ -1333,18 +1317,11 @@ lvgl:
                               hidden: true
                               widgets:
                                 - image:
-                                    id: img_bg2_stopwatch
+                                    id: img_bg2
                                     src: img_stopwatch_bg
                                     align: CENTER
                                     x: -26
                                     opa: 60%
-                                - image:
-                                    id: img_bg2_countdown
-                                    src: img_countdown_bg
-                                    align: CENTER
-                                    x: -26
-                                    opa: 60%
-                                    hidden: true
                                 - button:
                                     id: slot2_running_touch
                                     width: 178
@@ -1518,18 +1495,11 @@ lvgl:
                               hidden: true
                               widgets:
                                 - image:
-                                    id: img_bg3_stopwatch
+                                    id: img_bg3
                                     src: img_stopwatch_bg
                                     align: CENTER
                                     x: -26
                                     opa: 60%
-                                - image:
-                                    id: img_bg3_countdown
-                                    src: img_countdown_bg
-                                    align: CENTER
-                                    x: -26
-                                    opa: 60%
-                                    hidden: true
                                 - button:
                                     id: slot3_running_touch
                                     width: 178
@@ -1705,18 +1675,11 @@ lvgl:
                               hidden: true
                               widgets:
                                 - image:
-                                    id: img_bg4_stopwatch
+                                    id: img_bg4
                                     src: img_stopwatch_bg
                                     align: CENTER
                                     x: -26
                                     opa: 60%
-                                - image:
-                                    id: img_bg4_countdown
-                                    src: img_countdown_bg
-                                    align: CENTER
-                                    x: -26
-                                    opa: 60%
-                                    hidden: true
                                 - button:
                                     id: slot4_running_touch
                                     width: 178
@@ -1890,18 +1853,11 @@ lvgl:
                               hidden: true
                               widgets:
                                 - image:
-                                    id: img_bg5_stopwatch
+                                    id: img_bg5
                                     src: img_stopwatch_bg
                                     align: CENTER
                                     x: -26
                                     opa: 60%
-                                - image:
-                                    id: img_bg5_countdown
-                                    src: img_countdown_bg
-                                    align: CENTER
-                                    x: -26
-                                    opa: 60%
-                                    hidden: true
                                 - button:
                                     id: slot5_running_touch
                                     width: 178
@@ -2075,18 +2031,11 @@ lvgl:
                               hidden: true
                               widgets:
                                 - image:
-                                    id: img_bg6_stopwatch
+                                    id: img_bg6
                                     src: img_stopwatch_bg
                                     align: CENTER
                                     x: -26
                                     opa: 60%
-                                - image:
-                                    id: img_bg6_countdown
-                                    src: img_countdown_bg
-                                    align: CENTER
-                                    x: -26
-                                    opa: 60%
-                                    hidden: true
                                 - button:
                                     id: slot6_running_touch
                                     width: 178
