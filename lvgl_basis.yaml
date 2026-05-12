@@ -93,10 +93,10 @@ font:
       - "\uF252"  # hourglass-half (Countdown/Sanduhr)
       - "\ue516"  # jar (fa-jar, FA6 v6.0, Dose/Konserve, cd_mini Reihen-Icon)
 
-  # Orbitron Font für Timer-Anzeige
-  - file: "gfonts://Orbitron@700"
+  # Digital-7 Mono Font für Timer-Anzeige
+  - file: "fonts/digital-7_mono.ttf"
     id: font_timer
-    size: 38
+    size: 60
     bpp: 4
     glyphs: "0123456789:"
 
@@ -1140,9 +1140,9 @@ lvgl:
                                       - label:
                                           id: lbl_slot1_time
                                           text: "00:00"
-                                          align: TOP_LEFT
+                                          align: CENTER
                                           x: 0
-                                          y: 30
+                                          y: 0
                                           text_font: font_timer
                                           text_color: 0x000000
                                 - button:
@@ -1312,9 +1312,9 @@ lvgl:
                                       - label:
                                           id: lbl_slot2_time
                                           text: "00:00"
-                                          align: TOP_LEFT
+                                          align: CENTER
                                           x: 0
-                                          y: 30
+                                          y: 0
                                           text_font: font_timer
                                           text_color: 0x000000
                                 - button:
@@ -1484,9 +1484,9 @@ lvgl:
                                       - label:
                                           id: lbl_slot3_time
                                           text: "00:00"
-                                          align: TOP_LEFT
+                                          align: CENTER
                                           x: 0
-                                          y: 30
+                                          y: 0
                                           text_font: font_timer
                                           text_color: 0x000000
                                 - button:
@@ -1658,9 +1658,9 @@ lvgl:
                                       - label:
                                           id: lbl_slot4_time
                                           text: "00:00"
-                                          align: TOP_LEFT
+                                          align: CENTER
                                           x: 0
-                                          y: 30
+                                          y: 0
                                           text_font: font_timer
                                           text_color: 0x000000
                                 - button:
@@ -1830,9 +1830,9 @@ lvgl:
                                       - label:
                                           id: lbl_slot5_time
                                           text: "00:00"
-                                          align: TOP_LEFT
+                                          align: CENTER
                                           x: 0
-                                          y: 30
+                                          y: 0
                                           text_font: font_timer
                                           text_color: 0xFFFFFF
                                 - button:
@@ -2002,9 +2002,9 @@ lvgl:
                                       - label:
                                           id: lbl_slot6_time
                                           text: "00:00"
-                                          align: TOP_LEFT
+                                          align: CENTER
                                           x: 0
-                                          y: 30
+                                          y: 0
                                           text_font: font_timer
                                           text_color: 0xFFFFFF
                                 - button:
