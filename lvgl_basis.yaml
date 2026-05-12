@@ -120,7 +120,7 @@ font:
     id: font_timer
     size: 60
     bpp: 4
-    glyphs: "0123456789:"
+    glyphs: "0123456789: "
 
   # Arc-Wert-Font (Schwenker-Overlay, groß)
   - file: "gfonts://Roboto@400"
@@ -416,6 +416,32 @@ script:
           if (id(slot_status)[i] == 1) {
             id(slot_elapsed_ms)[i] += millis() - id(slot_start_ms)[i];
             id(slot_status)[i] = 2;
+            // Timer-Label mit festem ':' einfrieren (kein Blinken im Pause-Zustand)
+            {
+              lv_obj_t* tlbl = nullptr;
+              switch(i) {
+                case 0: tlbl = id(lbl_slot1_time); break;
+                case 1: tlbl = id(lbl_slot2_time); break;
+                case 2: tlbl = id(lbl_slot3_time); break;
+                case 3: tlbl = id(lbl_slot4_time); break;
+                case 4: tlbl = id(lbl_slot5_time); break;
+                case 5: tlbl = id(lbl_slot6_time); break;
+              }
+              if (tlbl) {
+                char pbuf[8];
+                uint32_t tms = id(slot_elapsed_ms)[i];
+                if (id(slot_is_countdown)[i]) {
+                  uint32_t mms = id(slot_countdown_max_ms)[i];
+                  uint32_t rem = (tms < mms) ? (mms - tms) : 0;
+                  uint32_t s = rem / 1000;
+                  snprintf(pbuf, sizeof(pbuf), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                } else {
+                  uint32_t s = tms / 1000;
+                  snprintf(pbuf, sizeof(pbuf), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                }
+                lv_label_set_text(tlbl, pbuf);
+              }
+            }
             if (id(auto_motorbetrieb)) id(script_schwenker_goto_slot)->execute(i + 1);
           } else {
             id(slot_start_ms)[i] = millis();
@@ -497,12 +523,12 @@ interval:
               } else {
                 uint32_t rem = max_ms - total_ms;
                 uint32_t s = rem / 1000;
-                snprintf(buf, sizeof(buf), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+                snprintf(buf, sizeof(buf), "%02u%s%02u", (unsigned)(s/60), tc_blink_phase ? ":" : " ", (unsigned)(s%60));
                 lv_label_set_text(slot_time_lbl[ii], buf);
               }
             } else {
               uint32_t s = total_ms / 1000;
-              snprintf(buf, sizeof(buf), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
+              snprintf(buf, sizeof(buf), "%02u%s%02u", (unsigned)(s/60), tc_blink_phase ? ":" : " ", (unsigned)(s%60));
               lv_label_set_text(slot_time_lbl[ii], buf);
             }
           }
@@ -1165,7 +1191,7 @@ lvgl:
                                     src: img_stopwatch_bg
                                     align: CENTER
                                     x: -26
-                                    opa: 60%
+                                    opa: 70%
                                 - button:
                                     id: slot1_running_touch
                                     width: 178
@@ -1343,7 +1369,7 @@ lvgl:
                                     src: img_stopwatch_bg
                                     align: CENTER
                                     x: -26
-                                    opa: 60%
+                                    opa: 70%
                                 - button:
                                     id: slot2_running_touch
                                     width: 178
@@ -1521,7 +1547,7 @@ lvgl:
                                     src: img_stopwatch_bg
                                     align: CENTER
                                     x: -26
-                                    opa: 60%
+                                    opa: 70%
                                 - button:
                                     id: slot3_running_touch
                                     width: 178
@@ -1701,7 +1727,7 @@ lvgl:
                                     src: img_stopwatch_bg
                                     align: CENTER
                                     x: -26
-                                    opa: 60%
+                                    opa: 70%
                                 - button:
                                     id: slot4_running_touch
                                     width: 178
@@ -1879,7 +1905,7 @@ lvgl:
                                     src: img_stopwatch_bg
                                     align: CENTER
                                     x: -26
-                                    opa: 60%
+                                    opa: 70%
                                 - button:
                                     id: slot5_running_touch
                                     width: 178
@@ -2057,7 +2083,7 @@ lvgl:
                                     src: img_stopwatch_bg
                                     align: CENTER
                                     x: -26
-                                    opa: 60%
+                                    opa: 70%
                                 - button:
                                     id: slot6_running_touch
                                     width: 178
