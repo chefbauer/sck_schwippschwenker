@@ -532,17 +532,6 @@ interval:
               lv_label_set_text(slot_time_lbl[ii], buf);
             }
           }
-          // ── Hintergrundsymbole: Stopuhr ↔ Countdown per lv_image_set_src (alle 6 Slots) ──
-          lv_obj_t* img_bg[6] = {
-            id(img_bg1), id(img_bg2), id(img_bg3),
-            id(img_bg4), id(img_bg5), id(img_bg6)
-          };
-          for (int _bi = 0; _bi < 6; _bi++) {
-            if (id(slot_status)[_bi] > 0) {
-              lv_image_set_src(img_bg[_bi],
-                id(slot_is_countdown)[_bi] ? &img_countdown_bg : &img_stopwatch_bg);
-            }
-          }
           // AMG8833 Overlay aktualisieren wenn sichtbar
           if (!lv_obj_has_flag(id(overlay_amg8833), LV_OBJ_FLAG_HIDDEN)) {
             amg_update_cells(id(amg_pixel_temps).data());
@@ -594,6 +583,73 @@ interval:
               id(script_drehen_stop)->execute();
             }
           }
+      # ── Hintergrundsymbole: Stopuhr ↔ Countdown (sicheres lvgl.image.update) ──
+      - if:
+          condition:
+            lambda: 'return id(slot_is_countdown)[0];'
+          then:
+            - lvgl.image.update:
+                id: img_bg1
+                src: img_countdown_bg
+          else:
+            - lvgl.image.update:
+                id: img_bg1
+                src: img_stopwatch_bg
+      - if:
+          condition:
+            lambda: 'return id(slot_is_countdown)[1];'
+          then:
+            - lvgl.image.update:
+                id: img_bg2
+                src: img_countdown_bg
+          else:
+            - lvgl.image.update:
+                id: img_bg2
+                src: img_stopwatch_bg
+      - if:
+          condition:
+            lambda: 'return id(slot_is_countdown)[2];'
+          then:
+            - lvgl.image.update:
+                id: img_bg3
+                src: img_countdown_bg
+          else:
+            - lvgl.image.update:
+                id: img_bg3
+                src: img_stopwatch_bg
+      - if:
+          condition:
+            lambda: 'return id(slot_is_countdown)[3];'
+          then:
+            - lvgl.image.update:
+                id: img_bg4
+                src: img_countdown_bg
+          else:
+            - lvgl.image.update:
+                id: img_bg4
+                src: img_stopwatch_bg
+      - if:
+          condition:
+            lambda: 'return id(slot_is_countdown)[4];'
+          then:
+            - lvgl.image.update:
+                id: img_bg5
+                src: img_countdown_bg
+          else:
+            - lvgl.image.update:
+                id: img_bg5
+                src: img_stopwatch_bg
+      - if:
+          condition:
+            lambda: 'return id(slot_is_countdown)[5];'
+          then:
+            - lvgl.image.update:
+                id: img_bg6
+                src: img_countdown_bg
+          else:
+            - lvgl.image.update:
+                id: img_bg6
+                src: img_stopwatch_bg
 lvgl:
   log_level: WARN
   color_depth: 16
