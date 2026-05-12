@@ -165,6 +165,17 @@ image:
     resize: 60x60
     type: RGB
     transparency: alpha_channel
+  # 120px (200%) Hintergrundsymbole für Slot1 running_view
+  - file: graphics/stopwatch_23f1.svg
+    id: img_stopwatch_bg
+    resize: 120x120
+    type: RGB
+    transparency: alpha_channel
+  - file: graphics/cowntdown_23f3.svg
+    id: img_countdown_bg
+    resize: 120x120
+    type: RGB
+    transparency: alpha_channel
 
 # Timer-Globals für alle 6 Slots
 # Status: 0=gestoppt  1=läuft  2=pausiert
@@ -471,6 +482,16 @@ interval:
               uint32_t s = total_ms / 1000;
               snprintf(buf, sizeof(buf), "%02u:%02u", (unsigned)(s/60), (unsigned)(s%60));
               lv_label_set_text(slot_time_lbl[ii], buf);
+            }
+          }
+          // ── Slot1 Hintergrundsymbol: Stopuhr ↔ Countdown je nach Modus ─────────
+          if (id(slot_status)[0] > 0) {
+            if (id(slot_is_countdown)[0]) {
+              lv_obj_add_flag(id(img_bg1_stopwatch), LV_OBJ_FLAG_HIDDEN);
+              lv_obj_clear_flag(id(img_bg1_countdown), LV_OBJ_FLAG_HIDDEN);
+            } else {
+              lv_obj_clear_flag(id(img_bg1_stopwatch), LV_OBJ_FLAG_HIDDEN);
+              lv_obj_add_flag(id(img_bg1_countdown), LV_OBJ_FLAG_HIDDEN);
             }
           }
           // AMG8833 Overlay aktualisieren wenn sichtbar
@@ -1115,6 +1136,18 @@ lvgl:
                               clickable: false
                               hidden: true
                               widgets:
+                                # ── Hintergrundsymbol 200% / 50% opa, zuerst → hinterste Ebene ──────
+                                - image:
+                                    id: img_bg1_stopwatch
+                                    src: img_stopwatch_bg
+                                    align: CENTER
+                                    opa: 50%
+                                - image:
+                                    id: img_bg1_countdown
+                                    src: img_countdown_bg
+                                    align: CENTER
+                                    opa: 50%
+                                    hidden: true
                                 - button:
                                     id: slot1_running_touch
                                     width: 178
