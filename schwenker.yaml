@@ -632,6 +632,28 @@ script:
                   lambda: return !id(sw_aktiv);
                 timeout: 10s
             - delay: 200ms   # kurze Beruhigungspause nach dem Stop
+      # ── Warten bis Motor wirklich stillsteht ─────────────────────────────
+      # Motor bremst bereits (drehen_stop lief, Positionsfahrt aktiv etc.).
+      # Kein extra Bremsbefehl – aktiv pollen bis Status=1. Timeout 10s → Abbruch.
+      - lambda: |-
+          id(sw_motor_last_move_ms) = millis();  // Timeout-Startzeitstempel
+      - script.execute: script_motor_get_status
+      - delay: 50ms
+      - while:
+          condition:
+            lambda: return id(sensor_motor_status).state != 1 && (millis() - id(sw_motor_last_move_ms) < 10000);
+          then:
+            - script.execute: script_motor_get_status
+            - delay: 50ms
+      - if:
+          condition:
+            lambda: return id(sensor_motor_status).state != 1;
+          then:
+            - lambda: |-
+                id(sw_motor_busy) = false;
+                id(sw_motor_last_move_ms) = millis();
+                ESP_LOGW("goto_slot", "Timeout 10s – Motor steht nicht, Slotfahrt abgebrochen");
+                id(script_schwenker_goto_slot).stop();
       # Closed Loop + 128 Sub + Work current aus NVS laden
       - lambda: |-
           id(can_bus)->send_data(${motor_can_id}, false, add_crc(${motor_can_id}, { 0x82, 0x04 }));
