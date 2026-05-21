@@ -908,3 +908,5 @@ Alle Sensoren auf `i2c_id: i2c_bus` (fremdkonfiguriert in main_config).
 | 2026-05-01 (session) | — | Tab Licht: Button `btn_led_effekt_strobo` (braun `#774400`) für Effekt „Strobo"; alle 5 Effektbuttons auf 140 px Breite verkleinert und neu verteilt (x: 140/295/450/605/760) | `lvgl_basis.yaml` |
 | 2026-05-21 (session) | — | `lvgl_basis.yaml`: `script_slot_stop` — letzter aktiver Slot gestoppt → `script_schwenker_goto_slot(i+1)` statt `script_schwenker_stop` (Slot wird angefahren wie bei Pause/Ende) | `lvgl_basis.yaml` |
 | 2026-05-21 (session) | — | `schwenker.yaml`: `script_schwenker_goto_slot` Ende — RV-Auto-Intervall starten wenn `global_rv_aktiv` && `pumpe_a_modus==2` (Turmpumpe nach Timer-Ende nicht mehr dauerhaft an) | `schwenker.yaml` |
+| 2026-05-21 (session) | — | `lvgl_basis.yaml`: Tab „Test" → „Info" (`tab_test` → `tab_info`); Labels `lbl_info_build` (Build-Datum + ESPHome-Version, Compile-Time) und `lbl_info_wifi` (WiFi IP, Laufzeit) | `lvgl_basis.yaml` |
+| 2026-05-21 (session) | — | `hardware.yaml`: `text_sensor: wifi_info → ip_address` (`sensor_wifi_ip`, internal); `on_value` aktualisiert `lbl_info_wifi` | `hardware.yaml` |

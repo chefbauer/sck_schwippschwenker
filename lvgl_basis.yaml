@@ -3601,16 +3601,28 @@ lvgl:
                                         }
                                         ESP_LOGI("rv", "RV %s", x ? "aktiv" : "inaktiv");
 
-                    # Tab 4: Test
-                    - name: "Test"
-                      id: tab_test
+                    # Tab 4: Info
+                    - name: "Info"
+                      id: tab_info
                       scrollable: true
                       widgets:
                         - label:
-                            text: "(leer)"
-                            align: CENTER
-                            text_font: font_normal
-                            text_color: 0x888888
+                            id: lbl_info_build
+                            x: 12
+                            y: 10
+                            text: !lambda |-
+                              char buf[80];
+                              snprintf(buf, sizeof(buf), "Build:  %s  %s\nESPHome %s", __DATE__, __TIME__, ESPHOME_VERSION);
+                              return std::string(buf);
+                            text_font: font_small
+                            text_color: 0xCCCCCC
+                        - label:
+                            id: lbl_info_wifi
+                            x: 12
+                            y: 64
+                            text: "WiFi IP:  ..."
+                            text_font: font_small
+                            text_color: 0xCCCCCC
 
               # Schließen-Button (rechts oben, wie Overlays)
               - button:

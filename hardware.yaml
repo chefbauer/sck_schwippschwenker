@@ -9,6 +9,7 @@
 #  sensor:    sensor_temp_becken, sensor_amg8833
 #  climate:   climate_thermostat
 #  script:    script_kompressor_delayed_start
+#  text_sensor: sensor_wifi_ip
 # ─────────────────────────────────────────────────────────────────────────────────
 
 esphome:
@@ -626,3 +627,13 @@ interval:
               lv_slider_set_value(id(slider_umwaelzpumpe), 0, LV_ANIM_OFF);
             }
           }
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      id: sensor_wifi_ip
+      name: "WiFi IP"
+      internal: true
+      on_value:
+        - lambda: |-
+            lv_label_set_text_fmt(id(lbl_info_wifi), "WiFi IP:  %s", x.c_str());
