@@ -140,7 +140,7 @@ globals:
     restore_value: no
     initial_value: '0'
 
-  - id: pumpe_a_aktiv          # Beckenfüllung aktiv (Pumpe A läuft)
+  - id: pumpe_a_aktiv          # Turmpumpe / Beckenfüllung aktiv (Pumpe A = dacA läuft)
     type: bool
     restore_value: no
     initial_value: 'false'
@@ -294,7 +294,7 @@ globals:
     restore_value: no            # beim Reboot immer AN
     initial_value: 'true'
 
-  - id: dr_pumpe_auto          # true = Beckenpumpe beim Drehmodus auf 100% setzen
+  - id: dr_pumpe_auto          # true = Turmpumpe (dacA) beim Drehmodus auf 100% setzen
     type: bool
     restore_value: yes
     initial_value: 'true'
@@ -722,7 +722,8 @@ script:
           id(can_bus)->send_data(${motor_can_id}, false, data);
           ESP_LOGI("schwenker", "Motor Re-Init abgeschlossen");
 
-  # ── Pumpe: Modus setzen (0=AUS, 1=MANUELL, 2=AUTO, 3=TURBO) ────────────
+  # ── Turmpumpe (dacA) Modus setzen (0=AUS, 1=MANUELL, 2=AUTO, 3=TURBO) ─
+  # Synonym: script_beckenpumpe_set_modus steuert dacA = Turmpumpe = Beckenfüllung
   - id: script_beckenpumpe_set_modus
     mode: restart
     parameters:

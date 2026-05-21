@@ -115,6 +115,8 @@ mcp4728:
     i2c_id: i2c_bus
 
 output:
+  # DAC Turmpumpe / Beckenfüllung (Channel A)
+  # Synonym: "Turmpumpe" (UI/Slider), "Beckenfüllung" (Skript-Kommentare), "Beckenpumpe" (script_beckenpumpe_set_modus) → alle meinen dieselbe Pumpe: output_pumpe_dacA
   - platform: mcp4728
     id: output_pumpe_dacA
     mcp4728_id: dac_output
@@ -127,6 +129,7 @@ output:
     zero_means_zero: true
 
   # DAC Umwälzpumpe (Channel B)
+  # Synonym: konsistent als "Umwälzpumpe" benannt → kein weiterer Alias
   - platform: mcp4728
     id: output_pumpe_dacB
     mcp4728_id: dac_output
