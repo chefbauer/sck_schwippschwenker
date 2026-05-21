@@ -689,6 +689,15 @@ script:
           id(sw_motor_busy) = false;
           id(sw_motor_last_move_ms) = millis();
           ESP_LOGI("schwenker", "goto_slot fertig – Idle-Timeout aktiv");
+          // RV-Auto-Modus: Intervall-Zyklus starten wenn Pumpe=AUTO und RV eingebaut
+          if (id(global_rv_aktiv) && id(pumpe_a_modus) == 2) {
+            id(rv_auto_phase_ms) = millis();
+            id(rv_auto_pump_on)  = false;
+            id(script_rv_pumpe_start).stop();
+            id(pumpe_a_aktiv) = false;
+            id(output_pumpe_dacA).set_level(0.0f);
+            ESP_LOGI("rv", "goto_slot: Auto-Intervall gestartet (Pause zuerst)");
+          }
 
   # ── Motor Soft-Reboot (Soll = Ist, manuell aus Einstellungen) ──────────
   - id: script_motor_reboot

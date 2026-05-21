@@ -370,7 +370,8 @@ script:
               if (id(dr_modus)) id(script_drehen_start)->execute();
               else id(script_schwenker_start)->execute();
             } else {
-              id(script_schwenker_stop)->execute();
+              // Letzter aktiver Slot gestoppt → Slot anfahren (wie bei Pause/Ende)
+              id(script_schwenker_goto_slot)->execute(i + 1);
             }
           }
 
